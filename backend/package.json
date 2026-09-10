@@ -4,7 +4,7 @@
   "description": "Mihwar ERP Backend",
   "main": "src/index.js",
   "scripts": {
-    "postinstall": "prisma generate",
+    "postinstall": "npx prisma generate --schema=./prisma/schema.prisma",
     "start": "node src/index.js"
   },
   "dependencies": {
