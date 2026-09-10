@@ -1,0 +1,125 @@
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config();
+const { PrismaClient } = require('@prisma/client');
+
+const prisma = new PrismaClient();
+const app = express();
+
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// طبقة الحماية وعزل البيانات
+app.use(async (req, res, next) => {
+  if (req.method === 'OPTIONS') return next();
+
+  const url = req.path.toLowerCase();
+  if (url.includes('login') || url.includes('register') || url.includes('forgot')) {
+    return next();
+  }
+
+  const userId = req.headers['user-id'];
+  if (!userId) {
+    return res.status(401).json({ error: 'غير مصرح لك بالوصول (Missing Auth Header)' });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
+    if (!user) return res.status(401).json({ error: 'حساب المستخدم غير موجود' });
+
+    req.companyId = user.companyId;
+    req.userId = user.id;
+    next();
+  } catch (error) {
+    console.error('Middleware Error:', error);
+    res.status(500).json({ error: 'خطأ داخلي أثناء التحقق من الصلاحيات' });
+  }
+});
+
+// نظام التسجيل والدخول
+app.post(['/register', '/api/register', '/api/api/register'], async (req, res) => {
+  const { businessName, clientName, email, phone, password } = req.body;
+  try {
+    if (!email || !password) return res.status(400).json({ error: 'البريد الإلكتروني وكلمة المرور مطلوبان' });
+    const cleanEmail = email.trim().toLowerCase();
+    
+    const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    if (existingUser) return res.status(400).json({ error: 'البريد الإلكتروني مسجل مسبقاً' });
+
+    const result = await prisma.$transaction(async (tx) => {
+      const company = await tx.company.create({ data: { name: businessName || 'شركة جديدة' } });
+      const adminRole = await tx.role.create({ data: { companyId: company.id, name: 'مدير النظام', permissions: ['ALL_ACCESS'] } });
+      const user = await tx.user.create({
+        data: {
+          companyId: company.id, roleId: adminRole.id, name: clientName || 'مدير',
+          email: cleanEmail, password: password, phone: phone || null
+        }
+      });
+      return { company, user, role: adminRole };
+    });
+    res.json({ message: 'تم إنشاء مساحة العمل بنجاح', user: result.user });
+  } catch (error) {
+    console.error('Registration Error:', error);
+    res.status(500).json({ error: 'حدث خطأ أثناء إنشاء مساحة العمل' });
+  }
+});
+
+app.post(['/login', '/api/login', '/api/api/login'], async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await prisma.user.findUnique({ where: { email: cleanEmail }, include: { company: true, role: true } });
+    if (!user || user.password !== password) return res.status(401).json({ error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' });
+    if (!user.isActive) return res.status(403).json({ error: 'هذا الحساب موقوف' });
+
+    const userData = { id: user.id, email: user.email, name: user.name, role: user.role?.name || 'مستخدم', businessName: user.company?.name || 'محور ERP' };
+    res.json({ message: 'تم تسجيل الدخول بنجاح', user: userData });
+  } catch (error) {
+    console.error('Login Error:', error);
+    res.status(500).json({ error: 'حدث خطأ في الخادم' });
+  }
+});
+
+// مسارات المخزون المستقرة
+app.get(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res) => {
+  try {
+    const products = await prisma.product.findMany({ where: { companyId: req.companyId } });
+    res.json(products);
+  } catch (error) {
+    console.error('Inventory Fetch Error:', error);
+    res.status(500).json({ error: 'خطأ في جلب بيانات المخزون' });
+  }
+});
+
+app.post(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res) => {
+  const { name, price, stock } = req.body;
+  try {
+    if (!name || price === undefined) {
+      return res.status(400).json({ error: 'اسم المنتج والسعر مطلوبان' });
+    }
+
+    const numericPrice = Number(price);
+
+    const newProduct = await prisma.product.create({
+      data: {
+        companyId: Number(req.companyId),
+        name: String(name),
+        price: numericPrice,
+        cost: numericPrice,
+        stock: Number(stock) || 0,
+        sku: `SKU-${Date.now().toString().slice(-6)}`
+      }
+    });
+
+    res.json({ message: 'تم إضافة المنتج للمخزون بنجاح', product: newProduct });
+  } catch (error) {
+    console.error('PRISMA CREATE PRODUCT ERROR:', error);
+    res.status(500).json({ error: 'تعذر حفظ المنتج في قاعدة البيانات' });
+  }
+});
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`🚀 Mihwar ERP Backend is running on port ${PORT}`);
+});
