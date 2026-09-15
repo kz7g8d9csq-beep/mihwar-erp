@@ -60,7 +60,6 @@ app.post(['/register', '/api/register', '/api/api/register'], async (req, res) =
     });
     res.json({ message: 'تم إنشاء مساحة العمل بنجاح', user: result.user });
   } catch (error) {
-    console.error('Registration Error:', error);
     res.status(500).json({ error: 'حدث خطأ أثناء إنشاء مساحة العمل' });
   }
 });
@@ -76,7 +75,6 @@ app.post(['/login', '/api/login', '/api/api/login'], async (req, res) => {
     const userData = { id: user.id, email: user.email, name: user.name, role: user.role?.name || 'مستخدم', businessName: user.company?.name || 'محور ERP' };
     res.json({ message: 'تم تسجيل الدخول بنجاح', user: userData });
   } catch (error) {
-    console.error('Login Error:', error);
     res.status(500).json({ error: 'حدث خطأ في الخادم' });
   }
 });
@@ -278,7 +276,7 @@ app.post(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res
   }
 });
 
-// ==================== المبيعات والفوترة الذكية ====================
+// ==================== المبيعات والفوترة الذكية (متعددة الأصناف) ====================
 app.get(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
   try {
     const invoices = await prisma.invoice.findMany({
@@ -297,38 +295,66 @@ app.get(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
 });
 
 app.post(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
-  const { productId, quantity, price, customerId } = req.body;
+  const { items, customerId, productId, quantity, price } = req.body;
   try {
-    if (!productId || !quantity) return res.status(400).json({ error: 'المنتج والكمية مطلوبان' });
+    // دعم استقبال سلة أصناف مجمعة أو صنف فردي
+    let itemsToProcess = items;
+    if (!itemsToProcess || !itemsToProcess.length) {
+      if (productId && quantity) {
+        itemsToProcess = [{ productId, quantity, price }];
+      } else {
+        return res.status(400).json({ error: 'يجب إضافة صنف واحد على الأقل في الفاتورة' });
+      }
+    }
 
-    const qty = Number(quantity);
-    const prodId = Number(productId);
     const custId = customerId ? Number(customerId) : null;
 
     const result = await prisma.$transaction(async (tx) => {
-      const product = await tx.product.findFirst({
-        where: { id: prodId, companyId: req.companyId }
-      });
+      let totalSubtotal = 0;
+      const preparedInvoiceItems = [];
 
-      if (!product) throw new Error('المنتج غير موجود');
-      if (product.stock < qty) throw new Error(`الرصيد غير كافٍ! المتوفر: ${product.stock}`);
+      for (const it of itemsToProcess) {
+        const pId = Number(it.productId);
+        const q = Number(it.quantity);
+        if (q <= 0) throw new Error('الكمية يجب أن تكون أكبر من صفر');
 
-      const unitPrice = price !== undefined ? Number(price) : product.price;
-      const subtotal = Number((unitPrice * qty).toFixed(2));
+        const product = await tx.product.findFirst({
+          where: { id: pId, companyId: req.companyId }
+        });
+
+        if (!product) throw new Error(`المنتج رقم ${pId} غير موجود بالمخزن`);
+        if (product.stock < q) {
+          throw new Error(`الرصيد غير كافٍ للمنتج "${product.name}"! المتاح بالمخزن: ${product.stock}`);
+        }
+
+        const uPrice = it.price !== undefined ? Number(it.price) : product.price;
+        const lineSubtotal = Number((uPrice * q).toFixed(2));
+        totalSubtotal += lineSubtotal;
+
+        // خصم ذري فوري لكل صنف في السلة
+        await tx.product.update({
+          where: { id: pId },
+          data: { stock: { decrement: q } }
+        });
+
+        preparedInvoiceItems.push({
+          productId: pId,
+          quantity: q,
+          unitPrice: uPrice,
+          subtotal: lineSubtotal
+        });
+      }
+
       const taxRate = 0.15;
-      const taxAmount = Number((subtotal * taxRate).toFixed(2));
-      const totalAmount = Number((subtotal + taxAmount).toFixed(2));
-
-      await tx.product.update({
-        where: { id: prodId },
-        data: { stock: { decrement: qty } }
-      });
+      const subtotalRounded = Number(totalSubtotal.toFixed(2));
+      const taxAmount = Number((subtotalRounded * taxRate).toFixed(2));
+      const totalAmount = Number((subtotalRounded + taxAmount).toFixed(2));
 
       const invoiceNo = `INV-${Date.now().toString().slice(-6)}`;
       const invoice = await tx.invoice.create({
         data: {
           invoiceNo,
-          subtotal,
+          subtotal: subtotalRounded,
           taxRate,
           taxAmount,
           totalAmount,
@@ -336,25 +362,22 @@ app.post(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
           userId: req.userId,
           customerId: custId,
           items: {
-            create: [
-              {
-                productId: prodId,
-                quantity: qty,
-                unitPrice: unitPrice,
-                subtotal: subtotal
-              }
-            ]
+            create: preparedInvoiceItems
           }
         },
-        include: { items: true, customer: true }
+        include: {
+          items: { include: { product: true } },
+          customer: true
+        }
       });
 
       return invoice;
     });
 
-    res.json({ message: 'تم إصدار الفاتورة وخصم المخزون بنجاح', invoice: result });
+    res.json({ message: 'تم إصدار الفاتورة واعتماد خصم جميع الأصناف بنجاح', invoice: result });
   } catch (error) {
-    res.status(400).json({ error: error.message || 'فشلت عملية البيع' });
+    console.error('Sales Error:', error);
+    res.status(400).json({ error: error.message || 'فشلت عملية إصدار الفاتورة' });
   }
 });
 
@@ -400,7 +423,6 @@ app.post(['/purchases', '/api/purchases', '/api/api/purchases'], async (req, res
       const taxAmount = Number((subtotal * taxRate).toFixed(2));
       const totalAmount = Number((subtotal + taxAmount).toFixed(2));
 
-      // 1. زيادة رصيد المستودع تلقائياً وتحديث تكلفة المنتج
       await tx.product.update({
         where: { id: prodId },
         data: {
@@ -409,7 +431,6 @@ app.post(['/purchases', '/api/purchases', '/api/api/purchases'], async (req, res
         }
       });
 
-      // 2. إصدار فاتورة الشراء وتوثيق بنود التوريد
       const invoiceNo = `PUR-${Date.now().toString().slice(-6)}`;
       const purchaseInvoice = await tx.purchaseInvoice.create({
         data: {

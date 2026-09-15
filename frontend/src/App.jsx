@@ -35,7 +35,6 @@ const dict = {
     costCol: 'التكلفة',
     unitProfitCol: 'ربح الوحدة',
     statusCol: 'حالة التوفر',
-    cashflowTitle: 'ميزان التدفق المالي (المبيعات مقابل المشتريات)',
 
     // العملاء
     addNewCust: '👤 فتح حساب عميل جديد',
@@ -65,21 +64,24 @@ const dict = {
     confirmDeleteSupp: 'هل أنت متأكد من حذف هذا المورد؟',
     noSupps: 'لا يوجد موردون مسجلون حالياً.',
 
-    // المبيعات
+    // المبيعات (سلة الأصناف)
     issueInvoice: '⚡ إصدار فاتورة بيع جديدة',
-    selectCust: 'العميل',
+    selectCust: 'العميل المستلم',
     defaultCust: 'عميل نقدي عام (افتراضي)',
-    selectProd: 'المنتج (يسحب تلقائياً من TiDB)',
-    chooseProd: '-- اختر المنتج من المستودع --',
-    qty: 'الكمية المطلوبة',
-    unitPrice: 'سعر البيع (ر.س)',
-    confirmSaleBtn: '💳 إصدار الفاتورة وخصم المخزون',
+    selectProd: 'اختيار المنتج',
+    chooseProd: '-- اختر المنتج لإضافته للفاتورة --',
+    qty: 'الكمية',
+    unitPrice: 'السعر (ر.س)',
+    addItemBtn: '➕ إضافة الصنف إلى الفاتورة',
+    cartItemsTitle: '🛒 محتويات الفاتورة الحالية',
+    cartEmpty: 'لم تتم إضافة أي صنف للفاتورة بعد. اختر منتجاً واضغط إضافة.',
+    confirmSaleBtn: '💳 إصدار الفاتورة واعتماد الخصم',
     summaryTitle: 'ملخص الحسبة التلقائية',
     vatBadge: 'ضريبة 15% آلية',
     subtotal: 'المبلغ الخاضع للضريبة:',
     vatAmount: 'ضريبة القيمة المضافة (15%):',
     totalDue: 'الإجمالي المستحق:',
-    vatNote: '💡 تُخصم الكمية فوراً من رصيد المستودع، وتُربط الفاتورة بـ TiDB.',
+    vatNote: '💡 ستُخصم كافة أصناف السلة فوراً من رصيد المستودع، وتُربط الفاتورة بـ TiDB.',
 
     // المشتريات
     issuePurchase: '📥 تسجيل فاتورة شراء وتوريد بضاعة',
@@ -97,7 +99,7 @@ const dict = {
     invNo: 'رقم الفاتورة',
     clientCol: 'العميل / المستلم',
     suppCol: 'المورد',
-    itemCol: 'المنتج',
+    itemCol: 'الأصناف المباعة',
     dateCol: 'التاريخ',
     noInvoices: 'لا توجد فواتير مبيعات مسجلة حتى الآن.',
     noPurchases: 'لا توجد فواتير شراء مسجلة حتى الآن.',
@@ -178,7 +180,6 @@ const dict = {
     costCol: 'Unit Cost',
     unitProfitCol: 'Unit Margin',
     statusCol: 'Availability',
-    cashflowTitle: 'Operating Cashflow Balance (Sales vs Purchases)',
 
     // Customers
     addNewCust: '👤 Add New Client Account',
@@ -208,21 +209,24 @@ const dict = {
     confirmDeleteSupp: 'Are you sure you want to delete this supplier?',
     noSupps: 'No suppliers registered yet.',
 
-    // Sales
+    // Sales (Cart)
     issueInvoice: '⚡ Generate New Sales Invoice',
-    selectCust: 'Client',
+    selectCust: 'Client / Buyer',
     defaultCust: 'General Cash Customer (Default)',
-    selectProd: 'Product (Live TiDB Stock)',
-    chooseProd: '-- Select product from warehouse --',
-    qty: 'Required Quantity',
-    unitPrice: 'Sale Price (SAR)',
+    selectProd: 'Select Product',
+    chooseProd: '-- Select product to add to invoice --',
+    qty: 'Quantity',
+    unitPrice: 'Price (SAR)',
+    addItemBtn: '➕ Add Item to Invoice',
+    cartItemsTitle: '🛒 Current Invoice Items',
+    cartEmpty: 'No items added yet. Select a product and click add.',
     confirmSaleBtn: '💳 Confirm & Deplete Stock',
     summaryTitle: 'Live Tax Summary',
     vatBadge: 'Automated 15% VAT',
     subtotal: 'Taxable Amount:',
     vatAmount: 'Value Added Tax (15%):',
     totalDue: 'Total Amount Due:',
-    vatNote: '💡 Stock is depleted atomically, invoice is bound to TiDB.',
+    vatNote: '💡 All items in the cart will be depleted atomically from TiDB.',
 
     // Purchases
     issuePurchase: '📥 Record Purchase & Inbound Stock',
@@ -240,7 +244,7 @@ const dict = {
     invNo: 'Invoice #',
     clientCol: 'Client / Buyer',
     suppCol: 'Supplier',
-    itemCol: 'Item',
+    itemCol: 'Items Sold',
     dateCol: 'Date',
     noInvoices: 'No sales invoices recorded yet.',
     noPurchases: 'No purchase invoices recorded yet.',
@@ -371,13 +375,16 @@ function App() {
   const [editingSuppId, setEditingSuppId] = useState(null);
   const [isSavingSupplier, setIsSavingSupplier] = useState(false);
 
+  // نظام المبيعات متعدد الأصناف (سلة الفاتورة)
   const [invoices, setInvoices] = useState([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
-  const [qty, setQty] = useState(1);
-  const [amount, setAmount] = useState('');
+  const [itemQty, setItemQty] = useState(1);
+  const [itemPrice, setItemPrice] = useState('');
+  const [cartItems, setCartItems] = useState([]); // سلة الأصناف الحالية
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
+  // المشتريات
   const [purchaseInvoices, setPurchaseInvoices] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedPurchaseProdId, setSelectedPurchaseProdId] = useState('');
@@ -475,7 +482,158 @@ function App() {
     }
   };
 
-  // معالجات العمليات
+  // إضافة صنف إلى سلة الفاتورة الحالية
+  const handleAddItemToCart = () => {
+    if (!selectedProductId) {
+      alert(lang === 'ar' ? 'الرجاء اختيار المنتج أولاً' : 'Please select a product first');
+      return;
+    }
+    const product = inventory.find(p => p.id === Number(selectedProductId));
+    if (!product) return;
+
+    const qty = Number(itemQty);
+    if (qty <= 0) {
+      alert(lang === 'ar' ? 'الكمية يجب أن تكون 1 أو أكثر' : 'Quantity must be at least 1');
+      return;
+    }
+
+    // التحقق من الرصيد المتوفر مقارنة بما هو مضاف أصلاً في السلة
+    const existingInCart = cartItems.find(it => it.productId === product.id);
+    const totalRequired = (existingInCart ? existingInCart.quantity : 0) + qty;
+
+    if (totalRequired > product.stock) {
+      alert(lang === 'ar' 
+        ? `الرصيد غير كافٍ! المتاح في المستودع: ${product.stock} وحدة فقط.` 
+        : `Insufficient stock! Only ${product.stock} units available.`);
+      return;
+    }
+
+    const price = Number(itemPrice) || product.price;
+
+    if (existingInCart) {
+      // تحديث الكمية للصنف الموجود مسبقاً
+      setCartItems(cartItems.map(it => {
+        if (it.productId === product.id) {
+          const newQ = it.quantity + qty;
+          return {
+            ...it,
+            quantity: newQ,
+            price: price,
+            subtotal: Number((newQ * price).toFixed(2))
+          };
+        }
+        return it;
+      }));
+    } else {
+      // إضافة صنف جديد في السلة
+      setCartItems([
+        ...cartItems,
+        {
+          productId: product.id,
+          name: product.name,
+          quantity: qty,
+          price: price,
+          subtotal: Number((qty * price).toFixed(2))
+        }
+      ]);
+    }
+
+    // إعادة ضبط الحقول لإضافة صنف ثانٍ وثالث بسهولة
+    setSelectedProductId('');
+    setItemQty(1);
+    setItemPrice('');
+  };
+
+  // حذف صنف من سلة الفاتورة
+  const handleRemoveItemFromCart = (index) => {
+    setCartItems(cartItems.filter((_, idx) => idx !== index));
+  };
+
+  // اعتماد الفاتورة متعددة الأصناف وإرسالها للسيرفر
+  const handleSaveInvoice = async () => {
+    if (cartItems.length === 0) {
+      alert(lang === 'ar' ? 'يجب إضافة صنف واحد على الأقل في الفاتورة' : 'Add at least one item to invoice');
+      return;
+    }
+
+    setIsSubmittingSale(true);
+    try {
+      const res = await API.post('/api/sales', {
+        customerId: selectedCustomerId ? Number(selectedCustomerId) : null,
+        items: cartItems.map(it => ({
+          productId: it.productId,
+          quantity: it.quantity,
+          price: it.price
+        }))
+      });
+
+      const newInv = res.data?.invoice;
+      alert(`✅ ${res.data.message || (lang === 'ar' ? 'تم إصدار الفاتورة واعتماد خصم المخزون بنجاح!' : 'Invoice created successfully!')}`);
+      
+      // تصفية السلة وتحديث السيرفر
+      setCartItems([]);
+      fetchAllData();
+      if (newInv) setPrintingInvoice(newInv);
+      setActiveTab('reports');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Sales process failed');
+    } finally {
+      setIsSubmittingSale(false);
+    }
+  };
+
+  // معالجات المشتريات
+  const handleSavePurchase = async () => {
+    if (!selectedPurchaseProdId || !purchaseQty || !purchaseCost) return;
+    setIsSubmittingPurchase(true);
+    try {
+      await API.post('/api/purchases', {
+        productId: Number(selectedPurchaseProdId),
+        quantity: Number(purchaseQty),
+        unitCost: Number(purchaseCost),
+        supplierId: selectedSupplierId ? Number(selectedSupplierId) : null
+      });
+      setSelectedPurchaseProdId('');
+      setPurchaseCost('');
+      setPurchaseQty(10);
+      fetchAllData();
+      setActiveTab('inventory');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Purchase process failed');
+    } finally {
+      setIsSubmittingPurchase(false);
+    }
+  };
+
+  // الحسابات المالية اللحظية لسلة المبيعات
+  const cartSubtotal = cartItems.reduce((sum, it) => sum + Number(it.subtotal || 0), 0);
+  const cartTax = cartSubtotal * 0.15;
+  const cartGrandTotal = cartSubtotal + cartTax;
+
+  // الحسابات التحليلية للمشتريات والمخزون
+  const inventoryVal = inventory.reduce((sum, i) => sum + (Number(i.price) * Number(i.stock)), 0);
+  const totalSalesVal = invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+  const totalPurchasesVal = purchaseInvoices.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
+  
+  const totalRevenuePreTax = invoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
+  const totalCOGS = invoices.reduce((sum, inv) => {
+    const itemCostSum = (inv.items || []).reduce((iSum, it) => {
+      const prodCost = it.product?.cost || 0;
+      return iSum + (prodCost * it.quantity);
+    }, 0);
+    return sum + itemCostSum;
+  }, 0);
+
+  const netProfitVal = totalRevenuePreTax - totalCOGS;
+  const marginPercentage = totalRevenuePreTax > 0 ? ((netProfitVal / totalRevenuePreTax) * 100).toFixed(1) : '0.0';
+
+  const lowStockItems = inventory.filter(i => Number(i.stock) <= lowStockThreshold);
+
+  const purchaseSubtotal = (Number(purchaseCost) || 0) * (Number(purchaseQty) || 0);
+  const purchaseTax = purchaseSubtotal * 0.15;
+  const purchaseTotal = purchaseSubtotal + purchaseTax;
+
+  // إدارة العملاء والموردين
   const handleAddOrUpdateCustomer = async (e) => {
     e.preventDefault();
     if (!custName.trim()) return;
@@ -580,81 +738,6 @@ function App() {
       alert(err.response?.data?.error || 'Error saving product');
     }
   };
-
-  const handleSaveInvoice = async () => {
-    if (!selectedProductId || !qty) return;
-    setIsSubmittingSale(true);
-    try {
-      const res = await API.post('/api/sales', {
-        productId: Number(selectedProductId),
-        quantity: Number(qty),
-        price: Number(amount),
-        customerId: selectedCustomerId ? Number(selectedCustomerId) : null
-      });
-
-      const newInv = res.data?.invoice;
-      setSelectedProductId('');
-      setAmount('');
-      setQty(1);
-      fetchAllData();
-      if (newInv) setPrintingInvoice(newInv);
-      setActiveTab('reports');
-    } catch (err) {
-      alert(err.response?.data?.error || 'Sales process failed');
-    } finally {
-      setIsSubmittingSale(false);
-    }
-  };
-
-  const handleSavePurchase = async () => {
-    if (!selectedPurchaseProdId || !purchaseQty || !purchaseCost) return;
-    setIsSubmittingPurchase(true);
-    try {
-      await API.post('/api/purchases', {
-        productId: Number(selectedPurchaseProdId),
-        quantity: Number(purchaseQty),
-        unitCost: Number(purchaseCost),
-        supplierId: selectedSupplierId ? Number(selectedSupplierId) : null
-      });
-      setSelectedPurchaseProdId('');
-      setPurchaseCost('');
-      setPurchaseQty(10);
-      fetchAllData();
-      setActiveTab('inventory');
-    } catch (err) {
-      alert(err.response?.data?.error || 'Purchase process failed');
-    } finally {
-      setIsSubmittingPurchase(false);
-    }
-  };
-
-  // الحسابات المالية والتحليلية الذكية
-  const inventoryVal = inventory.reduce((sum, i) => sum + (Number(i.price) * Number(i.stock)), 0);
-  const totalSalesVal = invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-  const totalPurchasesVal = purchaseInvoices.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
-  
-  const totalRevenuePreTax = invoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
-  const totalCOGS = invoices.reduce((sum, inv) => {
-    const itemCostSum = (inv.items || []).reduce((iSum, it) => {
-      const prodCost = it.product?.cost || 0;
-      return iSum + (prodCost * it.quantity);
-    }, 0);
-    return sum + itemCostSum;
-  }, 0);
-
-  const netProfitVal = totalRevenuePreTax - totalCOGS;
-  const marginPercentage = totalRevenuePreTax > 0 ? ((netProfitVal / totalRevenuePreTax) * 100).toFixed(1) : '0.0';
-
-  // رادار نواقص المخزون ديناميكي حسب الحد المخصص
-  const lowStockItems = inventory.filter(i => Number(i.stock) <= lowStockThreshold);
-
-  const salesSubtotal = (Number(amount) || 0) * (Number(qty) || 0);
-  const salesTax = salesSubtotal * 0.15;
-  const salesTotal = salesSubtotal + salesTax;
-
-  const purchaseSubtotal = (Number(purchaseCost) || 0) * (Number(purchaseQty) || 0);
-  const purchaseTax = purchaseSubtotal * 0.15;
-  const purchaseTotal = purchaseSubtotal + purchaseTax;
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -871,7 +954,6 @@ function App() {
               </span>
             </div>
 
-            {/* بطاقات المؤشرات المالية الحيوية */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
               <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}`, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                 <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.invValue}</p>
@@ -898,7 +980,7 @@ function App() {
               </div>
             </div>
 
-            {/* رادار نواقص المخزون بدون جملة حد الأمان في العنوان */}
+            {/* رادار نواقص المخزون */}
             <div style={{ background: lowStockItems.length > 0 ? (isDark ? '#450a0a' : '#fff1f2') : theme.cardBg, border: `1px solid ${lowStockItems.length > 0 ? '#fecdd3' : theme.border}`, borderRadius: '14px', padding: '22px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: lowStockItems.length > 0 ? '15px' : '0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -912,7 +994,6 @@ function App() {
                   )}
                 </div>
 
-                {/* خيار تعديل حد الأمان */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {isEditingThreshold ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -982,7 +1063,7 @@ function App() {
               )}
             </div>
 
-            {/* جدول أداء الأصناف وهامش ربح المنتجات */}
+            {/* جدول أداء الأصناف */}
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <h3 style={{ marginTop: 0, color: theme.textDark, fontSize: '17px' }}>{t.topSellingTitle}</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
@@ -1025,51 +1106,132 @@ function App() {
           </div>
         )}
 
-        {/* المبيعات والفوترة الذكية */}
+        {/* المبيعات والفوترة الذكية (سلة الأصناف المجمعة) */}
         {activeTab === 'sales' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '25px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 0.75fr', gap: '25px' }}>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
               <h2 style={{ marginTop: 0, color: theme.textDark, fontSize: '18px' }}>{t.issueInvoice}</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold' }}>{t.selectCust}</label>
-                  <select value={selectedCustomerId} onChange={e => setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, marginTop: '5px' }}>
-                    <option value="">{t.defaultCust}</option>
-                    {customers.map(c => <option key={c.id} value={c.id}>{c.name} {c.phone ? `(${c.phone})` : ''}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold' }}>{t.selectProd}</label>
-                  <select value={selectedProductId} onChange={e => {
-                    const prodId = e.target.value;
-                    setSelectedProductId(prodId);
-                    const p = inventory.find(i => i.id === Number(prodId));
-                    if (p) setAmount(p.price); else setAmount('');
-                  }} style={{ width: '100%', padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, marginTop: '5px' }}>
-                    <option value="">{t.chooseProd}</option>
-                    {inventory.map(p => (
-                      <option key={p.id} value={p.id} disabled={p.stock <= 0}>
-                        {p.name} — {p.price} {t.currency} {p.stock > 0 ? `(${t.availableStock}: ${p.stock})` : '(نفذت الكمية)'}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 'bold' }}>{t.qty}</label>
-                    <input type="number" min="1" value={qty} onChange={e => setQty(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, boxSizing: 'border-box', marginTop: '5px' }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 'bold' }}>{t.unitPrice}</label>
-                    <input type="number" value={amount} onChange={e => setAmount(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, boxSizing: 'border-box', marginTop: '5px' }} />
-                  </div>
-                </div>
-                <button onClick={handleSaveInvoice} disabled={isSubmittingSale || !selectedProductId} style={{ background: selectedProductId ? theme.primary : '#94a3b8', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: selectedProductId ? 'pointer' : 'not-allowed', fontSize: '14px', marginTop: '10px' }}>
-                  {isSubmittingSale ? '...' : t.confirmSaleBtn}
-                </button>
+              
+              {/* قسم اختيار العميل */}
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 'bold' }}>{t.selectCust}</label>
+                <select value={selectedCustomerId} onChange={e => setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, marginTop: '5px' }}>
+                  <option value="">{t.defaultCust}</option>
+                  {customers.map(c => <option key={c.id} value={c.id}>{c.name} {c.phone ? `(${c.phone})` : ''}</option>)}
+                </select>
               </div>
+
+              {/* قسم اختيار وإضافة الصنف إلى السلة */}
+              <div style={{ background: isDark ? '#0f172a' : '#f8fafc', padding: '16px', borderRadius: '10px', border: `1px solid ${theme.border}`, marginBottom: '20px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 'bold', color: theme.primary, display: 'block', marginBottom: '10px' }}>
+                  ➕ إضافة صنف جديد إلى الفاتورة
+                </span>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold' }}>{t.selectProd}</label>
+                    <select 
+                      value={selectedProductId} 
+                      onChange={e => {
+                        const prodId = e.target.value;
+                        setSelectedProductId(prodId);
+                        const p = inventory.find(i => i.id === Number(prodId));
+                        if (p) setItemPrice(p.price); else setItemPrice('');
+                      }} 
+                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, marginTop: '4px' }}
+                    >
+                      <option value="">{t.chooseProd}</option>
+                      {inventory.map(p => (
+                        <option key={p.id} value={p.id} disabled={p.stock <= 0}>
+                          {p.name} — {p.price} {t.currency} {p.stock > 0 ? `(${t.availableStock}: ${p.stock})` : '(نفذت الكمية)'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '10px', alignItems: 'flex-end' }}>
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 'bold' }}>{t.qty}</label>
+                      <input type="number" min="1" value={itemQty} onChange={e => setItemQty(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, boxSizing: 'border-box', marginTop: '4px' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 'bold' }}>{t.unitPrice}</label>
+                      <input type="number" value={itemPrice} onChange={e => setItemPrice(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, boxSizing: 'border-box', marginTop: '4px' }} />
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={handleAddItemToCart} 
+                      disabled={!selectedProductId} 
+                      style={{ background: selectedProductId ? theme.primary : '#94a3b8', color: '#fff', padding: '10px 16px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: selectedProductId ? 'pointer' : 'not-allowed', height: '42px', whiteSpace: 'nowrap' }}
+                    >
+                      {t.addItemBtn}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* جدول سلة الأصناف الحالية */}
+              <div style={{ marginBottom: '15px' }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: theme.textDark }}>
+                  {t.cartItemsTitle} ({cartItems.length} {lang === 'ar' ? 'أصناف مضافة' : 'items'})
+                </h4>
+                
+                {cartItems.length === 0 ? (
+                  <div style={{ padding: '20px', textAlign: 'center', background: theme.bgMain, borderRadius: '8px', border: `1px dashed ${theme.border}`, color: theme.textMuted, fontSize: '13px' }}>
+                    {t.cartEmpty}
+                  </div>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
+                    <thead>
+                      <tr style={{ background: isDark ? '#334155' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                        <th style={{ padding: '8px' }}>الصنف</th>
+                        <th style={{ padding: '8px' }}>الكمية</th>
+                        <th style={{ padding: '8px' }}>السعر</th>
+                        <th style={{ padding: '8px' }}>المجموع</th>
+                        <th style={{ padding: '8px', textAlign: 'center' }}>إلغاء</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cartItems.map((item, idx) => (
+                        <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                          <td style={{ padding: '8px', fontWeight: 'bold' }}>{item.name}</td>
+                          <td style={{ padding: '8px' }}>{item.quantity}</td>
+                          <td style={{ padding: '8px' }}>{item.price} {t.currency}</td>
+                          <td style={{ padding: '8px', fontWeight: 'bold', color: theme.primary }}>{item.subtotal} {t.currency}</td>
+                          <td style={{ padding: '8px', textAlign: 'center' }}>
+                            <button onClick={() => handleRemoveItemFromCart(idx)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '4px', padding: '4px 8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>
+                              ✖
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* زر اعتماد الفاتورة وطباعتها */}
+              <button 
+                onClick={handleSaveInvoice} 
+                disabled={isSubmittingSale || cartItems.length === 0} 
+                style={{ 
+                  width: '100%',
+                  background: cartItems.length > 0 ? theme.primary : '#94a3b8', 
+                  color: '#fff', 
+                  padding: '14px', 
+                  borderRadius: '8px', 
+                  border: 'none', 
+                  fontWeight: 'bold', 
+                  cursor: cartItems.length > 0 ? 'pointer' : 'not-allowed', 
+                  fontSize: '15px', 
+                  marginTop: '10px' 
+                }}
+              >
+                {isSubmittingSale ? '...' : `${t.confirmSaleBtn} (${cartItems.length} أصناف)`}
+              </button>
             </div>
 
+            {/* بطاقة الحساب التلقائي للضريبة */}
             <div style={{ background: '#020617', borderRadius: '14px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 10px 25px rgba(0,0,0,0.3)' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
@@ -1079,19 +1241,19 @@ function App() {
                 <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#94a3b8' }}>
                     <span>{t.subtotal}</span>
-                    <strong style={{ color: '#fff' }}>{salesSubtotal.toFixed(2)} {t.currency}</strong>
+                    <strong style={{ color: '#fff' }}>{cartSubtotal.toFixed(2)} {t.currency}</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#94a3b8' }}>
                     <span>{t.vatAmount}</span>
-                    <strong style={{ color: '#5eead4' }}>{salesTax.toFixed(2)} {t.currency}</strong>
+                    <strong style={{ color: '#5eead4' }}>{cartTax.toFixed(2)} {t.currency}</strong>
                   </div>
                   <div style={{ borderTop: '1px dashed #334155', paddingTop: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '15px', fontWeight: 'bold' }}>{t.totalDue}</span>
-                    <span style={{ fontSize: '22px', fontWeight: '800', color: '#38bdf8' }}>{salesTotal.toFixed(2)} {t.currency}</span>
+                    <span style={{ fontSize: '24px', fontWeight: '800', color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span>
                   </div>
                 </div>
               </div>
-              <div style={{ background: '#0f172a', padding: '12px', borderRadius: '8px', fontSize: '12px', color: '#94a3b8', marginTop: '20px' }}>
+              <div style={{ background: '#0f172a', padding: '12px', borderRadius: '8px', fontSize: '12px', color: '#94a3b8', marginTop: '20px', lineHeight: '1.5' }}>
                 {t.vatNote}
               </div>
             </div>
@@ -1368,7 +1530,14 @@ function App() {
                     <tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
                       <td style={{ padding: '10px', fontWeight: 'bold', color: theme.primary }}>#{inv.invoiceNo}</td>
                       <td style={{ padding: '10px', fontWeight: 'bold' }}>{inv.customer?.name || t.defaultCust}</td>
-                      <td style={{ padding: '10px' }}>{inv.items?.[0]?.product?.name || 'Item'} ({inv.items?.[0]?.quantity})</td>
+                      <td style={{ padding: '10px' }}>
+                        {inv.items && inv.items.length > 0 ? (
+                          <span>
+                            {inv.items[0]?.product?.name || 'صنف'} ({inv.items[0]?.quantity})
+                            {inv.items.length > 1 && <span style={{ color: theme.primary, fontWeight: 'bold' }}> + {inv.items.length - 1} أصناف أخرى</span>}
+                          </span>
+                        ) : 'بضاعة'}
+                      </td>
                       <td style={{ padding: '10px' }}>{Number(inv.subtotal || 0).toFixed(2)} {t.currency}</td>
                       <td style={{ padding: '10px', color: '#0d9488' }}>{Number(inv.taxAmount || 0).toFixed(2)} {t.currency}</td>
                       <td style={{ padding: '10px', fontWeight: 'bold' }}>{Number(inv.totalAmount || 0).toFixed(2)} {t.currency}</td>
@@ -1494,7 +1663,7 @@ function App() {
         )}
       </main>
 
-      {/* نافذة الفاتورة الضريبية الرسمية المعتمدة */}
+      {/* نافذة الفاتورة الضريبية الرسمية المعتمدة (تعرض كافة الأصناف) */}
       {printingInvoice && (
         <div className="invoice-modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px', boxSizing: 'border-box' }}>
           <div className="invoice-modal-card" style={{ background: '#ffffff', color: '#0f172a', width: '100%', maxWidth: '780px', maxHeight: '95vh', overflowY: 'auto', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
@@ -1554,6 +1723,7 @@ function App() {
                 </div>
               </div>
 
+              {/* جدول الأصناف المفصل في الفاتورة */}
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', marginBottom: '25px', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#0f172a', color: '#ffffff' }}>
