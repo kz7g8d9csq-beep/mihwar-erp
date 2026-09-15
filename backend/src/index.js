@@ -19,11 +19,10 @@ app.use(async (req, res, next) => {
   if (req.method === 'OPTIONS') return next();
 
   const url = req.path.toLowerCase();
-  if (url.includes('login') || url.includes('register') || url.includes('forgot')) {
+  if (url.includes('login') || url.includes('register') || url.includes('forgot-password')) {
     return next();
   }
 
-  // دعم التوثيق عبر JWT Token المشفر مع إمكانية التوافق المؤقت
   let token = null;
   const authHeader = req.headers['authorization'];
   if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -59,7 +58,7 @@ app.use(async (req, res, next) => {
   }
 });
 
-// إنشاء مساحة عمل جديدة مع تشفير كلمة المرور بـ Bcrypt وتوليد JWT
+// إنشاء مساحة عمل جديدة مع تشفير Bcrypt وتوليد JWT
 app.post(['/register', '/api/register', '/api/api/register'], async (req, res) => {
   const { businessName, clientName, email, phone, password } = req.body;
   try {
@@ -70,7 +69,6 @@ app.post(['/register', '/api/register', '/api/api/register'], async (req, res) =
     const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
     if (existingUser) return res.status(400).json({ error: 'البريد الإلكتروني مسجل مسبقاً' });
 
-    // تشفير كلمة المرور بتقنية التجزئة المتقدمة
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -91,11 +89,12 @@ app.post(['/register', '/api/register', '/api/api/register'], async (req, res) =
 
     res.json({ message: 'تم إنشاء مساحة العمل بنجاح', user: userData, token });
   } catch (error) {
+    console.error('Registration Error:', error);
     res.status(500).json({ error: 'حدث خطأ أثناء إنشاء مساحة العمل' });
   }
 });
 
-// تسجيل الدخول مع فحص Bcrypt الآمن والترقية التلقائية للحسابات السابقة
+// تسجيل الدخول الآمن مع فحص Bcrypt والترقية التلقائية
 app.post(['/login', '/api/login', '/api/api/login'], async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -112,7 +111,6 @@ app.post(['/login', '/api/login', '/api/api/login'], async (req, res) => {
     if (isBcryptHash) {
       isPasswordValid = await bcrypt.compare(password, user.password);
     } else {
-      // ترقية تلقائية للحسابات القديمة المسجلة قبل التشفير
       if (user.password === password) {
         isPasswordValid = true;
         const newSalt = await bcrypt.genSalt(10);
@@ -128,7 +126,41 @@ app.post(['/login', '/api/login', '/api/api/login'], async (req, res) => {
 
     res.json({ message: 'تم تسجيل الدخول بنجاح', user: userData, token });
   } catch (error) {
+    console.error('Login Error:', error);
     res.status(500).json({ error: 'حدث خطأ في الخادم أثناء تسجيل الدخول' });
+  }
+});
+
+// استعادة وتحديث كلمة المرور عند النسيان
+app.post(['/forgot-password', '/api/forgot-password', '/api/api/forgot-password'], async (req, res) => {
+  const { email, newPassword } = req.body;
+  try {
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: 'البريد الإلكتروني وكلمة المرور الجديدة مطلوبان' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'كلمة المرور الجديدة يجب ألا تقل عن 8 خانات' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'البريد الإلكتروني غير مسجل في النظام' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword }
+    });
+
+    res.json({ message: 'تم تحديث كلمة المرور بنجاح. يمكنك تسجيل الدخول الآن.' });
+  } catch (error) {
+    console.error('Forgot Password Error:', error);
+    res.status(500).json({ error: 'حدث خطأ في الخادم أثناء إعادة تعيين كلمة المرور' });
   }
 });
 
@@ -161,7 +193,7 @@ app.post(['/change-password', '/api/change-password', '/api/api/change-password'
   }
 });
 
-// تعطيل وحذف الحساب بعد مطابقة Bcrypt
+// تعطيل الحساب
 app.post(['/delete-account', '/api/delete-account', '/api/api/delete-account'], async (req, res) => {
   const { confirmPassword } = req.body;
   try {

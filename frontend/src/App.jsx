@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import API from './services/api';
 
-// محرك تصدير Excel المؤسسي الذكي (يدعم اللغتين العربية والإنجليزية وتغيير اتجاه الصفحة تلقائياً)
 const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
   const isAr = lang === 'ar';
   const cleanTitle = sheetTitle.replace(/[/\\?*[\]]/g, '');
@@ -82,7 +81,6 @@ const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
   URL.revokeObjectURL(url);
 };
 
-// قاموس اللغات المتكامل
 const dict = {
   ar: {
     brand: 'محور ERP',
@@ -100,7 +98,12 @@ const dict = {
     welcome: 'مرحباً بك،',
     currency: 'ر.س',
 
-    // بطاقات التحليلات
+    forgotPassLink: 'نسيت كلمة المرور؟',
+    forgotPassTitle: 'إعادة تعيين كلمة المرور',
+    forgotPassDesc: 'أدخل بريدك الإلكتروني المسجل وكلمة المرور الجديدة',
+    resetPassBtn: 'تحديث كلمة المرور وتسجيل الدخول',
+    backToLogin: 'العودة لتسجيل الدخول',
+
     invValue: 'قيمة المخزون الإجمالية',
     salesTotal: 'إجمالي المبيعات (شامل الضريبة)',
     purchasesTotal: 'إجمالي المشتريات (شامل الضريبة)',
@@ -117,7 +120,6 @@ const dict = {
     unitProfitCol: 'ربح الوحدة',
     statusCol: 'حالة التوفر',
 
-    // العملاء
     addNewCust: '👤 فتح حساب عميل جديد',
     custName: 'اسم العميل / المؤسسة *',
     custNationalId: 'رقم الهوية / السجل التجاري أو الضريبي',
@@ -133,7 +135,6 @@ const dict = {
     confirmDeleteCust: 'هل أنت متأكد من رغبتك في حذف هذا العميل؟',
     noCusts: 'لا يوجد عملاء مسجلون حالياً.',
 
-    // الموردين
     addNewSupp: '🏭 فتح حساب مورد جديد',
     suppName: 'اسم المورد / الشركة الموردة *',
     suppTaxNumber: 'الرقم الضريبي / السجل التجاري للمورد',
@@ -145,7 +146,6 @@ const dict = {
     confirmDeleteSupp: 'هل أنت متأكد من حذف هذا المورد؟',
     noSupps: 'لا يوجد موردون مسجلون حالياً.',
 
-    // المبيعات (سلة الأصناف)
     issueInvoice: '⚡ إصدار فاتورة بيع جديدة',
     selectCust: 'العميل المستلم',
     defaultCust: 'عميل نقدي عام (افتراضي)',
@@ -164,7 +164,6 @@ const dict = {
     totalDue: 'الإجمالي المستحق:',
     vatNote: '💡 ستُخصم كافة أصناف السلة فوراً من رصيد المستودع، وتُربط الفاتورة بـ TiDB.',
 
-    // المشتريات
     issuePurchase: '📥 تسجيل فاتورة شراء وتوريد بضاعة',
     selectSupp: 'المورد',
     defaultSupp: 'توريد نقدي مباشر',
@@ -174,7 +173,6 @@ const dict = {
     confirmPurchaseBtn: '📦 اعتماد الفاتورة وتوريد المخزون',
     purchaseVatNote: '💡 ستتم زيادة رصيد المستودع فوراً وتحديث تكلفة الصنف آلياً.',
 
-    // الفواتير والطباعة
     invRepo: 'سجل الفواتير والمبيعات المعتمدة',
     purchasesRepo: 'سجل فواتير المشتريات والتوريد',
     invNo: 'رقم الفاتورة',
@@ -204,7 +202,6 @@ const dict = {
     zatcaQRSub: 'امسح الرمز للتحقق من بيانات الفاتورة الضريبية',
     invoiceFooterNote: 'شكراً لتعاملكم معنا • صدرت إلكترونياً عبر نظام محور ERP',
 
-    // المخزون
     prodName: 'اسم المنتج',
     prodPrice: 'سعر البيع الافتراضي (ر.س)',
     prodStock: 'الكمية الأولية بالمخزون',
@@ -212,7 +209,6 @@ const dict = {
     stockRepo: '📦 مستودع المنتجات (متصل بـ TiDB)',
     availableStock: 'الرصيد الفعلي',
 
-    // الإعدادات
     settingsHeader: 'مركز إعدادات النظام وتخصيص الحساب',
     settingsSub: 'التحكم في المظهر واللغة والأمان المشدد لمنشأتك',
     prefTitle: '🌐 تفضيلات اللغة والمظهر',
@@ -249,7 +245,12 @@ const dict = {
     welcome: 'Welcome,',
     currency: 'SAR',
 
-    // Analytics
+    forgotPassLink: 'Forgot password?',
+    forgotPassTitle: 'Reset Password',
+    forgotPassDesc: 'Enter your registered email and new secure password',
+    resetPassBtn: 'Update Password & Sign In',
+    backToLogin: 'Back to Sign In',
+
     invValue: 'Total Inventory Valuation',
     salesTotal: 'Gross Sales (Incl. VAT)',
     purchasesTotal: 'Gross Purchases (Incl. VAT)',
@@ -266,7 +267,6 @@ const dict = {
     unitProfitCol: 'Unit Margin',
     statusCol: 'Availability',
 
-    // Customers
     addNewCust: '👤 Add New Client Account',
     custName: 'Client / Business Name *',
     custNationalId: 'National ID / Tax / CR Number',
@@ -282,7 +282,6 @@ const dict = {
     confirmDeleteCust: 'Are you sure you want to delete this client?',
     noCusts: 'No clients registered yet.',
 
-    // Suppliers
     addNewSupp: '🏭 Add New Supplier Account',
     suppName: 'Supplier / Company Name *',
     suppTaxNumber: 'Tax ID / CR Number',
@@ -294,7 +293,6 @@ const dict = {
     confirmDeleteSupp: 'Are you sure you want to delete this supplier?',
     noSupps: 'No suppliers registered yet.',
 
-    // Sales (Cart)
     issueInvoice: '⚡ Generate New Sales Invoice',
     selectCust: 'Client / Buyer',
     defaultCust: 'General Cash Customer (Default)',
@@ -313,7 +311,6 @@ const dict = {
     totalDue: 'Total Amount Due:',
     vatNote: '💡 All items in the cart will be depleted atomically from TiDB.',
 
-    // Purchases
     issuePurchase: '📥 Record Purchase & Inbound Stock',
     selectSupp: 'Supplier',
     defaultSupp: 'Direct Cash Inbound',
@@ -323,7 +320,6 @@ const dict = {
     confirmPurchaseBtn: '📦 Confirm & Replenish Stock',
     purchaseVatNote: '💡 Warehouse stock will increase immediately, updating unit cost.',
 
-    // Reports & Invoices
     invRepo: 'Verified Sales Invoices',
     purchasesRepo: 'Verified Purchase Invoices',
     invNo: 'Invoice #',
@@ -353,7 +349,6 @@ const dict = {
     zatcaQRSub: 'Scan to verify electronic tax invoice details',
     invoiceFooterNote: 'Thank you for your business • Issued electronically via Mihwar ERP',
 
-    // Inventory
     prodName: 'Product Name',
     prodPrice: 'Default Sale Price (SAR)',
     prodStock: 'Initial Stock Quantity',
@@ -361,7 +356,6 @@ const dict = {
     stockRepo: '📦 Warehouse Products (TiDB Connected)',
     availableStock: 'Available Stock',
 
-    // Settings
     settingsHeader: 'System Settings & Account Management',
     settingsSub: 'Control enterprise preferences, display, language, and security',
     prefTitle: '🌐 Language & Display Preferences',
@@ -384,7 +378,6 @@ const dict = {
   }
 };
 
-// خوارزمية تشفير رمز الاستجابة السريعة (ZATCA TLV Base64)
 const generateZatcaQR = (invoice, companyName, defaultVatNo = '300123456700003') => {
   try {
     const getTlv = (tag, value) => {
@@ -422,7 +415,6 @@ function App() {
   const [lang, setLang] = useState('ar');
   const [isDark, setIsDark] = useState(false);
 
-  // استرجاع المستخدم والتوكن المشفر JWT
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('mihwar_user');
     const savedToken = localStorage.getItem('mihwar_token');
@@ -448,7 +440,6 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [businessName, setBusinessName] = useState('محور ERP');
 
-  // البيانات التشغيلية
   const [inventory, setInventory] = useState([]);
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
@@ -470,7 +461,6 @@ function App() {
   const [editingSuppId, setEditingSuppId] = useState(null);
   const [isSavingSupplier, setIsSavingSupplier] = useState(false);
 
-  // نظام المبيعات متعدد الأصناف (سلة الفاتورة)
   const [invoices, setInvoices] = useState([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -479,7 +469,6 @@ function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
-  // المشتريات
   const [purchaseInvoices, setPurchaseInvoices] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedPurchaseProdId, setSelectedPurchaseProdId] = useState('');
@@ -487,7 +476,6 @@ function App() {
   const [purchaseCost, setPurchaseCost] = useState('');
   const [isSubmittingPurchase, setIsSubmittingPurchase] = useState(false);
 
-  // إعداد حد نواقص المخزون المخصص
   const [lowStockThreshold, setLowStockThreshold] = useState(() => {
     const saved = localStorage.getItem('mihwar_low_stock_threshold');
     return saved ? Number(saved) : 30;
@@ -536,71 +524,43 @@ function App() {
     try {
       const res = await API.get('/api/inventory');
       if (res.data) setInventory(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const fetchCustomers = async () => {
     try {
       const res = await API.get('/api/customers');
       if (res.data) setCustomers(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const fetchSuppliers = async () => {
     try {
       const res = await API.get('/api/suppliers');
       if (res.data) setSuppliers(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const fetchInvoices = async () => {
     try {
       const res = await API.get('/api/sales');
       if (res.data) setInvoices(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
   const fetchPurchases = async () => {
     try {
       const res = await API.get('/api/purchases');
       if (res.data) setPurchaseInvoices(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  // وظائف التصدير المؤسسية (متعددة اللغات بالكامل)
   const handleExportSales = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
     const headers = isAr
-      ? [
-          'رقم الفاتورة',
-          'العميل المستلم',
-          'تاريخ الإصدار',
-          'المبلغ الخاضع للضريبة (ر.س)',
-          'ضريبة القيمة المضافة 15% (ر.س)',
-          'الإجمالي المستحق (ر.س)',
-          'عدد البنود المباعة'
-        ]
-      : [
-          'Invoice Number',
-          'Client / Buyer',
-          'Issue Date',
-          'Taxable Amount (SAR)',
-          'VAT 15% (SAR)',
-          'Total Amount Due (SAR)',
-          'Items Count'
-        ];
-
+      ? ['رقم الفاتورة', 'العميل المستلم', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)', 'عدد البنود المباعة']
+      : ['Invoice Number', 'Client / Buyer', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)', 'Items Count'];
     const rows = invoices.map(inv => [
       inv.invoiceNo,
       inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'),
@@ -610,7 +570,6 @@ function App() {
       Number(inv.totalAmount || 0).toFixed(2),
       inv.items ? inv.items.length : 1
     ]);
-
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -618,23 +577,8 @@ function App() {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_المشتريات_والتوريد' : 'Purchases_Inbound_Report';
     const headers = isAr
-      ? [
-          'رقم فاتورة الشراء',
-          'اسم المورد',
-          'تاريخ التوريد',
-          'المبلغ الأساسي (ر.س)',
-          'ضريبة المدخلات 15% (ر.س)',
-          'إجمالي فاتورة الشراء (ر.س)'
-        ]
-      : [
-          'Purchase Invoice #',
-          'Supplier Name',
-          'Inbound Date',
-          'Base Amount (SAR)',
-          'Input VAT 15% (SAR)',
-          'Total Purchase Cost (SAR)'
-        ];
-
+      ? ['رقم فاتورة الشراء', 'اسم المورد', 'تاريخ التوريد', 'المبلغ الأساسي (ر.س)', 'ضريبة المدخلات 15% (ر.س)', 'إجمالي فاتورة الشراء (ر.س)']
+      : ['Purchase Invoice #', 'Supplier Name', 'Inbound Date', 'Base Amount (SAR)', 'Input VAT 15% (SAR)', 'Total Purchase Cost (SAR)'];
     const rows = purchaseInvoices.map(p => [
       p.invoiceNo,
       p.supplier?.name || (isAr ? 'توريد نقدي مباشر' : 'Direct Cash Inbound'),
@@ -643,7 +587,6 @@ function App() {
       Number(p.taxAmount || 0).toFixed(2),
       Number(p.totalAmount || 0).toFixed(2)
     ]);
-
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -651,23 +594,8 @@ function App() {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
     const headers = isAr
-      ? [
-          'اسم المنتج',
-          'رمز الصنف (SKU)',
-          'الرصيد الفعلي بالمستودع',
-          'سعر التكلفة للوحدة (ر.س)',
-          'سعر البيع الافتراضي (ر.س)',
-          'إجمالي القيمة التقديرية (ر.س)'
-        ]
-      : [
-          'Product Name',
-          'SKU Code',
-          'Available Stock',
-          'Unit Cost (SAR)',
-          'Sale Price (SAR)',
-          'Total Valuation (SAR)'
-        ];
-
+      ? ['اسم المنتج', 'رمز الصنف (SKU)', 'الرصيد الفعلي بالمستودع', 'سعر التكلفة للوحدة (ر.س)', 'سعر البيع الافتراضي (ر.س)', 'إجمالي القيمة التقديرية (ر.س)']
+      : ['Product Name', 'SKU Code', 'Available Stock', 'Unit Cost (SAR)', 'Sale Price (SAR)', 'Total Valuation (SAR)'];
     const rows = inventory.map(i => [
       i.name,
       i.sku || '-',
@@ -676,7 +604,6 @@ function App() {
       Number(i.price).toFixed(2),
       (Number(i.price) * Number(i.stock)).toFixed(2)
     ]);
-
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -684,26 +611,14 @@ function App() {
     const isAr = lang === 'ar';
     const title = isAr ? 'دليل_العملاء_المعتمدين' : 'Registered_Clients_Directory';
     const headers = isAr
-      ? [
-          'اسم العميل / المؤسسة',
-          'الهوية / السجل التجاري أو الضريبي',
-          'رقم الهاتف / الجوال',
-          'البريد الإلكتروني'
-        ]
-      : [
-          'Client / Business Name',
-          'National ID / CR / Tax No',
-          'Phone / Mobile',
-          'Email Address'
-        ];
-
+      ? ['اسم العميل / المؤسسة', 'الهوية / السجل التجاري أو الضريبي', 'رقم الهاتف / الجوال', 'البريد الإلكتروني']
+      : ['Client / Business Name', 'National ID / CR / Tax No', 'Phone / Mobile', 'Email Address'];
     const rows = customers.map(c => [
       c.name,
       c.nationalId || '-',
       c.phone || '-',
       c.email || '-'
     ]);
-
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -711,30 +626,17 @@ function App() {
     const isAr = lang === 'ar';
     const title = isAr ? 'دليل_الموردين_المعتمدين' : 'Approved_Suppliers_Directory';
     const headers = isAr
-      ? [
-          'اسم الشركة الموردة',
-          'الرقم الضريبي / السجل التجاري',
-          'رقم الهاتف ومسؤول المبيعات',
-          'البريد الإلكتروني'
-        ]
-      : [
-          'Supplier / Company Name',
-          'Tax ID / CR Number',
-          'Phone / Sales Rep',
-          'Email Address'
-        ];
-
+      ? ['اسم الشركة الموردة', 'الرقم الضريبي / السجل التجاري', 'رقم الهاتف ومسؤول المبيعات', 'البريد الإلكتروني']
+      : ['Supplier / Company Name', 'Tax ID / CR Number', 'Phone / Sales Rep', 'Email Address'];
     const rows = suppliers.map(s => [
       s.name,
       s.taxNumber || '-',
       s.phone || '-',
       s.email || '-'
     ]);
-
     exportToExcel(title, headers, rows, lang);
   };
 
-  // سلة الفاتورة
   const handleAddItemToCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
@@ -747,9 +649,7 @@ function App() {
     const totalRequired = (existingInCart ? existingInCart.quantity : 0) + qty;
 
     if (totalRequired > product.stock) {
-      alert(lang === 'ar' 
-        ? `الرصيد غير كافٍ! المتاح في المستودع: ${product.stock} وحدة فقط.` 
-        : `Insufficient stock! Only ${product.stock} units available.`);
+      alert(lang === 'ar' ? `الرصيد غير كافٍ! المتاح: ${product.stock}` : `Insufficient stock! Only ${product.stock}`);
       return;
     }
 
@@ -759,26 +659,12 @@ function App() {
       setCartItems(cartItems.map(it => {
         if (it.productId === product.id) {
           const newQ = it.quantity + qty;
-          return {
-            ...it,
-            quantity: newQ,
-            price: price,
-            subtotal: Number((newQ * price).toFixed(2))
-          };
+          return { ...it, quantity: newQ, price, subtotal: Number((newQ * price).toFixed(2)) };
         }
         return it;
       }));
     } else {
-      setCartItems([
-        ...cartItems,
-        {
-          productId: product.id,
-          name: product.name,
-          quantity: qty,
-          price: price,
-          subtotal: Number((qty * price).toFixed(2))
-        }
-      ]);
+      setCartItems([...cartItems, { productId: product.id, name: product.name, quantity: qty, price, subtotal: Number((qty * price).toFixed(2)) }]);
     }
 
     setSelectedProductId('');
@@ -796,15 +682,9 @@ function App() {
     try {
       const res = await API.post('/api/sales', {
         customerId: selectedCustomerId ? Number(selectedCustomerId) : null,
-        items: cartItems.map(it => ({
-          productId: it.productId,
-          quantity: it.quantity,
-          price: it.price
-        }))
+        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, price: it.price }))
       });
-
       const newInv = res.data?.invoice;
-      alert(`✅ ${res.data.message || 'Invoice generated successfully!'}`);
       setCartItems([]);
       fetchAllData();
       if (newInv) setPrintingInvoice(newInv);
@@ -832,7 +712,7 @@ function App() {
       fetchAllData();
       setActiveTab('inventory');
     } catch (err) {
-      alert(err.response?.data?.error || 'Purchase process failed');
+      alert(err.response?.data?.error || 'Purchase failed');
     } finally {
       setIsSubmittingPurchase(false);
     }
@@ -848,16 +728,12 @@ function App() {
   
   const totalRevenuePreTax = invoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
   const totalCOGS = invoices.reduce((sum, inv) => {
-    const itemCostSum = (inv.items || []).reduce((iSum, it) => {
-      const prodCost = it.product?.cost || 0;
-      return iSum + (prodCost * it.quantity);
-    }, 0);
+    const itemCostSum = (inv.items || []).reduce((iSum, it) => iSum + ((it.product?.cost || 0) * it.quantity), 0);
     return sum + itemCostSum;
   }, 0);
 
   const netProfitVal = totalRevenuePreTax - totalCOGS;
   const marginPercentage = totalRevenuePreTax > 0 ? ((netProfitVal / totalRevenuePreTax) * 100).toFixed(1) : '0.0';
-
   const lowStockItems = inventory.filter(i => Number(i.stock) <= lowStockThreshold);
 
   const purchaseSubtotal = (Number(purchaseCost) || 0) * (Number(purchaseQty) || 0);
@@ -870,41 +746,19 @@ function App() {
     setIsSavingCustomer(true);
     try {
       if (editingCustId) {
-        await API.put(`/api/customers/${editingCustId}`, {
-          name: custName.trim(),
-          nationalId: custNationalId.trim() || null,
-          phone: custPhone.trim() || null,
-          email: custEmail.trim() || null
-        });
+        await API.put(`/api/customers/${editingCustId}`, { name: custName.trim(), nationalId: custNationalId.trim()||null, phone: custPhone.trim()||null, email: custEmail.trim()||null });
         setEditingCustId(null);
       } else {
-        await API.post('/api/customers', {
-          name: custName.trim(),
-          nationalId: custNationalId.trim() || null,
-          phone: custPhone.trim() || null,
-          email: custEmail.trim() || null
-        });
+        await API.post('/api/customers', { name: custName.trim(), nationalId: custNationalId.trim()||null, phone: custPhone.trim()||null, email: custEmail.trim()||null });
       }
-      setCustName('');
-      setCustNationalId('');
-      setCustPhone('');
-      setCustEmail('');
+      setCustName(''); setCustNationalId(''); setCustPhone(''); setCustEmail('');
       fetchCustomers();
-    } catch (err) {
-      alert(err.response?.data?.error || 'Error saving client');
-    } finally {
-      setIsSavingCustomer(false);
-    }
+    } catch (err) { alert(err.response?.data?.error || 'Error saving client'); } finally { setIsSavingCustomer(false); }
   };
 
   const handleDeleteCustomer = async (id) => {
     if (!window.confirm(t.confirmDeleteCust)) return;
-    try {
-      await API.delete(`/api/customers/${id}`);
-      fetchCustomers();
-    } catch (err) {
-      alert(err.response?.data?.error || 'Failed to delete client');
-    }
+    try { await API.delete(`/api/customers/${id}`); fetchCustomers(); } catch (err) { alert('Failed'); }
   };
 
   const handleAddOrUpdateSupplier = async (e) => {
@@ -913,60 +767,29 @@ function App() {
     setIsSavingSupplier(true);
     try {
       if (editingSuppId) {
-        await API.put(`/api/suppliers/${editingSuppId}`, {
-          name: suppName.trim(),
-          taxNumber: suppTaxNumber.trim() || null,
-          phone: suppPhone.trim() || null,
-          email: suppEmail.trim() || null
-        });
+        await API.put(`/api/suppliers/${editingSuppId}`, { name: suppName.trim(), taxNumber: suppTaxNumber.trim()||null, phone: suppPhone.trim()||null, email: suppEmail.trim()||null });
         setEditingSuppId(null);
       } else {
-        await API.post('/api/suppliers', {
-          name: suppName.trim(),
-          taxNumber: suppTaxNumber.trim() || null,
-          phone: suppPhone.trim() || null,
-          email: suppEmail.trim() || null
-        });
+        await API.post('/api/suppliers', { name: suppName.trim(), taxNumber: suppTaxNumber.trim()||null, phone: suppPhone.trim()||null, email: suppEmail.trim()||null });
       }
-      setSuppName('');
-      setSuppTaxNumber('');
-      setSuppPhone('');
-      setSuppEmail('');
+      setSuppName(''); setSuppTaxNumber(''); setSuppPhone(''); setSuppEmail('');
       fetchSuppliers();
-    } catch (err) {
-      alert(err.response?.data?.error || 'Error saving supplier');
-    } finally {
-      setIsSavingSupplier(false);
-    }
+    } catch (err) { alert(err.response?.data?.error || 'Error saving supplier'); } finally { setIsSavingSupplier(false); }
   };
 
   const handleDeleteSupplier = async (id) => {
     if (!window.confirm(t.confirmDeleteSupp)) return;
-    try {
-      await API.delete(`/api/suppliers/${id}`);
-      fetchSuppliers();
-    } catch (err) {
-      alert(err.response?.data?.error || 'Failed to delete supplier');
-    }
+    try { await API.delete(`/api/suppliers/${id}`); fetchSuppliers(); } catch (err) { alert('Failed'); }
   };
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!newProdName || !newProdPrice) return;
     try {
-      await API.post('/api/inventory', {
-        name: newProdName,
-        price: newProdPrice,
-        stock: newProdStock || 0
-      });
-      alert(lang === 'ar' ? 'تم حفظ المنتج بنجاح!' : 'Product saved successfully!');
-      setNewProdName('');
-      setNewProdPrice('');
-      setNewProdStock('');
+      await API.post('/api/inventory', { name: newProdName, price: newProdPrice, stock: newProdStock || 0 });
+      setNewProdName(''); setNewProdPrice(''); setNewProdStock('');
       fetchInventory();
-    } catch (err) {
-      alert(err.response?.data?.error || 'Error saving product');
-    }
+    } catch (err) { alert(err.response?.data?.error || 'Error saving product'); }
   };
 
   const handleChangePassword = async (e) => {
@@ -975,25 +798,34 @@ function App() {
     try {
       const res = await API.post('/api/change-password', { currentPassword: currentPass, newPassword: newPass });
       alert(`✅ ${res.data.message}`);
-      setCurrentPass('');
-      setNewPass('');
-    } catch (err) {
-      alert(err.response?.data?.error || 'Failed to change password');
-    }
+      setCurrentPass(''); setNewPass('');
+    } catch (err) { alert(err.response?.data?.error || 'Failed'); }
   };
 
   const handleDeleteAccount = async (e) => {
     e.preventDefault();
-    if (!window.confirm(lang === 'ar' ? 'تحذير نهائي: هل تريد تعطيل وحذف حسابك تماماً؟' : 'Final Warning: Permanently deactivate account?')) return;
+    if (!window.confirm(lang === 'ar' ? 'تحذير نهائي: هل تريد تعطيل وحذف حسابك تماماً؟' : 'Final Warning?')) return;
     try {
       await API.post('/api/delete-account', { confirmPassword: deleteConfirmPass });
       handleLogout();
+    } catch (err) { alert(err.response?.data?.error || 'Failed'); }
+  };
+
+  const handleForgotPasswordSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const res = await API.post('/api/forgot-password', { email: authEmail, newPassword: authPassword });
+      alert(`✅ ${res.data.message}`);
+      setAuthView('login');
+      setAuthPassword('');
     } catch (err) {
-      alert(err.response?.data?.error || 'Failed to delete account');
+      alert(err.response?.data?.error || 'Failed to reset password');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // معالجة تسجيل الدخول وإنشاء الحساب مع حفظ التوكن الرقمي JWT
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -1056,39 +888,68 @@ function App() {
             </div>
 
             <h1 style={{ color: theme.textDark, fontSize: '24px', fontWeight: '800' }}>
-              {authView === 'login' ? (lang === 'ar' ? 'تسجيل الدخول' : 'Sign In') : (lang === 'ar' ? 'إنشاء مساحة عمل جديدة' : 'Create Workspace')}
+              {authView === 'login' ? (lang === 'ar' ? 'تسجيل الدخول' : 'Sign In') : authView === 'register' ? (lang === 'ar' ? 'إنشاء مساحة عمل جديدة' : 'Create Workspace') : t.forgotPassTitle}
             </h1>
 
-            <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
-              {authView === 'register' && (
-                <>
-                  <div>
-                    <label style={{ fontSize: '13px', fontWeight: '600', color: theme.textDark }}>{lang === 'ar' ? 'اسم المنشأة' : 'Company Name'}</label>
-                    <input type="text" value={authBusinessName} onChange={(e)=>setAuthBusinessName(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+            {authView === 'forgot' ? (
+              <form onSubmit={handleForgotPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+                <p style={{ margin: 0, fontSize: '13px', color: theme.textMuted }}>{t.forgotPassDesc}</p>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: theme.textDark }}>{lang === 'ar' ? 'البريد الإلكتروني' : 'Email'}</label>
+                  <input type="email" value={authEmail} onChange={(e)=>setAuthEmail(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box', background: theme.bgMain, color: theme.textDark }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: theme.textDark }}>{lang === 'ar' ? 'كلمة المرور الجديدة (8+ خانات)' : 'New Password (8+ chars)'}</label>
+                  <input type="password" value={authPassword} onChange={(e)=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box', background: theme.bgMain, color: theme.textDark }} />
+                </div>
+                <button type="submit" disabled={isLoading} style={{ background: theme.primary, color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                  {isLoading ? '...' : t.resetPassBtn}
+                </button>
+                <div style={{ textAlign: 'center', fontSize: '14px' }}>
+                  <span onClick={() => { setAuthView('login'); setAuthPassword(''); }} style={{ color: theme.primary, fontWeight: '700', cursor: 'pointer', textDecoration: 'underline' }}>
+                    {t.backToLogin}
+                  </span>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+                {authView === 'register' && (
+                  <>
+                    <div>
+                      <label style={{ fontSize: '13px', fontWeight: '600', color: theme.textDark }}>{lang === 'ar' ? 'اسم المنشأة' : 'Company Name'}</label>
+                      <input type="text" value={authBusinessName} onChange={(e)=>setAuthBusinessName(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box', background: theme.bgMain, color: theme.textDark }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '13px', fontWeight: '600', color: theme.textDark }}>{lang === 'ar' ? 'اسم المدير' : 'Manager Name'}</label>
+                      <input type="text" value={authClientName} onChange={(e)=>setAuthClientName(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box', background: theme.bgMain, color: theme.textDark }} />
+                    </div>
+                  </>
+                )}
+                <div>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: theme.textDark }}>{lang === 'ar' ? 'البريد الإلكتروني' : 'Email'}</label>
+                  <input type="email" value={authEmail} onChange={(e)=>setAuthEmail(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box', background: theme.bgMain, color: theme.textDark }} />
+                </div>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: '13px', fontWeight: '600', color: theme.textDark }}>{lang === 'ar' ? 'كلمة المرور' : 'Password'}</label>
+                    {authView === 'login' && (
+                      <span onClick={() => { setAuthView('forgot'); setAuthPassword(''); }} style={{ fontSize: '12px', color: theme.primary, cursor: 'pointer', fontWeight: 'bold' }}>
+                        {t.forgotPassLink}
+                      </span>
+                    )}
                   </div>
-                  <div>
-                    <label style={{ fontSize: '13px', fontWeight: '600', color: theme.textDark }}>{lang === 'ar' ? 'اسم المدير' : 'Manager Name'}</label>
-                    <input type="text" value={authClientName} onChange={(e)=>setAuthClientName(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
-                  </div>
-                </>
-              )}
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: '600', color: theme.textDark }}>{lang === 'ar' ? 'البريد الإلكتروني' : 'Email'}</label>
-                <input type="email" value={authEmail} onChange={(e)=>setAuthEmail(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
-              </div>
-              <div>
-                <label style={{ fontSize: '13px', fontWeight: '600', color: theme.textDark }}>{lang === 'ar' ? 'كلمة المرور' : 'Password'}</label>
-                <input type="password" value={authPassword} onChange={(e)=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
-              </div>
-              <button type="submit" disabled={isLoading} style={{ background: theme.primary, color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
-                {isLoading ? '...' : (authView === 'login' ? (lang === 'ar' ? 'دخول' : 'Sign In') : (lang === 'ar' ? 'تسجيل مساحة العمل' : 'Register Workspace'))}
-              </button>
-              <div style={{ textAlign: 'center', fontSize: '14px' }}>
-                <span onClick={() => setAuthView(authView === 'login' ? 'register' : 'login')} style={{ color: theme.primary, fontWeight: '700', cursor: 'pointer', textDecoration: 'underline' }}>
-                  {authView === 'login' ? (lang === 'ar' ? 'سجل شركتك الآن' : 'Create an account') : (lang === 'ar' ? 'لديك حساب؟ سجل دخولك' : 'Already registered?')}
-                </span>
-              </div>
-            </form>
+                  <input type="password" value={authPassword} onChange={(e)=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box', background: theme.bgMain, color: theme.textDark, marginTop: '4px' }} />
+                </div>
+                <button type="submit" disabled={isLoading} style={{ background: theme.primary, color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                  {isLoading ? '...' : (authView === 'login' ? (lang === 'ar' ? 'دخول' : 'Sign In') : (lang === 'ar' ? 'تسجيل مساحة العمل' : 'Register Workspace'))}
+                </button>
+                <div style={{ textAlign: 'center', fontSize: '14px' }}>
+                  <span onClick={() => setAuthView(authView === 'login' ? 'register' : 'login')} style={{ color: theme.primary, fontWeight: '700', cursor: 'pointer', textDecoration: 'underline' }}>
+                    {authView === 'login' ? (lang === 'ar' ? 'سجل شركتك الآن' : 'Create an account') : (lang === 'ar' ? 'لديك حساب؟ سجل دخولك' : 'Already registered?')}
+                  </span>
+                </div>
+              </form>
+            )}
           </div>
         </div>
         <div style={{ flex: '1 1 50%', background: theme.secondary, color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '80px' }}>
@@ -1144,7 +1005,7 @@ function App() {
         }
       `}</style>
 
-      {/* الترويسة العلوية */}
+      {/* ترويسة النظام */}
       <header style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 35px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1166,7 +1027,7 @@ function App() {
         </div>
       </header>
 
-      {/* شريط الأقسام الرئيسي */}
+      {/* شريط الأقسام */}
       <div className="main-navbar" style={{ background: theme.secondary, color: '#fff', padding: '0 30px', display: 'flex', gap: '4px', fontSize: '13px', overflowX: 'auto' }}>
         {[
           { id: 'dashboard', label: t.dashboard },
@@ -1185,7 +1046,7 @@ function App() {
       </div>
 
       <main style={{ padding: '30px', maxWidth: '1400px', margin: 'auto' }}>
-        {/* لوحة التحكم والتحليلات */}
+        {/* لوحة التحكم */}
         {activeTab === 'dashboard' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
