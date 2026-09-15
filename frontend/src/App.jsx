@@ -87,13 +87,13 @@ const dict = {
     tagline: 'إدارة متكاملة برؤية مستقبلية.',
     taglineSub: 'نظام سحابي متطور لربط كافة أقسام منشأتك.',
     workspace: 'مساحة العمل:',
-    dashboard: '📊 لوحة التحكم',
+    dashboard: '📊 لوحة التحكم والتحليلات',
     sales: '🛍️ المبيعات والفوترة',
     purchases: '📥 المشتريات والتوريد',
     customers: '👥 العملاء',
     suppliers: '🏭 الموردين',
-    inventory: '📦 المخزون',
-    reports: '📈 التقارير',
+    inventory: '📦 المخزون (حي)',
+    reports: '📈 الفواتير والتقارير',
     team: '👨‍💼 فريق العمل والصلاحيات',
     settings: '⚙️ الإعدادات',
     welcome: 'مرحباً بك،',
@@ -156,14 +156,14 @@ const dict = {
     unitPrice: 'السعر (ر.س)',
     addItemBtn: '➕ إضافة الصنف إلى الفاتورة',
     cartItemsTitle: '🛒 محتويات الفاتورة الحالية',
-    cartEmpty: 'لم تتم إضافة أي صنف للفاتورة بعد.',
+    cartEmpty: 'لم تتم إضافة أي صنف للفاتورة بعد. اختر منتجاً واضغط إضافة.',
     confirmSaleBtn: '💳 إصدار الفاتورة واعتماد الخصم',
     summaryTitle: 'ملخص الحسبة التلقائية',
     vatBadge: 'ضريبة 15% آلية',
     subtotal: 'المبلغ الخاضع للضريبة:',
     vatAmount: 'ضريبة القيمة المضافة (15%):',
     totalDue: 'الإجمالي المستحق:',
-    vatNote: '💡 ستُخصم كافة أصناف السلة فوراً من رصيد المستودع.',
+    vatNote: '💡 ستُخصم كافة أصناف السلة فوراً من رصيد المستودع، وتُربط الفاتورة بـ TiDB.',
 
     issuePurchase: '📥 تسجيل فاتورة شراء وتوريد بضاعة',
     selectSupp: 'المورد',
@@ -186,9 +186,9 @@ const dict = {
     viewAndPrint: '👁️ معاينة وطباعة',
     printBtn: '🖨️ طباعة الفاتورة / تصدير PDF',
     exportExcelBtn: '📥 تصدير إلى Excel',
-    exportSalesBtn: '📥 تصدير المبيعات للإقرار الضريبي',
-    exportPurchasesBtn: '📥 تصدير المشتريات',
-    exportInventoryBtn: '📥 تصدير جرد المستودع',
+    exportSalesBtn: '📥 تصدير المبيعات للإقرار الضريبي (Excel)',
+    exportPurchasesBtn: '📥 تصدير المشتريات ومصروفات التوريد (Excel)',
+    exportInventoryBtn: '📥 تصدير جرد المستودع (Excel)',
     closeModal: '✖ إغلاق',
     taxInvoiceTitle: 'فاتورة ضريبية مبسطة',
     vatRegNo: 'الرقم الضريبي:',
@@ -200,7 +200,7 @@ const dict = {
     unitPriceCol: 'سعر الوحدة',
     totalCol: 'المجموع الخاضع للضريبة',
     zatcaQRTitle: 'رمز الاستجابة السريعة (ZATCA QR)',
-    zatcaQRSub: 'امسح الرمز للتحقق من بيانات الفاتورة',
+    zatcaQRSub: 'امسح الرمز للتحقق من بيانات الفاتورة الضريبية',
     invoiceFooterNote: 'شكراً لتعاملكم معنا • صدرت إلكترونياً عبر نظام محور ERP',
 
     prodName: 'اسم المنتج',
@@ -219,24 +219,24 @@ const dict = {
     addEmpBtn: 'إضافة موظف جديد',
     teamList: 'قائمة أعضاء الفريق',
 
-    settingsHeader: 'مركز إعدادات النظام',
-    settingsSub: 'التحكم في المظهر واللغة والأمان',
+    settingsHeader: 'مركز إعدادات النظام وتخصيص الحساب',
+    settingsSub: 'التحكم في المظهر واللغة والأمان المشدد لمنشأتك',
     prefTitle: '🌐 تفضيلات اللغة والمظهر',
-    prefDesc: 'تخصيص لغة النظام ونمط الشاشة',
+    prefDesc: 'تخصيص لغة النظام ونمط الشاشة لتناسب استخدامك',
     langLabel: 'لغة النظام:',
     themeLabel: 'نمط العرض:',
     darkMode: 'الوضع الليلي 🌙',
     lightMode: 'الوضع النهاري ☀️',
     securityTitle: '🔒 حماية الحساب وتغيير كلمة المرور',
-    securityDesc: 'تغيير كلمة المرور بضوابط أمان مشددة',
+    securityDesc: 'تغيير كلمة المرور بضوابط أمان مشددة (8 خانات كحد أدنى)',
     oldPass: 'كلمة المرور الحالية',
     newPass: 'كلمة المرور الجديدة (8 خانات فأكثر)',
     updatePassBtn: 'تحديث كلمة المرور فوراً',
     sessionTitle: '🚪 الجلسة وإدارة الحساب',
-    sessionDesc: 'تسجيل الخروج من النظام',
-    logoutBtn: 'تسجيل الخروج',
-    dangerZoneTitle: '⚠️ منطقة الخطر: تعطيل الحساب',
-    dangerZoneDesc: 'سيتم تعطيل الحساب وحظر الدخول نهائياً:',
+    sessionDesc: 'تسجيل الخروج أو إيقاف الحساب نهائياً',
+    logoutBtn: 'تسجيل الخروج من النظام',
+    dangerZoneTitle: '⚠️ منطقة الخطر: تعطيل وحذف الحساب',
+    dangerZoneDesc: 'سيتم تعطيل الحساب وحظر الدخول نهائياً. أدخل كلمة المرور للتأكيد:',
     deleteAccBtn: 'تعطيل الحساب نهائياً'
   },
   en: {
@@ -244,13 +244,13 @@ const dict = {
     tagline: 'Enterprise Management Reimagined.',
     taglineSub: 'Next-generation cloud ERP connecting every department.',
     workspace: 'Workspace:',
-    dashboard: '📊 Dashboard',
+    dashboard: '📊 Dashboard & Analytics',
     sales: '🛍️ Sales & POS',
-    purchases: '📥 Purchasing',
+    purchases: '📥 Purchasing & Inbound',
     customers: '👥 Clients',
     suppliers: '🏭 Suppliers',
-    inventory: '📦 Inventory',
-    reports: '📈 Reports',
+    inventory: '📦 Live Inventory',
+    reports: '📈 Reports & Invoices',
     team: '👨‍💼 Team & Roles',
     settings: '⚙️ Settings',
     welcome: 'Welcome,',
@@ -268,7 +268,7 @@ const dict = {
     netProfit: 'Estimated Net Profit',
     profitMargin: 'Profit Margin',
     lowStockTitle: '⚠️ Warning: Low Stock Alert',
-    lowStockClean: '✅ Warehouse inventory levels are optimal.',
+    lowStockClean: '✅ Warehouse inventory levels are optimal. No shortages detected.',
     reorderBtn: 'Reorder Now',
     topSellingTitle: '🏆 Product Performance & Profitability',
     productCol: 'Product',
@@ -313,14 +313,14 @@ const dict = {
     unitPrice: 'Price (SAR)',
     addItemBtn: '➕ Add Item to Invoice',
     cartItemsTitle: '🛒 Current Invoice Items',
-    cartEmpty: 'No items added yet.',
+    cartEmpty: 'No items added yet. Select a product and click add.',
     confirmSaleBtn: '💳 Confirm & Deplete Stock',
     summaryTitle: 'Live Tax Summary',
     vatBadge: 'Automated 15% VAT',
     subtotal: 'Taxable Amount:',
     vatAmount: 'Value Added Tax (15%):',
     totalDue: 'Total Amount Due:',
-    vatNote: '💡 All items in the cart will be depleted atomically.',
+    vatNote: '💡 All items in the cart will be depleted atomically from TiDB.',
 
     issuePurchase: '📥 Record Purchase & Inbound Stock',
     selectSupp: 'Supplier',
@@ -329,7 +329,7 @@ const dict = {
     purchaseQty: 'Inbound Quantity (Adds to stock)',
     purchaseCost: 'Unit Cost Price (SAR)',
     confirmPurchaseBtn: '📦 Confirm & Replenish Stock',
-    purchaseVatNote: '💡 Warehouse stock will increase immediately.',
+    purchaseVatNote: '💡 Warehouse stock will increase immediately, updating unit cost.',
 
     invRepo: 'Verified Sales Invoices',
     purchasesRepo: 'Verified Purchase Invoices',
@@ -357,7 +357,7 @@ const dict = {
     unitPriceCol: 'Unit Price',
     totalCol: 'Taxable Subtotal',
     zatcaQRTitle: 'ZATCA Official QR Code',
-    zatcaQRSub: 'Scan to verify electronic invoice details',
+    zatcaQRSub: 'Scan to verify electronic tax invoice details',
     invoiceFooterNote: 'Thank you for your business • Issued electronically via Mihwar ERP',
 
     prodName: 'Product Name',
@@ -376,25 +376,25 @@ const dict = {
     addEmpBtn: 'Add New Staff Member',
     teamList: 'Team Members Directory',
 
-    settingsHeader: 'System Settings',
-    settingsSub: 'Control enterprise preferences and security',
+    settingsHeader: 'System Settings & Account Management',
+    settingsSub: 'Control enterprise preferences, display, language, and security',
     prefTitle: '🌐 Language & Display Preferences',
-    prefDesc: 'Customize interface language and theme',
+    prefDesc: 'Customize interface language and visual workspace theme',
     langLabel: 'System Language:',
     themeLabel: 'Color Theme:',
     darkMode: 'Dark Mode 🌙',
     lightMode: 'Light Mode ☀️',
     securityTitle: '🔒 Account Security & Password',
-    securityDesc: 'Update your password under strict rules',
+    securityDesc: 'Update your password under strict security rules (8+ characters)',
     oldPass: 'Current Password',
     newPass: 'New Password (8+ characters)',
     updatePassBtn: 'Update Password Now',
-    sessionTitle: '🚪 Session & Controls',
-    sessionDesc: 'Sign out from system',
-    logoutBtn: 'Sign Out',
+    sessionTitle: '🚪 Session & Account Controls',
+    sessionDesc: 'Sign out or manage permanent account status',
+    logoutBtn: 'Sign Out from System',
     dangerZoneTitle: '⚠️ Danger Zone: Deactivate Account',
-    dangerZoneDesc: 'Your account will be permanently deactivated:',
-    deleteAccBtn: 'Deactivate Account'
+    dangerZoneDesc: 'Your account will be permanently deactivated. Enter password to confirm:',
+    deleteAccBtn: 'Permanently Deactivate Account'
   }
 };
 
@@ -481,7 +481,6 @@ function App() {
   const [purchaseCost, setPurchaseCost] = useState('');
   const [isSubmittingPurchase, setIsSubmittingPurchase] = useState(false);
 
-  // إدارة الفريق والموظفين
   const [teamUsers, setTeamUsers] = useState([]);
   const [rolesList, setRolesList] = useState([]);
   const [empName, setEmpName] = useState('');
@@ -557,47 +556,45 @@ function App() {
       alert(lang === 'ar' ? 'تم إضافة الموظف بنجاح' : 'Staff added successfully');
       setEmpName(''); setEmpEmail(''); setEmpPass(''); setEmpPhone(''); setEmpRoleId('');
       fetchTeamAndRoles();
-    } catch (err) {
-      alert(err.response?.data?.error || 'Failed');
-    }
+    } catch (err) { alert(err.response?.data?.error || 'Failed'); }
   };
 
   const handleExportSales = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
-    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة', 'الضريبة 15%', 'الإجمالي', 'البنود'] : ['Invoice #', 'Client', 'Date', 'Taxable', 'VAT 15%', 'Total', 'Items'];
-    const rows = invoices.map(inv => [inv.invoiceNo, inv.customer?.name || 'Cash', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2), inv.items?.length || 1]);
+    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)', 'عدد البنود المباعة'] : ['Invoice Number', 'Client / Buyer', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)', 'Items Count'];
+    const rows = invoices.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2), inv.items ? inv.items.length : 1]);
     exportToExcel(title, headers, rows, lang);
   };
 
   const handleExportPurchases = () => {
     const isAr = lang === 'ar';
-    const title = isAr ? 'تقرير_المشتريات' : 'Purchases_Report';
-    const headers = isAr ? ['رقم الشراء', 'المورد', 'التاريخ', 'المبلغ', 'الضريبة 15%', 'الإجمالي'] : ['Purchase #', 'Supplier', 'Date', 'Base', 'VAT 15%', 'Total'];
-    const rows = purchaseInvoices.map(p => [p.invoiceNo, p.supplier?.name || 'Cash', new Date(p.createdAt).toISOString().slice(0, 10), Number(p.subtotal || 0).toFixed(2), Number(p.taxAmount || 0).toFixed(2), Number(p.totalAmount || 0).toFixed(2)]);
+    const title = isAr ? 'تقرير_المشتريات_والتوريد' : 'Purchases_Inbound_Report';
+    const headers = isAr ? ['رقم فاتورة الشراء', 'اسم المورد', 'تاريخ التوريد', 'المبلغ الأساسي (ر.س)', 'ضريبة المدخلات 15% (ر.س)', 'إجمالي فاتورة الشراء (ر.س)'] : ['Purchase Invoice #', 'Supplier Name', 'Inbound Date', 'Base Amount (SAR)', 'Input VAT 15% (SAR)', 'Total Purchase Cost (SAR)'];
+    const rows = purchaseInvoices.map(p => [p.invoiceNo, p.supplier?.name || (isAr ? 'توريد نقدي مباشر' : 'Direct Cash Inbound'), new Date(p.createdAt).toISOString().slice(0, 10), Number(p.subtotal || 0).toFixed(2), Number(p.taxAmount || 0).toFixed(2), Number(p.totalAmount || 0).toFixed(2)]);
     exportToExcel(title, headers, rows, lang);
   };
 
   const handleExportInventory = () => {
     const isAr = lang === 'ar';
-    const title = isAr ? 'تقرير_المخزون' : 'Inventory_Report';
-    const headers = isAr ? ['المنتج', 'SKU', 'الرصيد', 'التكلفة', 'سعر البيع', 'القيمة الإجمالية'] : ['Product', 'SKU', 'Stock', 'Cost', 'Price', 'Total Value'];
+    const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
+    const headers = isAr ? ['اسم المنتج', 'رمز الصنف (SKU)', 'الرصيد الفعلي بالمستودع', 'سعر التكلفة للوحدة (ر.س)', 'سعر البيع الافتراضي (ر.س)', 'إجمالي القيمة التقديرية (ر.س)'] : ['Product Name', 'SKU Code', 'Available Stock', 'Unit Cost (SAR)', 'Sale Price (SAR)', 'Total Valuation (SAR)'];
     const rows = inventory.map(i => [i.name, i.sku || '-', i.stock, Number(i.cost || i.price).toFixed(2), Number(i.price).toFixed(2), (Number(i.price) * Number(i.stock)).toFixed(2)]);
     exportToExcel(title, headers, rows, lang);
   };
 
   const handleExportCustomers = () => {
     const isAr = lang === 'ar';
-    const title = isAr ? 'دليل_العملاء' : 'Clients_Directory';
-    const headers = isAr ? ['الاسم', 'الهوية / السجل', 'الهاتف', 'البريد'] : ['Name', 'ID/Tax', 'Phone', 'Email'];
+    const title = isAr ? 'دليل_العملاء_المعتمدين' : 'Registered_Clients_Directory';
+    const headers = isAr ? ['اسم العميل / المؤسسة', 'الهوية / السجل التجاري أو الضريبي', 'رقم الهاتف / الجوال', 'البريد الإلكتروني'] : ['Client / Business Name', 'National ID / CR / Tax No', 'Phone / Mobile', 'Email Address'];
     const rows = customers.map(c => [c.name, c.nationalId || '-', c.phone || '-', c.email || '-']);
     exportToExcel(title, headers, rows, lang);
   };
 
   const handleExportSuppliers = () => {
     const isAr = lang === 'ar';
-    const title = isAr ? 'دليل_الموردين' : 'Suppliers_Directory';
-    const headers = isAr ? ['المورد', 'الرقم الضريبي', 'الهاتف', 'البريد'] : ['Supplier', 'Tax No', 'Phone', 'Email'];
+    const title = isAr ? 'دليل_الموردين_المعتمدين' : 'Approved_Suppliers_Directory';
+    const headers = isAr ? ['اسم الشركة الموردة', 'الرقم الضريبي / السجل التجاري', 'رقم الهاتف ومسؤول المبيعات', 'البريد الإلكتروني'] : ['Supplier / Company Name', 'Tax ID / CR Number', 'Phone / Sales Rep', 'Email Address'];
     const rows = suppliers.map(s => [s.name, s.taxNumber || '-', s.phone || '-', s.email || '-']);
     exportToExcel(title, headers, rows, lang);
   };
@@ -748,7 +745,7 @@ function App() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: theme.primary, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{user.name[0]}</div>
-          <span style={{ fontSize: '14px', fontWeight: '800' }}>{user.name} ({user.role})</span>
+          <span style={{ fontSize: '14px', fontWeight: '800' }}>{user.name}</span>
         </div>
       </header>
 
@@ -937,7 +934,7 @@ function App() {
               <h3>{t.teamList}</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginTop: '15px' }}>
                 <thead><tr style={{ background: isDark?'#334155':'#f8fafc' }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Email</th><th style={{ padding: '10px' }}>Role</th></tr></thead>
-                <tbody>{teamUsers.map(u=><tr key={u.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{u.name}</td><td style={{ padding: '10px' }}>{u.email}</td><td style={{ padding: '10px', fontWeight: 'bold', color: theme.primary }}>{u.role?.name || 'مدير'}</td></tr>)}</tbody>
+                <tbody>{teamUsers.map(u=><tr key={u.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{u.name}</td><td style={{ padding: '10px' }}>{u.email}</td><td style={{ padding: '10px', fontWeight: 'bold', color: theme.primary }}>{u.role?.name || 'Admin'}</td></tr>)}</tbody>
               </table>
             </div>
           </div>
