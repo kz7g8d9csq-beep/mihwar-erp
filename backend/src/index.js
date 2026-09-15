@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// جدار الحماية والتحقق من التوكن
+// جدار الحماية الأمني
 app.use(async (req, res, next) => {
   if (req.method === 'OPTIONS') return next();
 
@@ -58,7 +58,7 @@ app.use(async (req, res, next) => {
   }
 });
 
-// تسجيل الحساب
+// المصادقة والتسجيل
 app.post(['/register', '/api/register', '/api/api/register'], async (req, res) => {
   const { businessName, clientName, email, phone, password } = req.body;
   try {
@@ -88,7 +88,6 @@ app.post(['/register', '/api/register', '/api/api/register'], async (req, res) =
   }
 });
 
-// تسجيل الدخول
 app.post(['/login', '/api/login', '/api/api/login'], async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -119,7 +118,6 @@ app.post(['/login', '/api/login', '/api/api/login'], async (req, res) => {
   }
 });
 
-// نسيت كلمة المرور
 app.post(['/forgot-password', '/api/forgot-password', '/api/api/forgot-password'], async (req, res) => {
   const { email, newPassword } = req.body;
   try {
@@ -136,7 +134,6 @@ app.post(['/forgot-password', '/api/forgot-password', '/api/api/forgot-password'
   }
 });
 
-// تغيير كلمة المرور
 app.post(['/change-password', '/api/change-password', '/api/api/change-password'], async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   try {
@@ -152,7 +149,6 @@ app.post(['/change-password', '/api/change-password', '/api/api/change-password'
   } catch (error) { res.status(500).json({ error: 'خطأ' }); }
 });
 
-// تعطيل الحساب
 app.post(['/delete-account', '/api/delete-account', '/api/api/delete-account'], async (req, res) => {
   const { confirmPassword } = req.body;
   try {
@@ -166,21 +162,13 @@ app.post(['/delete-account', '/api/delete-account', '/api/api/delete-account'], 
   } catch (error) { res.status(500).json({ error: 'خطأ' }); }
 });
 
-// الأدوار والمستخدمين
+// فريق العمل والأدوار
 app.get(['/roles', '/api/roles', '/api/api/roles'], async (req, res) => {
-  try {
-    const roles = await prisma.role.findMany({ where: { companyId: req.companyId } });
-    res.json(roles);
-  } catch (e) { res.status(500).json({ error: 'خطأ' }); }
+  try { res.json(await prisma.role.findMany({ where: { companyId: req.companyId } })); } catch (e) { res.status(500).json({ error: 'خطأ' }); }
 });
-
 app.get(['/users', '/api/users', '/api/api/users'], async (req, res) => {
-  try {
-    const users = await prisma.user.findMany({ where: { companyId: req.companyId }, include: { role: true }, select: { id: true, name: true, email: true, phone: true, isActive: true, role: true } });
-    res.json(users);
-  } catch (e) { res.status(500).json({ error: 'خطأ' }); }
+  try { res.json(await prisma.user.findMany({ where: { companyId: req.companyId }, include: { role: true }, select: { id: true, name: true, email: true, phone: true, isActive: true, role: true } })); } catch (e) { res.status(500).json({ error: 'خطأ' }); }
 });
-
 app.post(['/users', '/api/users', '/api/api/users'], async (req, res) => {
   const { name, email, password, roleId, phone } = req.body;
   try {
@@ -205,6 +193,14 @@ app.post(['/customers', '/api/customers', '/api/api/customers'], async (req, res
     res.json({ message: 'تم الحفظ', customer: cust });
   } catch (e) { res.status(500).json({ error: 'خطأ' }); }
 });
+app.put(['/customers/:id', '/api/customers/:id', '/api/api/customers/:id'], async (req, res) => {
+  const { id } = req.params;
+  const { name, nationalId, phone, email } = req.body;
+  try {
+    const updated = await prisma.customer.update({ where: { id: Number(id) }, data: { name, nationalId, phone, email } });
+    res.json({ message: 'تم التحديث', customer: updated });
+  } catch (e) { res.status(500).json({ error: 'خطأ' }); }
+});
 app.delete(['/customers/:id', '/api/customers/:id', '/api/api/customers/:id'], async (req, res) => {
   try { await prisma.customer.delete({ where: { id: Number(req.params.id) } }); res.json({ message: 'تم الحذف' }); } catch (e) { res.status(500).json({ error: 'خطأ' }); }
 });
@@ -218,6 +214,14 @@ app.post(['/suppliers', '/api/suppliers', '/api/api/suppliers'], async (req, res
   try {
     const supp = await prisma.supplier.create({ data: { companyId: req.companyId, name, taxNumber, phone, email } });
     res.json({ message: 'تم الحفظ', supplier: supp });
+  } catch (e) { res.status(500).json({ error: 'خطأ' }); }
+});
+app.put(['/suppliers/:id', '/api/suppliers/:id', '/api/api/suppliers/:id'], async (req, res) => {
+  const { id } = req.params;
+  const { name, taxNumber, phone, email } = req.body;
+  try {
+    const updated = await prisma.supplier.update({ where: { id: Number(id) }, data: { name, taxNumber, phone, email } });
+    res.json({ message: 'تم التحديث', supplier: updated });
   } catch (e) { res.status(500).json({ error: 'خطأ' }); }
 });
 app.delete(['/suppliers/:id', '/api/suppliers/:id', '/api/api/suppliers/:id'], async (req, res) => {
