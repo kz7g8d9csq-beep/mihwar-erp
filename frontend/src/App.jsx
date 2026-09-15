@@ -1,6 +1,24 @@
 import { useState, useEffect } from 'react';
 import API from './services/api';
 
+// دالة تصدير ملفات Excel / CSV معتمدة وداعمة للغة العربية بنقاء تام
+const exportToExcel = (filename, headers, rows) => {
+  const BOM = '\uFEFF'; // تمييز الترميز العربي لبرنامج Excel لمنع تشوه الحروف
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+  ].join('\r\n');
+
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${filename}_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 // قاموس اللغات المتكامل
 const dict = {
   ar: {
@@ -105,6 +123,7 @@ const dict = {
     noPurchases: 'لا توجد فواتير شراء مسجلة حتى الآن.',
     viewAndPrint: '👁️ معاينة وطباعة',
     printBtn: '🖨️ طباعة الفاتورة / تصدير PDF',
+    exportExcelBtn: '📥 تصدير إلى Excel',
     closeModal: '✖ إغلاق',
     taxInvoiceTitle: 'فاتورة ضريبية مبسطة',
     vatRegNo: 'الرقم الضريبي:',
@@ -250,6 +269,7 @@ const dict = {
     noPurchases: 'No purchase invoices recorded yet.',
     viewAndPrint: '👁️ View & Print',
     printBtn: '🖨️ Print Invoice / PDF Export',
+    exportExcelBtn: '📥 Export to Excel',
     closeModal: '✖ Close',
     taxInvoiceTitle: 'Simplified Tax Invoice',
     vatRegNo: 'VAT Registration No:',
@@ -381,7 +401,7 @@ function App() {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [itemQty, setItemQty] = useState(1);
   const [itemPrice, setItemPrice] = useState('');
-  const [cartItems, setCartItems] = useState([]); // سلة الأصناف الحالية
+  const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
   // المشتريات
@@ -482,22 +502,78 @@ function App() {
     }
   };
 
+  // وظائف تصدير الجداول إلى Excel
+  const handleExportSales = () => {
+    const headers = ['رقم الفاتورة', 'العميل', 'التاريخ', 'المبلغ قبل الضريبة', 'الضريبة 15%', 'الإجمالي النهائي', 'عدد البنود'];
+    const rows = invoices.map(inv => [
+      inv.invoiceNo,
+      inv.customer?.name || 'عميل نقدي عام',
+      new Date(inv.createdAt).toLocaleDateString('ar-SA'),
+      Number(inv.subtotal || 0).toFixed(2),
+      Number(inv.taxAmount || 0).toFixed(2),
+      Number(inv.totalAmount || 0).toFixed(2),
+      inv.items ? inv.items.length : 1
+    ]);
+    exportToExcel('فواتير_المبيعات_محور_ERP', headers, rows);
+  };
+
+  const handleExportPurchases = () => {
+    const headers = ['رقم فاتورة الشراء', 'المورد', 'التاريخ', 'المبلغ الأساسي', 'ضريبة المدخلات 15%', 'إجمالي الشراء'];
+    const rows = purchaseInvoices.map(p => [
+      p.invoiceNo,
+      p.supplier?.name || 'توريد نقدي مباشر',
+      new Date(p.createdAt).toLocaleDateString('ar-SA'),
+      Number(p.subtotal || 0).toFixed(2),
+      Number(p.taxAmount || 0).toFixed(2),
+      Number(p.totalAmount || 0).toFixed(2)
+    ]);
+    exportToExcel('فواتير_المشتريات_محور_ERP', headers, rows);
+  };
+
+  const handleExportInventory = () => {
+    const headers = ['اسم الصنف', 'رمز SKU', 'الرصيد الفعلي', 'سعر التكلفة', 'سعر البيع', 'قيمة المخزون للصنف'];
+    const rows = inventory.map(i => [
+      i.name,
+      i.sku || '-',
+      i.stock,
+      Number(i.cost || i.price).toFixed(2),
+      Number(i.price).toFixed(2),
+      (Number(i.price) * Number(i.stock)).toFixed(2)
+    ]);
+    exportToExcel('جرد_المستودع_محور_ERP', headers, rows);
+  };
+
+  const handleExportCustomers = () => {
+    const headers = ['اسم العميل / المؤسسة', 'الهوية / السجل التجاري أو الضريبي', 'رقم الهاتف', 'البريد الإلكتروني'];
+    const rows = customers.map(c => [
+      c.name,
+      c.nationalId || '-',
+      c.phone || '-',
+      c.email || '-'
+    ]);
+    exportToExcel('دليل_العملاء_محور_ERP', headers, rows);
+  };
+
+  const handleExportSuppliers = () => {
+    const headers = ['اسم المورد / الشركة', 'الرقم الضريبي / السجل التجاري', 'رقم الهاتف', 'البريد الإلكتروني'];
+    const rows = suppliers.map(s => [
+      s.name,
+      s.taxNumber || '-',
+      s.phone || '-',
+      s.email || '-'
+    ]);
+    exportToExcel('دليل_الموردين_محور_ERP', headers, rows);
+  };
+
   // إضافة صنف إلى سلة الفاتورة الحالية
   const handleAddItemToCart = () => {
-    if (!selectedProductId) {
-      alert(lang === 'ar' ? 'الرجاء اختيار المنتج أولاً' : 'Please select a product first');
-      return;
-    }
+    if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
     if (!product) return;
 
     const qty = Number(itemQty);
-    if (qty <= 0) {
-      alert(lang === 'ar' ? 'الكمية يجب أن تكون 1 أو أكثر' : 'Quantity must be at least 1');
-      return;
-    }
+    if (qty <= 0) return;
 
-    // التحقق من الرصيد المتوفر مقارنة بما هو مضاف أصلاً في السلة
     const existingInCart = cartItems.find(it => it.productId === product.id);
     const totalRequired = (existingInCart ? existingInCart.quantity : 0) + qty;
 
@@ -511,7 +587,6 @@ function App() {
     const price = Number(itemPrice) || product.price;
 
     if (existingInCart) {
-      // تحديث الكمية للصنف الموجود مسبقاً
       setCartItems(cartItems.map(it => {
         if (it.productId === product.id) {
           const newQ = it.quantity + qty;
@@ -525,7 +600,6 @@ function App() {
         return it;
       }));
     } else {
-      // إضافة صنف جديد في السلة
       setCartItems([
         ...cartItems,
         {
@@ -538,24 +612,17 @@ function App() {
       ]);
     }
 
-    // إعادة ضبط الحقول لإضافة صنف ثانٍ وثالث بسهولة
     setSelectedProductId('');
     setItemQty(1);
     setItemPrice('');
   };
 
-  // حذف صنف من سلة الفاتورة
   const handleRemoveItemFromCart = (index) => {
     setCartItems(cartItems.filter((_, idx) => idx !== index));
   };
 
-  // اعتماد الفاتورة متعددة الأصناف وإرسالها للسيرفر
   const handleSaveInvoice = async () => {
-    if (cartItems.length === 0) {
-      alert(lang === 'ar' ? 'يجب إضافة صنف واحد على الأقل في الفاتورة' : 'Add at least one item to invoice');
-      return;
-    }
-
+    if (cartItems.length === 0) return;
     setIsSubmittingSale(true);
     try {
       const res = await API.post('/api/sales', {
@@ -568,9 +635,7 @@ function App() {
       });
 
       const newInv = res.data?.invoice;
-      alert(`✅ ${res.data.message || (lang === 'ar' ? 'تم إصدار الفاتورة واعتماد خصم المخزون بنجاح!' : 'Invoice created successfully!')}`);
-      
-      // تصفية السلة وتحديث السيرفر
+      alert(`✅ ${res.data.message || 'Invoice generated successfully!'}`);
       setCartItems([]);
       fetchAllData();
       if (newInv) setPrintingInvoice(newInv);
@@ -582,7 +647,6 @@ function App() {
     }
   };
 
-  // معالجات المشتريات
   const handleSavePurchase = async () => {
     if (!selectedPurchaseProdId || !purchaseQty || !purchaseCost) return;
     setIsSubmittingPurchase(true);
@@ -605,12 +669,10 @@ function App() {
     }
   };
 
-  // الحسابات المالية اللحظية لسلة المبيعات
   const cartSubtotal = cartItems.reduce((sum, it) => sum + Number(it.subtotal || 0), 0);
   const cartTax = cartSubtotal * 0.15;
   const cartGrandTotal = cartSubtotal + cartTax;
 
-  // الحسابات التحليلية للمشتريات والمخزون
   const inventoryVal = inventory.reduce((sum, i) => sum + (Number(i.price) * Number(i.stock)), 0);
   const totalSalesVal = invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
   const totalPurchasesVal = purchaseInvoices.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
@@ -633,7 +695,6 @@ function App() {
   const purchaseTax = purchaseSubtotal * 0.15;
   const purchaseTotal = purchaseSubtotal + purchaseTax;
 
-  // إدارة العملاء والموردين
   const handleAddOrUpdateCustomer = async (e) => {
     e.preventDefault();
     if (!custName.trim()) return;
@@ -1112,7 +1173,6 @@ function App() {
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
               <h2 style={{ marginTop: 0, color: theme.textDark, fontSize: '18px' }}>{t.issueInvoice}</h2>
               
-              {/* قسم اختيار العميل */}
               <div style={{ marginBottom: '18px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 'bold' }}>{t.selectCust}</label>
                 <select value={selectedCustomerId} onChange={e => setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, marginTop: '5px' }}>
@@ -1121,7 +1181,6 @@ function App() {
                 </select>
               </div>
 
-              {/* قسم اختيار وإضافة الصنف إلى السلة */}
               <div style={{ background: isDark ? '#0f172a' : '#f8fafc', padding: '16px', borderRadius: '10px', border: `1px solid ${theme.border}`, marginBottom: '20px' }}>
                 <span style={{ fontSize: '13px', fontWeight: 'bold', color: theme.primary, display: 'block', marginBottom: '10px' }}>
                   ➕ إضافة صنف جديد إلى الفاتورة
@@ -1170,7 +1229,6 @@ function App() {
                 </div>
               </div>
 
-              {/* جدول سلة الأصناف الحالية */}
               <div style={{ marginBottom: '15px' }}>
                 <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: theme.textDark }}>
                   {t.cartItemsTitle} ({cartItems.length} {lang === 'ar' ? 'أصناف مضافة' : 'items'})
@@ -1210,7 +1268,6 @@ function App() {
                 )}
               </div>
 
-              {/* زر اعتماد الفاتورة وطباعتها */}
               <button 
                 onClick={handleSaveInvoice} 
                 disabled={isSubmittingSale || cartItems.length === 0} 
@@ -1231,7 +1288,6 @@ function App() {
               </button>
             </div>
 
-            {/* بطاقة الحساب التلقائي للضريبة */}
             <div style={{ background: '#020617', borderRadius: '14px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 10px 25px rgba(0,0,0,0.3)' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
@@ -1369,7 +1425,12 @@ function App() {
             </div>
 
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <h3 style={{ marginTop: 0, color: theme.textDark }}>{t.custDirectory}</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h3 style={{ margin: 0, color: theme.textDark }}>{t.custDirectory}</h3>
+                <button onClick={handleExportCustomers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {t.exportExcelBtn}
+                </button>
+              </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#334155' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
@@ -1437,7 +1498,12 @@ function App() {
             </div>
 
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <h3 style={{ marginTop: 0, color: theme.textDark }}>{t.suppDirectory}</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h3 style={{ margin: 0, color: theme.textDark }}>{t.suppDirectory}</h3>
+                <button onClick={handleExportSuppliers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {t.exportExcelBtn}
+                </button>
+              </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#334155' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
@@ -1481,8 +1547,14 @@ function App() {
                 <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '12px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveProd}</button>
               </form>
             </div>
+            
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <h3 style={{ marginTop: 0, color: theme.textDark }}>{t.stockRepo}</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h3 style={{ margin: 0, color: theme.textDark }}>{t.stockRepo}</h3>
+                <button onClick={handleExportInventory} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  📥 تصدير جرد المستودع (Excel)
+                </button>
+              </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#334155' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
@@ -1505,11 +1577,17 @@ function App() {
           </div>
         )}
 
-        {/* التقارير والفواتير */}
+        {/* التقارير والفواتير مع أزرار التصدير لـ Excel */}
         {activeTab === 'reports' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            {/* جدول المبيعات */}
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <h2 style={{ marginTop: 0, color: theme.textDark, fontSize: '18px' }}>{t.invRepo}</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h2 style={{ margin: 0, color: theme.textDark, fontSize: '18px' }}>{t.invRepo}</h2>
+                <button onClick={handleExportSales} style={{ background: '#0f766e', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  📥 تصدير المبيعات للإقرار الضريبي (Excel)
+                </button>
+              </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#334155' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
@@ -1553,8 +1631,14 @@ function App() {
               </table>
             </div>
 
+            {/* جدول المشتريات */}
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <h2 style={{ marginTop: 0, color: theme.textDark, fontSize: '18px' }}>{t.purchasesRepo}</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h2 style={{ margin: 0, color: theme.textDark, fontSize: '18px' }}>{t.purchasesRepo}</h2>
+                <button onClick={handleExportPurchases} style={{ background: '#f59e0b', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  📥 تصدير المشتريات ومصروفات التوريد (Excel)
+                </button>
+              </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#334155' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
@@ -1663,7 +1747,7 @@ function App() {
         )}
       </main>
 
-      {/* نافذة الفاتورة الضريبية الرسمية المعتمدة (تعرض كافة الأصناف) */}
+      {/* نافذة الفاتورة الضريبية الرسمية المعتمدة */}
       {printingInvoice && (
         <div className="invoice-modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px', boxSizing: 'border-box' }}>
           <div className="invoice-modal-card" style={{ background: '#ffffff', color: '#0f172a', width: '100%', maxWidth: '780px', maxHeight: '95vh', overflowY: 'auto', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
@@ -1723,7 +1807,6 @@ function App() {
                 </div>
               </div>
 
-              {/* جدول الأصناف المفصل في الفاتورة */}
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', marginBottom: '25px', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#0f172a', color: '#ffffff' }}>
