@@ -18,7 +18,7 @@ model Company {
   invoices         Invoice[]
   purchaseInvoices PurchaseInvoice[]
   createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  updatedAt        DateTime          @default(now()) @updatedAt
 }
 
 model Role {
@@ -44,7 +44,7 @@ model User {
   invoices         Invoice[]
   purchaseInvoices PurchaseInvoice[]
   createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  updatedAt        DateTime          @default(now()) @updatedAt
 }
 
 model Customer {
@@ -57,7 +57,7 @@ model Customer {
   company    Company   @relation(fields: [companyId], references: [id])
   invoices   Invoice[]
   createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  updatedAt  DateTime  @default(now()) @updatedAt
 }
 
 model Supplier {
@@ -70,7 +70,7 @@ model Supplier {
   company          Company           @relation(fields: [companyId], references: [id])
   purchaseInvoices PurchaseInvoice[]
   createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  updatedAt        DateTime          @default(now()) @updatedAt
 }
 
 model Product {
@@ -85,7 +85,7 @@ model Product {
   invoiceItems         InvoiceItem[]
   purchaseInvoiceItems PurchaseInvoiceItem[]
   createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  updatedAt            DateTime              @default(now()) @updatedAt
 }
 
 model Invoice {
@@ -103,7 +103,7 @@ model Invoice {
   customer    Customer?     @relation(fields: [customerId], references: [id])
   items       InvoiceItem[]
   createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  updatedAt   DateTime      @default(now()) @updatedAt
 }
 
 model InvoiceItem {
@@ -133,7 +133,7 @@ model PurchaseInvoice {
   user        User?                 @relation(fields: [userId], references: [id])
   items       PurchaseInvoiceItem[]
   createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
+  updatedAt   DateTime              @default(now()) @updatedAt
 }
 
 model PurchaseInvoiceItem {
