@@ -81,35 +81,25 @@ app.post(['/login', '/api/login', '/api/api/login'], async (req, res) => {
   }
 });
 
-// أمان الحساب: تغيير كلمة المرور بقيود صارمة
+// أمان الحساب
 app.post(['/change-password', '/api/change-password', '/api/api/change-password'], async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   try {
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: 'كلمة المرور الحالية والجديدة مطلوبتان' });
-    }
-    if (newPassword.length < 8) {
-      return res.status(400).json({ error: 'يجب ألا تقل كلمة المرور الجديدة عن 8 أحرف وأرقام' });
-    }
+    if (!currentPassword || !newPassword) return res.status(400).json({ error: 'كلمة المرور الحالية والجديدة مطلوبتان' });
+    if (newPassword.length < 8) return res.status(400).json({ error: 'يجب ألا تقل كلمة المرور الجديدة عن 8 أحرف وأرقام' });
 
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
     if (!user || user.password !== currentPassword) {
-      return res.status(400).json({ error: 'كلمة المرور الحالية غير صحيحة، تم رفض الطلب لأسباب أمنية' });
+      return res.status(400).json({ error: 'كلمة المرور الحالية غير صحيحة' });
     }
 
-    await prisma.user.update({
-      where: { id: req.userId },
-      data: { password: newPassword }
-    });
-
+    await prisma.user.update({ where: { id: req.userId }, data: { password: newPassword } });
     res.json({ message: 'تم تحديث كلمة المرور بنجاح وبشكل آمن' });
   } catch (error) {
-    console.error('Password Change Error:', error);
-    res.status(500).json({ error: 'حدث خطأ أثناء محاولة تحديث كلمة المرور' });
+    res.status(500).json({ error: 'تعذر تحديث كلمة المرور' });
   }
 });
 
-// أمان الحساب: إيقاف وحذف الحساب
 app.post(['/delete-account', '/api/delete-account', '/api/api/delete-account'], async (req, res) => {
   const { confirmPassword } = req.body;
   try {
@@ -117,21 +107,14 @@ app.post(['/delete-account', '/api/delete-account', '/api/api/delete-account'], 
     if (!user || user.password !== confirmPassword) {
       return res.status(400).json({ error: 'كلمة المرور غير مطابقة لتأكيد حذف الحساب' });
     }
-
-    // تعطيل الحساب لحماية سجل المعاملات المالية المترابطة
-    await prisma.user.update({
-      where: { id: req.userId },
-      data: { isActive: false }
-    });
-
-    res.json({ message: 'تم تعطيل الحساب بنجاح وتسجيل الخروج النهائي' });
+    await prisma.user.update({ where: { id: req.userId }, data: { isActive: false } });
+    res.json({ message: 'تم تعطيل الحساب بنجاح' });
   } catch (error) {
-    console.error('Delete Account Error:', error);
     res.status(500).json({ error: 'تعذر حذف الحساب' });
   }
 });
 
-// العملاء: استعراض وإضافة
+// ==================== إدارة العملاء ====================
 app.get(['/customers', '/api/customers', '/api/api/customers'], async (req, res) => {
   try {
     const customers = await prisma.customer.findMany({
@@ -140,7 +123,6 @@ app.get(['/customers', '/api/customers', '/api/api/customers'], async (req, res)
     });
     res.json(customers);
   } catch (error) {
-    console.error('Customer Fetch Error:', error);
     res.status(500).json({ error: 'خطأ في جلب بيانات العملاء' });
   }
 });
@@ -149,7 +131,6 @@ app.post(['/customers', '/api/customers', '/api/api/customers'], async (req, res
   const { name, nationalId, phone, email } = req.body;
   try {
     if (!name) return res.status(400).json({ error: 'اسم العميل مطلوب' });
-
     const newCustomer = await prisma.customer.create({
       data: {
         companyId: req.companyId,
@@ -159,64 +140,109 @@ app.post(['/customers', '/api/customers', '/api/api/customers'], async (req, res
         email: email ? String(email) : null
       }
     });
-    res.json({ message: 'تم فتح حساب العميل بنجاح', customer: newCustomer });
+    res.json({ message: 'تم حفظ حساب العميل بنجاح', customer: newCustomer });
   } catch (error) {
-    console.error('Customer Create Error:', error);
-    res.status(500).json({ error: 'تعذر حفظ حساب العميل' });
+    res.status(500).json({ error: 'تعذر حفظ العميل' });
   }
 });
 
-// العملاء: تعديل بيانات عميل
 app.put(['/customers/:id', '/api/customers/:id', '/api/api/customers/:id'], async (req, res) => {
   const { id } = req.params;
   const { name, nationalId, phone, email } = req.body;
   try {
-    const existing = await prisma.customer.findFirst({
-      where: { id: Number(id), companyId: req.companyId }
-    });
-    if (!existing) return res.status(404).json({ error: 'العميل غير موجود أو لا تملك صلاحية تعديله' });
-
     const updated = await prisma.customer.update({
       where: { id: Number(id) },
       data: {
-        name: name ? String(name) : existing.name,
-        nationalId: nationalId !== undefined ? (nationalId ? String(nationalId) : null) : existing.nationalId,
-        phone: phone !== undefined ? (phone ? String(phone) : null) : existing.phone,
-        email: email !== undefined ? (email ? String(email) : null) : existing.email
+        name: name ? String(name) : undefined,
+        nationalId: nationalId !== undefined ? (nationalId ? String(nationalId) : null) : undefined,
+        phone: phone !== undefined ? (phone ? String(phone) : null) : undefined,
+        email: email !== undefined ? (email ? String(email) : null) : undefined
       }
     });
-
     res.json({ message: 'تم تحديث بيانات العميل بنجاح', customer: updated });
   } catch (error) {
-    console.error('Customer Update Error:', error);
-    res.status(500).json({ error: 'تعذر تعديل بيانات العميل' });
+    res.status(500).json({ error: 'تعذر تعديل العميل' });
   }
 });
 
-// العملاء: حذف عميل مع التحقق من الارتباطات المالية
 app.delete(['/customers/:id', '/api/customers/:id', '/api/api/customers/:id'], async (req, res) => {
   const { id } = req.params;
   try {
-    const existing = await prisma.customer.findFirst({
-      where: { id: Number(id), companyId: req.companyId }
-    });
-    if (!existing) return res.status(404).json({ error: 'العميل غير موجود' });
-
-    // منع الحذف إذا كانت هناك فواتير مسجلة باسمه حفاظاً على سلامة الدفاتر المحاسبية
     const invoiceCount = await prisma.invoice.count({ where: { customerId: Number(id) } });
-    if (invoiceCount > 0) {
-      return res.status(400).json({ error: 'لا يمكن حذف هذا العميل لوجود فواتير مبيعات سابقة مسجلة باسمه' });
-    }
+    if (invoiceCount > 0) return res.status(400).json({ error: 'لا يمكن حذف العميل لوجود فواتير مبيعات مرتبطة به' });
 
     await prisma.customer.delete({ where: { id: Number(id) } });
-    res.json({ message: 'تم حذف حساب العميل بنجاح' });
+    res.json({ message: 'تم حذف العميل بنجاح' });
   } catch (error) {
-    console.error('Customer Delete Error:', error);
     res.status(500).json({ error: 'تعذر حذف العميل' });
   }
 });
 
-// المخزون
+// ==================== إدارة الموردين ====================
+app.get(['/suppliers', '/api/suppliers', '/api/api/suppliers'], async (req, res) => {
+  try {
+    const suppliers = await prisma.supplier.findMany({
+      where: { companyId: req.companyId },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(suppliers);
+  } catch (error) {
+    res.status(500).json({ error: 'خطأ في جلب بيانات الموردين' });
+  }
+});
+
+app.post(['/suppliers', '/api/suppliers', '/api/api/suppliers'], async (req, res) => {
+  const { name, taxNumber, phone, email } = req.body;
+  try {
+    if (!name) return res.status(400).json({ error: 'اسم المورد مطلوب' });
+    const newSupplier = await prisma.supplier.create({
+      data: {
+        companyId: req.companyId,
+        name: String(name),
+        taxNumber: taxNumber ? String(taxNumber) : null,
+        phone: phone ? String(phone) : null,
+        email: email ? String(email) : null
+      }
+    });
+    res.json({ message: 'تم فتح حساب المورد بنجاح', supplier: newSupplier });
+  } catch (error) {
+    res.status(500).json({ error: 'تعذر حفظ المورد' });
+  }
+});
+
+app.put(['/suppliers/:id', '/api/suppliers/:id', '/api/api/suppliers/:id'], async (req, res) => {
+  const { id } = req.params;
+  const { name, taxNumber, phone, email } = req.body;
+  try {
+    const updated = await prisma.supplier.update({
+      where: { id: Number(id) },
+      data: {
+        name: name ? String(name) : undefined,
+        taxNumber: taxNumber !== undefined ? (taxNumber ? String(taxNumber) : null) : undefined,
+        phone: phone !== undefined ? (phone ? String(phone) : null) : undefined,
+        email: email !== undefined ? (email ? String(email) : null) : undefined
+      }
+    });
+    res.json({ message: 'تم تحديث بيانات المورد بنجاح', supplier: updated });
+  } catch (error) {
+    res.status(500).json({ error: 'تعذر تعديل المورد' });
+  }
+});
+
+app.delete(['/suppliers/:id', '/api/suppliers/:id', '/api/api/suppliers/:id'], async (req, res) => {
+  const { id } = req.params;
+  try {
+    const purchasesCount = await prisma.purchaseInvoice.count({ where: { supplierId: Number(id) } });
+    if (purchasesCount > 0) return res.status(400).json({ error: 'لا يمكن حذف المورد لوجود فواتير شراء مرتبطة به' });
+
+    await prisma.supplier.delete({ where: { id: Number(id) } });
+    res.json({ message: 'تم حذف المورد بنجاح' });
+  } catch (error) {
+    res.status(500).json({ error: 'تعذر حذف المورد' });
+  }
+});
+
+// ==================== المخزون ====================
 app.get(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res) => {
   try {
     const products = await prisma.product.findMany({ 
@@ -230,17 +256,18 @@ app.get(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res)
 });
 
 app.post(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res) => {
-  const { name, price, stock } = req.body;
+  const { name, price, cost, stock } = req.body;
   try {
     if (!name || price === undefined) return res.status(400).json({ error: 'اسم المنتج والسعر مطلوبان' });
     const numericPrice = Number(price);
+    const numericCost = cost !== undefined ? Number(cost) : numericPrice;
 
     const newProduct = await prisma.product.create({
       data: {
         companyId: req.companyId,
         name: String(name),
         price: numericPrice,
-        cost: numericPrice,
+        cost: numericCost,
         stock: Number(stock) || 0,
         sku: `SKU-${Date.now().toString().slice(-6)}`
       }
@@ -251,7 +278,7 @@ app.post(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res
   }
 });
 
-// المبيعات والفوترة
+// ==================== المبيعات والفوترة الذكية ====================
 app.get(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
   try {
     const invoices = await prisma.invoice.findMany({
@@ -328,6 +355,92 @@ app.post(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
     res.json({ message: 'تم إصدار الفاتورة وخصم المخزون بنجاح', invoice: result });
   } catch (error) {
     res.status(400).json({ error: error.message || 'فشلت عملية البيع' });
+  }
+});
+
+// ==================== المشتريات والتوريد الذكي ====================
+app.get(['/purchases', '/api/purchases', '/api/api/purchases'], async (req, res) => {
+  try {
+    const purchaseInvoices = await prisma.purchaseInvoice.findMany({
+      where: { companyId: req.companyId },
+      include: {
+        items: { include: { product: true } },
+        supplier: true,
+        user: { select: { name: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(purchaseInvoices);
+  } catch (error) {
+    res.status(500).json({ error: 'خطأ في جلب فواتير الشراء' });
+  }
+});
+
+app.post(['/purchases', '/api/purchases', '/api/api/purchases'], async (req, res) => {
+  const { productId, quantity, unitCost, supplierId } = req.body;
+  try {
+    if (!productId || !quantity || unitCost === undefined) {
+      return res.status(400).json({ error: 'المنتج، الكمية، وسعر الشراء مطلوبون' });
+    }
+
+    const qty = Number(quantity);
+    const prodId = Number(productId);
+    const cost = Number(unitCost);
+    const suppId = supplierId ? Number(supplierId) : null;
+
+    const result = await prisma.$transaction(async (tx) => {
+      const product = await tx.product.findFirst({
+        where: { id: prodId, companyId: req.companyId }
+      });
+
+      if (!product) throw new Error('المنتج المحدد غير موجود');
+
+      const subtotal = Number((cost * qty).toFixed(2));
+      const taxRate = 0.15;
+      const taxAmount = Number((subtotal * taxRate).toFixed(2));
+      const totalAmount = Number((subtotal + taxAmount).toFixed(2));
+
+      // 1. زيادة رصيد المستودع تلقائياً وتحديث تكلفة المنتج
+      await tx.product.update({
+        where: { id: prodId },
+        data: {
+          stock: { increment: qty },
+          cost: cost
+        }
+      });
+
+      // 2. إصدار فاتورة الشراء وتوثيق بنود التوريد
+      const invoiceNo = `PUR-${Date.now().toString().slice(-6)}`;
+      const purchaseInvoice = await tx.purchaseInvoice.create({
+        data: {
+          invoiceNo,
+          subtotal,
+          taxRate,
+          taxAmount,
+          totalAmount,
+          companyId: req.companyId,
+          userId: req.userId,
+          supplierId: suppId,
+          items: {
+            create: [
+              {
+                productId: prodId,
+                quantity: qty,
+                unitCost: cost,
+                subtotal: subtotal
+              }
+            ]
+          }
+        },
+        include: { items: true, supplier: true }
+      });
+
+      return purchaseInvoice;
+    });
+
+    res.json({ message: 'تم تسجيل فاتورة الشراء وتوريد الكمية للمخزون بنجاح', purchaseInvoice: result });
+  } catch (error) {
+    res.status(400).json({ error: error.message || 'فشلت عملية الشراء' });
   }
 });
 

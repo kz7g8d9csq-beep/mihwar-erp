@@ -8,15 +8,17 @@ datasource db {
 }
 
 model Company {
-  id        Int        @id @default(autoincrement())
-  name      String
-  users     User[]
-  roles     Role[]
-  products  Product[]
-  customers Customer[]
-  invoices  Invoice[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id               Int               @id @default(autoincrement())
+  name             String
+  users            User[]
+  roles            Role[]
+  products         Product[]
+  customers        Customer[]
+  suppliers        Supplier[]
+  invoices         Invoice[]
+  purchaseInvoices PurchaseInvoice[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 }
 
 model Role {
@@ -29,25 +31,26 @@ model Role {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  password  String
-  phone     String?
-  isActive  Boolean   @default(true)
-  companyId Int
-  company   Company   @relation(fields: [companyId], references: [id])
-  roleId    Int?
-  role      Role?     @relation(fields: [roleId], references: [id])
-  invoices  Invoice[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id               Int               @id @default(autoincrement())
+  name             String
+  email            String            @unique
+  password         String
+  phone            String?
+  isActive         Boolean           @default(true)
+  companyId        Int
+  company          Company           @relation(fields: [companyId], references: [id])
+  roleId           Int?
+  role             Role?             @relation(fields: [roleId], references: [id])
+  invoices         Invoice[]
+  purchaseInvoices PurchaseInvoice[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 }
 
 model Customer {
   id         Int       @id @default(autoincrement())
   name       String
-  nationalId String?   // رقم الهوية أو السجل التجاري / الرقم الضريبي
+  nationalId String?   // رقم الهوية أو السجل التجاري / الضريبي
   phone      String?
   email      String?
   companyId  Int
@@ -57,27 +60,41 @@ model Customer {
   updatedAt  DateTime  @updatedAt
 }
 
+model Supplier {
+  id               Int               @id @default(autoincrement())
+  name             String
+  taxNumber        String?           // الرقم الضريبي / السجل التجاري للمورد
+  phone            String?
+  email            String?
+  companyId        Int
+  company          Company           @relation(fields: [companyId], references: [id])
+  purchaseInvoices PurchaseInvoice[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
 model Product {
-  id           Int           @id @default(autoincrement())
-  name         String
-  price        Float
-  cost         Float
-  stock        Int           @default(0)
-  sku          String
-  companyId    Int
-  company      Company       @relation(fields: [companyId], references: [id])
-  invoiceItems InvoiceItem[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                   Int                   @id @default(autoincrement())
+  name                 String
+  price                Float
+  cost                 Float
+  stock                Int                   @default(0)
+  sku                  String
+  companyId            Int
+  company              Company               @relation(fields: [companyId], references: [id])
+  invoiceItems         InvoiceItem[]
+  purchaseInvoiceItems PurchaseInvoiceItem[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 }
 
 model Invoice {
   id          Int           @id @default(autoincrement())
   invoiceNo   String        @unique
-  subtotal    Float         // المجموع قبل الضريبة
-  taxRate     Float         @default(0.15) // 15% ضريبة آلية
-  taxAmount   Float         // مبلغ الضريبة
-  totalAmount Float         // الإجمالي شامل الضريبة
+  subtotal    Float
+  taxRate     Float         @default(0.15)
+  taxAmount   Float
+  totalAmount Float
   companyId   Int
   company     Company       @relation(fields: [companyId], references: [id])
   userId      Int?
@@ -99,4 +116,34 @@ model InvoiceItem {
   unitPrice Float
   subtotal  Float
   createdAt DateTime @default(now())
+}
+
+model PurchaseInvoice {
+  id          Int                   @id @default(autoincrement())
+  invoiceNo   String                @unique
+  subtotal    Float
+  taxRate     Float                 @default(0.15)
+  taxAmount   Float
+  totalAmount Float
+  companyId   Int
+  company     Company               @relation(fields: [companyId], references: [id])
+  supplierId  Int?
+  supplier    Supplier?             @relation(fields: [supplierId], references: [id])
+  userId      Int?
+  user        User?                 @relation(fields: [userId], references: [id])
+  items       PurchaseInvoiceItem[]
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+}
+
+model PurchaseInvoiceItem {
+  id                Int             @id @default(autoincrement())
+  purchaseInvoiceId Int
+  purchaseInvoice   PurchaseInvoice @relation(fields: [purchaseInvoiceId], references: [id], onDelete: Cascade)
+  productId         Int
+  product           Product         @relation(fields: [productId], references: [id])
+  quantity          Int             @default(1)
+  unitCost          Float
+  subtotal          Float
+  createdAt         DateTime        @default(now())
 }
