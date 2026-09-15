@@ -1,31 +1,74 @@
 import { useState, useEffect } from 'react';
 import API from './services/api';
 
-// دالة تصدير Excel احترافية تجبر البرنامج على تقسيم الأعمدة بدقة دون أي تشويه
-const exportToExcel = (filename, headers, rows) => {
-  // 1. تمييز الترميز العربي لبرنامج Excel (BOM)
-  const BOM = '\uFEFF';
-  // 2. تعليمة مايكروسوفت الرسمية لإجبار إكسل على تقسيم الأعمدة بدقة
-  const sepDirective = 'sep=,\r\n';
-  
-  const escapeCell = (val) => {
-    const str = String(val ?? '');
-    if (str.includes(',') || str.includes('\n') || str.includes('\r') || str.includes('"')) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-  };
+// محرك تصدير Excel المؤسسي المعتمد: تصميم شركات فخم بدون تشويه للأرقام أو الحروف
+const exportToExcel = (sheetTitle, headers, rows) => {
+  const cleanTitle = sheetTitle.replace(/[/\\?*[\]]/g, '');
+  const template = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">
+      <!--[if gte mso 9]>
+      <xml>
+        <x:ExcelWorkbook>
+          <x:ExcelWorksheets>
+            <x:ExcelWorksheet>
+              <x:Name>${cleanTitle}</x:Name>
+              <x:WorksheetOptions>
+                <x:DisplayRightToLeft/>
+              </x:WorksheetOptions>
+            </x:ExcelWorksheet>
+          </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+      </xml>
+      <![endif]-->
+      <style>
+        table { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; border-collapse: collapse; direction: rtl; width: 100%; }
+        .main-title { font-size: 16pt; font-weight: bold; color: #0f766e; text-align: center; padding: 12px; }
+        .meta-text { font-size: 10pt; color: #64748b; text-align: center; padding-bottom: 10px; }
+        th { background-color: #0f766e; color: #ffffff; font-weight: bold; border: 1px solid #042f2e; padding: 10px 14px; text-align: center; font-size: 11pt; }
+        td { border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 10pt; text-align: right; }
+        .text-cell { mso-number-format: "\\@"; text-align: center; }
+        .num-cell { mso-number-format: "#\\,##0\\.00"; text-align: right; }
+      </style>
+    </head>
+    <body>
+      <table>
+        <thead>
+          <tr><td colspan="${headers.length}" class="main-title">محور ERP • ${cleanTitle}</td></tr>
+          <tr><td colspan="${headers.length}" class="meta-text">تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')} | وثيقة معتمدة ومصدرة آلياً</td></tr>
+          <tr>
+            ${headers.map(h => `<th>${h}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              ${row.map(cell => {
+                const str = String(cell ?? '');
+                // فحص إذا كانت الخلية رقم ضريبي أو جوال لمنع تحويلها إلى E+14
+                const isCodeOrPhone = /^\d{9,}$/.test(str) || str.startsWith('05') || str.startsWith('+');
+                const isCurrency = /^-?\d+(\.\d+)?$/.test(str) && !isCodeOrPhone;
+                if (isCodeOrPhone) {
+                  return `<td class="text-cell">${str}</td>`;
+                } else if (isCurrency) {
+                  return `<td class="num-cell">${Number(str).toFixed(2)}</td>`;
+                }
+                return `<td>${str}</td>`;
+              }).join('')}
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `;
 
-  const csvContent = [
-    headers.map(escapeCell).join(','),
-    ...rows.map(row => row.map(escapeCell).join(','))
-  ].join('\r\n');
-
-  const blob = new Blob([BOM + sepDirective + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['\uFEFF' + template], { type: 'application/vnd.ms-excel;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${filename}_${new Date().toISOString().slice(0, 10)}.csv`);
+  link.href = url;
+  link.download = `${cleanTitle}_${new Date().toISOString().slice(0, 10)}.xls`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -515,15 +558,15 @@ function App() {
     }
   };
 
-  // وظائف تصدير الجداول إلى Excel بصيغة الشركات الاحترافية
+  // وظائف التصدير المؤسسية (HTML Excel)
   const handleExportSales = () => {
     const headers = [
       'رقم الفاتورة',
       'العميل المستلم',
       'تاريخ الإصدار',
-      'المبلغ الخاضع للضريبة',
-      'ضريبة القيمة المضافة (15%)',
-      'الإجمالي المستحق',
+      'المبلغ الخاضع للضريبة (ر.س)',
+      'ضريبة القيمة المضافة 15% (ر.س)',
+      'الإجمالي المستحق (ر.س)',
       'عدد البنود المباعة'
     ];
     const rows = invoices.map(inv => [
@@ -535,17 +578,17 @@ function App() {
       Number(inv.totalAmount || 0).toFixed(2),
       inv.items ? inv.items.length : 1
     ]);
-    exportToExcel('تقرير_المبيعات_الضريبية_محور_ERP', headers, rows);
+    exportToExcel('تقرير_المبيعات_الضريبية', headers, rows);
   };
 
   const handleExportPurchases = () => {
     const headers = [
       'رقم فاتورة الشراء',
-      'المورد المعتمد',
+      'اسم المورد',
       'تاريخ التوريد',
-      'المبلغ الأساسي',
-      'ضريبة المدخلات (15%)',
-      'إجمالي التكلفة الشاملة'
+      'المبلغ الأساسي (ر.س)',
+      'ضريبة المدخلات 15% (ر.س)',
+      'إجمالي فاتورة الشراء (ر.س)'
     ];
     const rows = purchaseInvoices.map(p => [
       p.invoiceNo,
@@ -555,16 +598,16 @@ function App() {
       Number(p.taxAmount || 0).toFixed(2),
       Number(p.totalAmount || 0).toFixed(2)
     ]);
-    exportToExcel('تقرير_المشتريات_والتوريد_محور_ERP', headers, rows);
+    exportToExcel('تقرير_المشتريات_والتوريد', headers, rows);
   };
 
   const handleExportInventory = () => {
     const headers = [
       'اسم المنتج',
-      'رمز SKU',
-      'الرصيد الفعلي بالمخزن',
-      'سعر التكلفة (ر.س)',
-      'سعر البيع (ر.س)',
+      'رمز الصنف (SKU)',
+      'الرصيد الفعلي بالمستودع',
+      'سعر التكلفة للوحدة (ر.س)',
+      'سعر البيع الافتراضي (ر.س)',
       'إجمالي القيمة التقديرية (ر.س)'
     ];
     const rows = inventory.map(i => [
@@ -575,14 +618,14 @@ function App() {
       Number(i.price).toFixed(2),
       (Number(i.price) * Number(i.stock)).toFixed(2)
     ]);
-    exportToExcel('تقرير_جرد_المستودع_محور_ERP', headers, rows);
+    exportToExcel('تقرير_جرد_المستودع_الحي', headers, rows);
   };
 
   const handleExportCustomers = () => {
     const headers = [
-      'اسم العميل أو المؤسسة',
+      'اسم العميل / المؤسسة',
       'الهوية / السجل التجاري أو الضريبي',
-      'رقم الهاتف',
+      'رقم الهاتف / الجوال',
       'البريد الإلكتروني'
     ];
     const rows = customers.map(c => [
@@ -591,7 +634,7 @@ function App() {
       c.phone || '-',
       c.email || '-'
     ]);
-    exportToExcel('دليل_العملاء_المسجلين_محور_ERP', headers, rows);
+    exportToExcel('دليل_العملاء_المعتمدين', headers, rows);
   };
 
   const handleExportSuppliers = () => {
@@ -607,10 +650,10 @@ function App() {
       s.phone || '-',
       s.email || '-'
     ]);
-    exportToExcel('دليل_الموردين_المعتمدين_محور_ERP', headers, rows);
+    exportToExcel('دليل_الموردين_المعتمدين', headers, rows);
   };
 
-  // إضافة صنف إلى سلة الفاتورة الحالية
+  // سلة الفاتورة
   const handleAddItemToCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
@@ -1212,7 +1255,7 @@ function App() {
           </div>
         )}
 
-        {/* المبيعات والفوترة الذكية (سلة الأصناف المجمعة) */}
+        {/* المبيعات والفوترة الذكية */}
         {activeTab === 'sales' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 0.75fr', gap: '25px' }}>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1625,6 +1668,7 @@ function App() {
         {/* التقارير والفواتير مع أزرار التصدير لـ Excel */}
         {activeTab === 'reports' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            {/* جدول المبيعات */}
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <h2 style={{ margin: 0, color: theme.textDark, fontSize: '18px' }}>{t.invRepo}</h2>
@@ -1675,6 +1719,7 @@ function App() {
               </table>
             </div>
 
+            {/* جدول المشتريات */}
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <h2 style={{ margin: 0, color: theme.textDark, fontSize: '18px' }}>{t.purchasesRepo}</h2>
