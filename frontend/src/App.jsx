@@ -37,7 +37,7 @@ const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
         th { background-color: #0f766e; color: #ffffff; font-weight: bold; border: 1px solid #042f2e; padding: 10px 14px; text-align: center; font-size: 11pt; }
         td { border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 10pt; text-align: ${isAr ? 'right' : 'left'}; }
         .text-cell { mso-number-format: "\\@"; text-align: center; }
-        .num-cell { mso-number-format: "#\\,##0\\.00"; text-align: ${isAr ? 'right' : 'right'}; }
+        .num-cell { mso-number-format: "#\\,##0\\.00"; text-align: right; }
       </style>
     </head>
     <body>
@@ -422,11 +422,17 @@ function App() {
   const [lang, setLang] = useState('ar');
   const [isDark, setIsDark] = useState(false);
 
+  // استرجاع المستخدم والتوكن المشفر JWT
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('mihwar_user');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (API.defaults) API.defaults.headers.common['user-id'] = parsed.id;
+    const savedUser = localStorage.getItem('mihwar_user');
+    const savedToken = localStorage.getItem('mihwar_token');
+    if (savedUser) {
+      const parsed = JSON.parse(savedUser);
+      if (savedToken && API.defaults) {
+        API.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
+      } else if (API.defaults) {
+        API.defaults.headers.common['user-id'] = parsed.id;
+      }
       return parsed;
     }
     return null;
@@ -987,6 +993,7 @@ function App() {
     }
   };
 
+  // معالجة تسجيل الدخول وإنشاء الحساب مع حفظ التوكن الرقمي JWT
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -994,9 +1001,13 @@ function App() {
       if (authView === 'login') {
         const res = await API.post('/api/login', { email: authEmail, password: authPassword });
         const loggedInUser = res.data.user;
+        const token = res.data.token;
         setUser(loggedInUser);
         localStorage.setItem('mihwar_user', JSON.stringify(loggedInUser));
-        API.defaults.headers.common['user-id'] = loggedInUser.id;
+        if (token) {
+          localStorage.setItem('mihwar_token', token);
+          API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        }
       } else {
         const res = await API.post('/api/register', {
           businessName: authBusinessName,
@@ -1005,9 +1016,13 @@ function App() {
           password: authPassword
         });
         const newUser = res.data.user;
+        const token = res.data.token;
         setUser(newUser);
         localStorage.setItem('mihwar_user', JSON.stringify(newUser));
-        API.defaults.headers.common['user-id'] = newUser.id;
+        if (token) {
+          localStorage.setItem('mihwar_token', token);
+          API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        }
       }
     } catch (err) {
       alert(err.response?.data?.error || 'Authentication error');
@@ -1019,6 +1034,8 @@ function App() {
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('mihwar_user');
+    localStorage.removeItem('mihwar_token');
+    delete API.defaults.headers.common['Authorization'];
     delete API.defaults.headers.common['user-id'];
     setAuthView('login');
   };

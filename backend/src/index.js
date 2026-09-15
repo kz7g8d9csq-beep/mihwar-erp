@@ -2,15 +2,19 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const prisma = new PrismaClient();
 const app = express();
+
+const JWT_SECRET = process.env.JWT_SECRET || 'mihwar-erp-super-secure-token-secret-2026';
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// جدار الحماية وعزل المنشآت
+// جدار الحماية السيبراني وفحص التوكن المشفر (JWT Auth Guard)
 app.use(async (req, res, next) => {
   if (req.method === 'OPTIONS') return next();
 
@@ -19,33 +23,56 @@ app.use(async (req, res, next) => {
     return next();
   }
 
-  const userId = req.headers['user-id'];
-  if (!userId) {
-    return res.status(401).json({ error: 'غير مصرح لك بالوصول (Missing Auth Header)' });
+  // دعم التوثيق عبر JWT Token المشفر مع إمكانية التوافق المؤقت
+  let token = null;
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  }
+
+  const legacyUserId = req.headers['user-id'];
+
+  if (!token && !legacyUserId) {
+    return res.status(401).json({ error: 'غير مصرح لك بالوصول (Missing Authentication Token)' });
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
-    if (!user || !user.isActive) return res.status(401).json({ error: 'حساب المستخدم غير متاح أو معطل' });
+    let verifiedUserId = null;
+
+    if (token) {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      verifiedUserId = decoded.id;
+    } else if (legacyUserId) {
+      verifiedUserId = Number(legacyUserId);
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: verifiedUserId } });
+    if (!user || !user.isActive) {
+      return res.status(401).json({ error: 'جلسة الدخول منتهية أو تم تعطيل هذا الحساب' });
+    }
 
     req.companyId = user.companyId;
     req.userId = user.id;
     next();
   } catch (error) {
-    console.error('Middleware Error:', error);
-    res.status(500).json({ error: 'خطأ أثناء التحقق من الصلاحيات' });
+    return res.status(401).json({ error: 'رمز التوثيق الرقمي غير صالح أو منتهي الصلاحية' });
   }
 });
 
-// المصادقة
+// إنشاء مساحة عمل جديدة مع تشفير كلمة المرور بـ Bcrypt وتوليد JWT
 app.post(['/register', '/api/register', '/api/api/register'], async (req, res) => {
   const { businessName, clientName, email, phone, password } = req.body;
   try {
     if (!email || !password) return res.status(400).json({ error: 'البريد الإلكتروني وكلمة المرور مطلوبان' });
+    if (password.length < 8) return res.status(400).json({ error: 'يجب ألا تقل كلمة المرور عن 8 أحرف وأرقام' });
+
     const cleanEmail = email.trim().toLowerCase();
-    
     const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
     if (existingUser) return res.status(400).json({ error: 'البريد الإلكتروني مسجل مسبقاً' });
+
+    // تشفير كلمة المرور بتقنية التجزئة المتقدمة
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     const result = await prisma.$transaction(async (tx) => {
       const company = await tx.company.create({ data: { name: businessName || 'شركة جديدة' } });
@@ -53,33 +80,59 @@ app.post(['/register', '/api/register', '/api/api/register'], async (req, res) =
       const user = await tx.user.create({
         data: {
           companyId: company.id, roleId: adminRole.id, name: clientName || 'مدير',
-          email: cleanEmail, password: password, phone: phone || null
+          email: cleanEmail, password: hashedPassword, phone: phone || null
         }
       });
       return { company, user, role: adminRole };
     });
-    res.json({ message: 'تم إنشاء مساحة العمل بنجاح', user: result.user });
+
+    const token = jwt.sign({ id: result.user.id, companyId: result.company.id }, JWT_SECRET, { expiresIn: '7d' });
+    const userData = { id: result.user.id, email: result.user.email, name: result.user.name, role: result.role.name, businessName: result.company.name };
+
+    res.json({ message: 'تم إنشاء مساحة العمل بنجاح', user: userData, token });
   } catch (error) {
     res.status(500).json({ error: 'حدث خطأ أثناء إنشاء مساحة العمل' });
   }
 });
 
+// تسجيل الدخول مع فحص Bcrypt الآمن والترقية التلقائية للحسابات السابقة
 app.post(['/login', '/api/login', '/api/api/login'], async (req, res) => {
   const { email, password } = req.body;
   try {
+    if (!email || !password) return res.status(400).json({ error: 'البريد وكلمة المرور مطلوبان' });
     const cleanEmail = email.trim().toLowerCase();
     const user = await prisma.user.findUnique({ where: { email: cleanEmail }, include: { company: true, role: true } });
-    if (!user || user.password !== password) return res.status(401).json({ error: 'بيانات الدخول غير صحيحة' });
+    
+    if (!user) return res.status(401).json({ error: 'بيانات الدخول غير صحيحة' });
     if (!user.isActive) return res.status(403).json({ error: 'تم تعطيل هذا الحساب' });
 
+    let isPasswordValid = false;
+    const isBcryptHash = user.password.startsWith('$2a$') || user.password.startsWith('$2b$');
+
+    if (isBcryptHash) {
+      isPasswordValid = await bcrypt.compare(password, user.password);
+    } else {
+      // ترقية تلقائية للحسابات القديمة المسجلة قبل التشفير
+      if (user.password === password) {
+        isPasswordValid = true;
+        const newSalt = await bcrypt.genSalt(10);
+        const newHashed = await bcrypt.hash(password, newSalt);
+        await prisma.user.update({ where: { id: user.id }, data: { password: newHashed } });
+      }
+    }
+
+    if (!isPasswordValid) return res.status(401).json({ error: 'بيانات الدخول غير صحيحة' });
+
+    const token = jwt.sign({ id: user.id, companyId: user.companyId }, JWT_SECRET, { expiresIn: '7d' });
     const userData = { id: user.id, email: user.email, name: user.name, role: user.role?.name || 'مستخدم', businessName: user.company?.name || 'محور ERP' };
-    res.json({ message: 'تم تسجيل الدخول بنجاح', user: userData });
+
+    res.json({ message: 'تم تسجيل الدخول بنجاح', user: userData, token });
   } catch (error) {
-    res.status(500).json({ error: 'حدث خطأ في الخادم' });
+    res.status(500).json({ error: 'حدث خطأ في الخادم أثناء تسجيل الدخول' });
   }
 });
 
-// أمان الحساب
+// تغيير كلمة المرور بأمان مع تشفير Bcrypt
 app.post(['/change-password', '/api/change-password', '/api/api/change-password'], async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   try {
@@ -87,24 +140,43 @@ app.post(['/change-password', '/api/change-password', '/api/api/change-password'
     if (newPassword.length < 8) return res.status(400).json({ error: 'يجب ألا تقل كلمة المرور الجديدة عن 8 أحرف وأرقام' });
 
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!user || user.password !== currentPassword) {
-      return res.status(400).json({ error: 'كلمة المرور الحالية غير صحيحة' });
+    if (!user) return res.status(400).json({ error: 'المستخدم غير موجود' });
+
+    let isMatch = false;
+    if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
+      isMatch = await bcrypt.compare(currentPassword, user.password);
+    } else {
+      isMatch = (user.password === currentPassword);
     }
 
-    await prisma.user.update({ where: { id: req.userId }, data: { password: newPassword } });
-    res.json({ message: 'تم تحديث كلمة المرور بنجاح وبشكل آمن' });
+    if (!isMatch) return res.status(400).json({ error: 'كلمة المرور الحالية غير صحيحة' });
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedNew = await bcrypt.hash(newPassword, salt);
+    await prisma.user.update({ where: { id: req.userId }, data: { password: hashedNew } });
+
+    res.json({ message: 'تم تحديث كلمة المرور وتشفيرها بنجاح وبشكل آمن' });
   } catch (error) {
     res.status(500).json({ error: 'تعذر تحديث كلمة المرور' });
   }
 });
 
+// تعطيل وحذف الحساب بعد مطابقة Bcrypt
 app.post(['/delete-account', '/api/delete-account', '/api/api/delete-account'], async (req, res) => {
   const { confirmPassword } = req.body;
   try {
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!user || user.password !== confirmPassword) {
-      return res.status(400).json({ error: 'كلمة المرور غير مطابقة لتأكيد حذف الحساب' });
+    if (!user) return res.status(400).json({ error: 'المستخدم غير موجود' });
+
+    let isMatch = false;
+    if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
+      isMatch = await bcrypt.compare(confirmPassword, user.password);
+    } else {
+      isMatch = (user.password === confirmPassword);
     }
+
+    if (!isMatch) return res.status(400).json({ error: 'كلمة المرور غير مطابقة لتأكيد حذف الحساب' });
+
     await prisma.user.update({ where: { id: req.userId }, data: { isActive: false } });
     res.json({ message: 'تم تعطيل الحساب بنجاح' });
   } catch (error) {
@@ -276,7 +348,7 @@ app.post(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res
   }
 });
 
-// ==================== المبيعات والفوترة الذكية (متعددة الأصناف) ====================
+// ==================== المبيعات والفوترة الذكية ====================
 app.get(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
   try {
     const invoices = await prisma.invoice.findMany({
@@ -297,7 +369,6 @@ app.get(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
 app.post(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
   const { items, customerId, productId, quantity, price } = req.body;
   try {
-    // دعم استقبال سلة أصناف مجمعة أو صنف فردي
     let itemsToProcess = items;
     if (!itemsToProcess || !itemsToProcess.length) {
       if (productId && quantity) {
@@ -324,14 +395,13 @@ app.post(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
 
         if (!product) throw new Error(`المنتج رقم ${pId} غير موجود بالمخزن`);
         if (product.stock < q) {
-          throw new Error(`الرصيد غير كافٍ للمنتج "${product.name}"! المتاح بالمخزن: ${product.stock}`);
+          throw new Error(`الرصيد غير كافٍ للمنتج "${product.name}"! المتاح: ${product.stock}`);
         }
 
         const uPrice = it.price !== undefined ? Number(it.price) : product.price;
         const lineSubtotal = Number((uPrice * q).toFixed(2));
         totalSubtotal += lineSubtotal;
 
-        // خصم ذري فوري لكل صنف في السلة
         await tx.product.update({
           where: { id: pId },
           data: { stock: { decrement: q } }
@@ -376,7 +446,6 @@ app.post(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
 
     res.json({ message: 'تم إصدار الفاتورة واعتماد خصم جميع الأصناف بنجاح', invoice: result });
   } catch (error) {
-    console.error('Sales Error:', error);
     res.status(400).json({ error: error.message || 'فشلت عملية إصدار الفاتورة' });
   }
 });
@@ -467,5 +536,5 @@ app.post(['/purchases', '/api/purchases', '/api/api/purchases'], async (req, res
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`🚀 Mihwar ERP Backend is running on port ${PORT}`);
+  console.log(`🚀 Mihwar ERP Secure Backend is running on port ${PORT}`);
 });
