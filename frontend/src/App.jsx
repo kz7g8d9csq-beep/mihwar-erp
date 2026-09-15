@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
 import API from './services/api';
 
-// محرك تصدير Excel المؤسسي المعتمد: تصميم شركات فخم بدون تشويه للأرقام أو الحروف
-const exportToExcel = (sheetTitle, headers, rows) => {
+// محرك تصدير Excel المؤسسي الذكي (يدعم اللغتين العربية والإنجليزية وتغيير اتجاه الصفحة تلقائياً)
+const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
+  const isAr = lang === 'ar';
   const cleanTitle = sheetTitle.replace(/[/\\?*[\]]/g, '');
+  const brandName = isAr ? 'محور ERP' : 'Mihwar ERP';
+  const metaText = isAr
+    ? `تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')} | وثيقة معتمدة ومصدرة آلياً من النظام`
+    : `Export Date: ${new Date().toLocaleDateString('en-US')} | Official System Generated Report`;
+
+  const rightToLeftXml = isAr ? '<x:DisplayRightToLeft/>' : '';
+
   const template = `
     <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
     <head>
@@ -13,9 +21,9 @@ const exportToExcel = (sheetTitle, headers, rows) => {
         <x:ExcelWorkbook>
           <x:ExcelWorksheets>
             <x:ExcelWorksheet>
-              <x:Name>${cleanTitle}</x:Name>
+              <x:Name>${cleanTitle.slice(0, 31)}</x:Name>
               <x:WorksheetOptions>
-                <x:DisplayRightToLeft/>
+                ${rightToLeftXml}
               </x:WorksheetOptions>
             </x:ExcelWorksheet>
           </x:ExcelWorksheets>
@@ -23,20 +31,20 @@ const exportToExcel = (sheetTitle, headers, rows) => {
       </xml>
       <![endif]-->
       <style>
-        table { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; border-collapse: collapse; direction: rtl; width: 100%; }
+        table { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; border-collapse: collapse; direction: ${isAr ? 'rtl' : 'ltr'}; width: 100%; }
         .main-title { font-size: 16pt; font-weight: bold; color: #0f766e; text-align: center; padding: 12px; }
         .meta-text { font-size: 10pt; color: #64748b; text-align: center; padding-bottom: 10px; }
         th { background-color: #0f766e; color: #ffffff; font-weight: bold; border: 1px solid #042f2e; padding: 10px 14px; text-align: center; font-size: 11pt; }
-        td { border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 10pt; text-align: right; }
+        td { border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 10pt; text-align: ${isAr ? 'right' : 'left'}; }
         .text-cell { mso-number-format: "\\@"; text-align: center; }
-        .num-cell { mso-number-format: "#\\,##0\\.00"; text-align: right; }
+        .num-cell { mso-number-format: "#\\,##0\\.00"; text-align: ${isAr ? 'right' : 'right'}; }
       </style>
     </head>
     <body>
       <table>
         <thead>
-          <tr><td colspan="${headers.length}" class="main-title">محور ERP • ${cleanTitle}</td></tr>
-          <tr><td colspan="${headers.length}" class="meta-text">تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')} | وثيقة معتمدة ومصدرة آلياً</td></tr>
+          <tr><td colspan="${headers.length}" class="main-title">${brandName} • ${cleanTitle.replace(/_/g, ' ')}</td></tr>
+          <tr><td colspan="${headers.length}" class="meta-text">${metaText}</td></tr>
           <tr>
             ${headers.map(h => `<th>${h}</th>`).join('')}
           </tr>
@@ -46,7 +54,6 @@ const exportToExcel = (sheetTitle, headers, rows) => {
             <tr>
               ${row.map(cell => {
                 const str = String(cell ?? '');
-                // فحص إذا كانت الخلية رقم ضريبي أو جوال لمنع تحويلها إلى E+14
                 const isCodeOrPhone = /^\d{9,}$/.test(str) || str.startsWith('05') || str.startsWith('+');
                 const isCurrency = /^-?\d+(\.\d+)?$/.test(str) && !isCodeOrPhone;
                 if (isCodeOrPhone) {
@@ -180,6 +187,9 @@ const dict = {
     viewAndPrint: '👁️ معاينة وطباعة',
     printBtn: '🖨️ طباعة الفاتورة / تصدير PDF',
     exportExcelBtn: '📥 تصدير إلى Excel',
+    exportSalesBtn: '📥 تصدير المبيعات للإقرار الضريبي (Excel)',
+    exportPurchasesBtn: '📥 تصدير المشتريات ومصروفات التوريد (Excel)',
+    exportInventoryBtn: '📥 تصدير جرد المستودع (Excel)',
     closeModal: '✖ إغلاق',
     taxInvoiceTitle: 'فاتورة ضريبية مبسطة',
     vatRegNo: 'الرقم الضريبي:',
@@ -326,6 +336,9 @@ const dict = {
     viewAndPrint: '👁️ View & Print',
     printBtn: '🖨️ Print Invoice / PDF Export',
     exportExcelBtn: '📥 Export to Excel',
+    exportSalesBtn: '📥 Export Sales Tax Report (Excel)',
+    exportPurchasesBtn: '📥 Export Purchases & Inbound (Excel)',
+    exportInventoryBtn: '📥 Export Warehouse Audit (Excel)',
     closeModal: '✖ Close',
     taxInvoiceTitle: 'Simplified Tax Invoice',
     vatRegNo: 'VAT Registration No:',
@@ -558,58 +571,97 @@ function App() {
     }
   };
 
-  // وظائف التصدير المؤسسية (HTML Excel)
+  // وظائف التصدير المؤسسية (متعددة اللغات بالكامل)
   const handleExportSales = () => {
-    const headers = [
-      'رقم الفاتورة',
-      'العميل المستلم',
-      'تاريخ الإصدار',
-      'المبلغ الخاضع للضريبة (ر.س)',
-      'ضريبة القيمة المضافة 15% (ر.س)',
-      'الإجمالي المستحق (ر.س)',
-      'عدد البنود المباعة'
-    ];
+    const isAr = lang === 'ar';
+    const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
+    const headers = isAr
+      ? [
+          'رقم الفاتورة',
+          'العميل المستلم',
+          'تاريخ الإصدار',
+          'المبلغ الخاضع للضريبة (ر.س)',
+          'ضريبة القيمة المضافة 15% (ر.س)',
+          'الإجمالي المستحق (ر.س)',
+          'عدد البنود المباعة'
+        ]
+      : [
+          'Invoice Number',
+          'Client / Buyer',
+          'Issue Date',
+          'Taxable Amount (SAR)',
+          'VAT 15% (SAR)',
+          'Total Amount Due (SAR)',
+          'Items Count'
+        ];
+
     const rows = invoices.map(inv => [
       inv.invoiceNo,
-      inv.customer?.name || 'عميل نقدي عام',
+      inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'),
       new Date(inv.createdAt).toISOString().slice(0, 10),
       Number(inv.subtotal || 0).toFixed(2),
       Number(inv.taxAmount || 0).toFixed(2),
       Number(inv.totalAmount || 0).toFixed(2),
       inv.items ? inv.items.length : 1
     ]);
-    exportToExcel('تقرير_المبيعات_الضريبية', headers, rows);
+
+    exportToExcel(title, headers, rows, lang);
   };
 
   const handleExportPurchases = () => {
-    const headers = [
-      'رقم فاتورة الشراء',
-      'اسم المورد',
-      'تاريخ التوريد',
-      'المبلغ الأساسي (ر.س)',
-      'ضريبة المدخلات 15% (ر.س)',
-      'إجمالي فاتورة الشراء (ر.س)'
-    ];
+    const isAr = lang === 'ar';
+    const title = isAr ? 'تقرير_المشتريات_والتوريد' : 'Purchases_Inbound_Report';
+    const headers = isAr
+      ? [
+          'رقم فاتورة الشراء',
+          'اسم المورد',
+          'تاريخ التوريد',
+          'المبلغ الأساسي (ر.س)',
+          'ضريبة المدخلات 15% (ر.س)',
+          'إجمالي فاتورة الشراء (ر.س)'
+        ]
+      : [
+          'Purchase Invoice #',
+          'Supplier Name',
+          'Inbound Date',
+          'Base Amount (SAR)',
+          'Input VAT 15% (SAR)',
+          'Total Purchase Cost (SAR)'
+        ];
+
     const rows = purchaseInvoices.map(p => [
       p.invoiceNo,
-      p.supplier?.name || 'توريد نقدي مباشر',
+      p.supplier?.name || (isAr ? 'توريد نقدي مباشر' : 'Direct Cash Inbound'),
       new Date(p.createdAt).toISOString().slice(0, 10),
       Number(p.subtotal || 0).toFixed(2),
       Number(p.taxAmount || 0).toFixed(2),
       Number(p.totalAmount || 0).toFixed(2)
     ]);
-    exportToExcel('تقرير_المشتريات_والتوريد', headers, rows);
+
+    exportToExcel(title, headers, rows, lang);
   };
 
   const handleExportInventory = () => {
-    const headers = [
-      'اسم المنتج',
-      'رمز الصنف (SKU)',
-      'الرصيد الفعلي بالمستودع',
-      'سعر التكلفة للوحدة (ر.س)',
-      'سعر البيع الافتراضي (ر.س)',
-      'إجمالي القيمة التقديرية (ر.س)'
-    ];
+    const isAr = lang === 'ar';
+    const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
+    const headers = isAr
+      ? [
+          'اسم المنتج',
+          'رمز الصنف (SKU)',
+          'الرصيد الفعلي بالمستودع',
+          'سعر التكلفة للوحدة (ر.س)',
+          'سعر البيع الافتراضي (ر.س)',
+          'إجمالي القيمة التقديرية (ر.س)'
+        ]
+      : [
+          'Product Name',
+          'SKU Code',
+          'Available Stock',
+          'Unit Cost (SAR)',
+          'Sale Price (SAR)',
+          'Total Valuation (SAR)'
+        ];
+
     const rows = inventory.map(i => [
       i.name,
       i.sku || '-',
@@ -618,39 +670,62 @@ function App() {
       Number(i.price).toFixed(2),
       (Number(i.price) * Number(i.stock)).toFixed(2)
     ]);
-    exportToExcel('تقرير_جرد_المستودع_الحي', headers, rows);
+
+    exportToExcel(title, headers, rows, lang);
   };
 
   const handleExportCustomers = () => {
-    const headers = [
-      'اسم العميل / المؤسسة',
-      'الهوية / السجل التجاري أو الضريبي',
-      'رقم الهاتف / الجوال',
-      'البريد الإلكتروني'
-    ];
+    const isAr = lang === 'ar';
+    const title = isAr ? 'دليل_العملاء_المعتمدين' : 'Registered_Clients_Directory';
+    const headers = isAr
+      ? [
+          'اسم العميل / المؤسسة',
+          'الهوية / السجل التجاري أو الضريبي',
+          'رقم الهاتف / الجوال',
+          'البريد الإلكتروني'
+        ]
+      : [
+          'Client / Business Name',
+          'National ID / CR / Tax No',
+          'Phone / Mobile',
+          'Email Address'
+        ];
+
     const rows = customers.map(c => [
       c.name,
       c.nationalId || '-',
       c.phone || '-',
       c.email || '-'
     ]);
-    exportToExcel('دليل_العملاء_المعتمدين', headers, rows);
+
+    exportToExcel(title, headers, rows, lang);
   };
 
   const handleExportSuppliers = () => {
-    const headers = [
-      'اسم الشركة الموردة',
-      'الرقم الضريبي / السجل التجاري',
-      'رقم الهاتف ومسؤول المبيعات',
-      'البريد الإلكتروني'
-    ];
+    const isAr = lang === 'ar';
+    const title = isAr ? 'دليل_الموردين_المعتمدين' : 'Approved_Suppliers_Directory';
+    const headers = isAr
+      ? [
+          'اسم الشركة الموردة',
+          'الرقم الضريبي / السجل التجاري',
+          'رقم الهاتف ومسؤول المبيعات',
+          'البريد الإلكتروني'
+        ]
+      : [
+          'Supplier / Company Name',
+          'Tax ID / CR Number',
+          'Phone / Sales Rep',
+          'Email Address'
+        ];
+
     const rows = suppliers.map(s => [
       s.name,
       s.taxNumber || '-',
       s.phone || '-',
       s.email || '-'
     ]);
-    exportToExcel('دليل_الموردين_المعتمدين', headers, rows);
+
+    exportToExcel(title, headers, rows, lang);
   };
 
   // سلة الفاتورة
@@ -1640,7 +1715,7 @@ function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <h3 style={{ margin: 0, color: theme.textDark }}>{t.stockRepo}</h3>
                 <button onClick={handleExportInventory} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  📥 تصدير جرد المستودع (Excel)
+                  {t.exportInventoryBtn}
                 </button>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
@@ -1668,12 +1743,11 @@ function App() {
         {/* التقارير والفواتير مع أزرار التصدير لـ Excel */}
         {activeTab === 'reports' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-            {/* جدول المبيعات */}
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <h2 style={{ margin: 0, color: theme.textDark, fontSize: '18px' }}>{t.invRepo}</h2>
                 <button onClick={handleExportSales} style={{ background: '#0f766e', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  📥 تصدير المبيعات للإقرار الضريبي (Excel)
+                  {t.exportSalesBtn}
                 </button>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
@@ -1719,12 +1793,11 @@ function App() {
               </table>
             </div>
 
-            {/* جدول المشتريات */}
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <h2 style={{ margin: 0, color: theme.textDark, fontSize: '18px' }}>{t.purchasesRepo}</h2>
                 <button onClick={handleExportPurchases} style={{ background: '#f59e0b', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  📥 تصدير المشتريات ومصروفات التوريد (Excel)
+                  {t.exportPurchasesBtn}
                 </button>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
