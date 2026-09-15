@@ -25,8 +25,8 @@ const dict = {
     purchasesTotal: 'إجمالي المشتريات (شامل الضريبة)',
     netProfit: 'صافي الربح التقديري',
     profitMargin: 'هامش الربحية',
-    lowStockTitle: '⚠️ رادار نواقص المخزون (أقل من 5 وحدات)',
-    lowStockClean: '✅ مستويات المخزون ممتازة، لا توجد أصناف أوشكت على النفاد.',
+    lowStockTitle: '⚠️ رادار نواقص المخزون',
+    lowStockClean: '✅ مستويات المخزون ممتازة، لا توجد أصناف تحت الحد المحدد.',
     reorderBtn: 'طلب توريد فوراً',
     topSellingTitle: '🏆 تقرير أداء المنتجات وربحية الأصناف',
     productCol: 'المنتج',
@@ -168,7 +168,7 @@ const dict = {
     purchasesTotal: 'Gross Purchases (Incl. VAT)',
     netProfit: 'Estimated Net Profit',
     profitMargin: 'Profit Margin',
-    lowStockTitle: '⚠️ Low Stock Radar (≤ 5 units)',
+    lowStockTitle: '⚠️ Low Stock Radar',
     lowStockClean: '✅ Warehouse inventory levels are optimal. No shortages detected.',
     reorderBtn: 'Reorder Now',
     topSellingTitle: '🏆 Product Performance & Profitability',
@@ -384,6 +384,14 @@ function App() {
   const [purchaseQty, setPurchaseQty] = useState(10);
   const [purchaseCost, setPurchaseCost] = useState('');
   const [isSubmittingPurchase, setIsSubmittingPurchase] = useState(false);
+
+  // إعداد حد نواقص المخزون القابل للتخصيص
+  const [lowStockThreshold, setLowStockThreshold] = useState(() => {
+    const saved = localStorage.getItem('mihwar_low_stock_threshold');
+    return saved ? Number(saved) : 5;
+  });
+  const [isEditingThreshold, setIsEditingThreshold] = useState(false);
+  const [tempThreshold, setTempThreshold] = useState(lowStockThreshold);
 
   const [printingInvoice, setPrintingInvoice] = useState(null);
 
@@ -638,8 +646,8 @@ function App() {
   const netProfitVal = totalRevenuePreTax - totalCOGS;
   const marginPercentage = totalRevenuePreTax > 0 ? ((netProfitVal / totalRevenuePreTax) * 100).toFixed(1) : '0.0';
 
-  // رادار نواقص المخزون (أقل من أو يساوي 5 وحدات)
-  const lowStockItems = inventory.filter(i => Number(i.stock) <= 5);
+  // رادار نواقص المخزون ديناميكي حسب الحد المخصص
+  const lowStockItems = inventory.filter(i => Number(i.stock) <= lowStockThreshold);
 
   const salesSubtotal = (Number(amount) || 0) * (Number(qty) || 0);
   const salesTax = salesSubtotal * 0.15;
@@ -771,7 +779,6 @@ function App() {
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark }}>
       
-      {/* ستايل الطباعة المنعزل */}
       <style>{`
         @media print {
           header, .main-navbar, main, .no-print-zone {
@@ -855,7 +862,7 @@ function App() {
       </div>
 
       <main style={{ padding: '30px', maxWidth: '1400px', margin: 'auto' }}>
-        {/* لوحة التحكم والتحليلات المالية والتشغيلية المتقدمة */}
+        {/* لوحة التحكم والتحليلات */}
         {activeTab === 'dashboard' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -865,7 +872,7 @@ function App() {
               </span>
             </div>
 
-            {/* بطاقات المؤشرات المالية الحيوية (KPIs) */}
+            {/* بطاقات المؤشرات المالية الحيوية */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
               <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}`, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                 <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.invValue}</p>
@@ -892,17 +899,67 @@ function App() {
               </div>
             </div>
 
-            {/* رادار نواقص المخزون والتنبيه الذكي */}
+            {/* رادار نواقص المخزون مع إمكانية تعديل الحد المخصص */}
             <div style={{ background: lowStockItems.length > 0 ? (isDark ? '#450a0a' : '#fff1f2') : theme.cardBg, border: `1px solid ${lowStockItems.length > 0 ? '#fecdd3' : theme.border}`, borderRadius: '14px', padding: '22px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: lowStockItems.length > 0 ? '15px' : '0' }}>
-                <h3 style={{ margin: 0, fontSize: '16px', color: lowStockItems.length > 0 ? '#be123c' : theme.textDark }}>
-                  {t.lowStockTitle}
-                </h3>
-                {lowStockItems.length > 0 && (
-                  <span style={{ background: '#be123c', color: '#fff', fontSize: '11px', fontWeight: 'bold', padding: '3px 8px', borderRadius: '6px' }}>
-                    {lowStockItems.length} أصناف
-                  </span>
-                )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: lowStockItems.length > 0 ? '15px' : '0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', color: lowStockItems.length > 0 ? '#be123c' : theme.textDark }}>
+                    {t.lowStockTitle} ({lang === 'ar' ? `الحد الحالي: ≤ ${lowStockThreshold} وحدات` : `Limit: ≤ ${lowStockThreshold} units`})
+                  </h3>
+                  {lowStockItems.length > 0 && (
+                    <span style={{ background: '#be123c', color: '#fff', fontSize: '11px', fontWeight: 'bold', padding: '3px 8px', borderRadius: '6px' }}>
+                      {lowStockItems.length} {lang === 'ar' ? 'أصناف' : 'items'}
+                    </span>
+                  )}
+                </div>
+
+                {/* خيار تعديل حد النواقص الذي طلبته */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {isEditingThreshold ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: theme.textDark }}>{lang === 'ar' ? 'حدد الحد الأدنى:' : 'New limit:'}</span>
+                      <input 
+                        type="number" 
+                        min="1" 
+                        value={tempThreshold} 
+                        onChange={e => setTempThreshold(e.target.value)} 
+                        style={{ width: '65px', padding: '5px 8px', borderRadius: '6px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, textAlign: 'center', fontWeight: 'bold', fontSize: '13px' }} 
+                      />
+                      <button 
+                        onClick={() => {
+                          const val = Number(tempThreshold);
+                          if (val > 0) {
+                            setLowStockThreshold(val);
+                            localStorage.setItem('mihwar_low_stock_threshold', String(val));
+                          }
+                          setIsEditingThreshold(false);
+                        }} 
+                        style={{ background: theme.primary, color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                      >
+                        {lang === 'ar' ? 'حفظ' : 'Save'}
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setTempThreshold(lowStockThreshold);
+                          setIsEditingThreshold(false);
+                        }} 
+                        style={{ background: '#94a3b8', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                      >
+                        {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        setTempThreshold(lowStockThreshold);
+                        setIsEditingThreshold(true);
+                      }} 
+                      style={{ background: isDark ? '#334155' : '#e2e8f0', color: theme.textDark, border: `1px solid ${theme.border}`, padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      ⚙️ {lang === 'ar' ? `تعديل حد النواقص (${lowStockThreshold})` : `Adjust Limit (${lowStockThreshold})`}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {lowStockItems.length === 0 ? (
@@ -914,7 +971,7 @@ function App() {
                       <div>
                         <strong style={{ fontSize: '14px', color: theme.textDark }}>{item.name}</strong>
                         <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#e11d48', fontWeight: 'bold' }}>
-                          المتبقي: {item.stock} وحدة فقط!
+                          المتبقي بالمخزن: {item.stock} وحدة فقط!
                         </p>
                       </div>
                       <button onClick={() => { setSelectedPurchaseProdId(item.id); setActiveTab('purchases'); }} style={{ background: theme.accentAmber, color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
@@ -945,7 +1002,7 @@ function App() {
                     <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: theme.textMuted }}>لا توجد منتجات مسجلة حتى الآن.</td></tr>
                   ) : inventory.map(prod => {
                     const unitProfit = Number(prod.price) - Number(prod.cost || prod.price);
-                    const isLow = Number(prod.stock) <= 5;
+                    const isLow = Number(prod.stock) <= lowStockThreshold;
                     return (
                       <tr key={prod.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
                         <td style={{ padding: '10px', fontWeight: 'bold' }}>{prod.name}</td>
@@ -957,7 +1014,7 @@ function App() {
                         </td>
                         <td style={{ padding: '10px' }}>
                           <span style={{ background: isLow ? '#fee2e2' : '#dcfce7', color: isLow ? '#be123c' : '#15803d', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold' }}>
-                            {isLow ? 'منخفض' : 'متوفر'}
+                            {isLow ? `نواقص (≤ ${lowStockThreshold})` : 'متوفر'}
                           </span>
                         </td>
                       </tr>
