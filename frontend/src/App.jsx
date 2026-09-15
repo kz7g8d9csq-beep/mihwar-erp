@@ -1,22 +1,19 @@
 import { useState, useEffect } from 'react';
 import API from './services/api';
 
-// قواميس اللغات
+// قاموس اللغات المتكامل
 const dict = {
   ar: {
     brand: 'محور ERP',
     tagline: 'إدارة متكاملة برؤية مستقبلية.',
     taglineSub: 'نظام سحابي متطور لربط كافة أقسام منشأتك.',
     workspace: 'مساحة العمل:',
-    logout: 'خروج',
-    security: 'الأمان والحساب',
-    darkMode: 'الوضع الليلي 🌙',
-    lightMode: 'الوضع النهاري ☀️',
     dashboard: '📊 لوحة التحكم',
-    sales: '🛍️ المبيعات والفوترة',
+    sales: '🛍️ المبيعات والفوترة الذكية',
     customers: '👥 فتح حساب عميل',
     inventory: '📦 المخزون (حي)',
     reports: '📈 الفواتير والتقارير',
+    settings: '⚙️ الإعدادات',
     welcome: 'مرحباً بك،',
     invValue: 'قيمة المخزون الحالي (TiDB)',
     salesTotal: 'إجمالي المبيعات مع الضريبة',
@@ -62,29 +59,39 @@ const dict = {
     saveProd: 'حفظ في قاعدة البيانات',
     stockRepo: '📦 مستودع المنتجات (متصل بـ TiDB)',
     availableStock: 'الرصيد الفعلي',
-    changePassTitle: '🔒 أمان الحساب وتغيير كلمة المرور',
+    
+    // شاشة الإعدادات
+    settingsHeader: 'مركز إعدادات النظام وتخصيص الحساب',
+    settingsSub: 'التحكم في المظهر واللغة والأمان المشدد لمنشأتك',
+    prefTitle: '🌐 تفضيلات اللغة والمظهر',
+    prefDesc: 'تخصيص لغة النظام ونمط الشاشة لتناسب استخدامك',
+    langLabel: 'لغة النظام:',
+    themeLabel: 'نمط العرض:',
+    darkMode: 'الوضع الليلي 🌙',
+    lightMode: 'الوضع النهاري ☀️',
+    securityTitle: '🔒 حماية الحساب وتغيير كلمة المرور',
+    securityDesc: 'تغيير كلمة المرور بضوابط أمان مشددة (8 خانات كحد أدنى)',
     oldPass: 'كلمة المرور الحالية',
     newPass: 'كلمة المرور الجديدة (8 خانات فأكثر)',
-    updatePassBtn: 'تحديث كلمة المرور',
-    deleteAccTitle: '⚠️ منطقة الخطر: حذف الحساب',
-    deleteAccNote: 'سيتم تعطيل حسابك بشكل نهائي، أدخل كلمة المرور للتأكيد:',
-    deleteAccBtn: 'حذف الحساب نهائياً',
-    close: 'إغلاق'
+    updatePassBtn: 'تحديث كلمة المرور فوراً',
+    sessionTitle: '🚪 الجلسة وإدارة الحساب',
+    sessionDesc: 'تسجيل الخروج أو إيقاف الحساب نهائياً',
+    logoutBtn: 'تسجيل الخروج من النظام',
+    dangerZoneTitle: '⚠️ منطقة الخطر: تعطيل وحذف الحساب',
+    dangerZoneDesc: 'سيتم تعطيل الحساب وحظر الدخول نهائياً. أدخل كلمة المرور للتأكيد:',
+    deleteAccBtn: 'تعطيل الحساب نهائياً'
   },
   en: {
     brand: 'Mihwar ERP',
     tagline: 'Enterprise Management Reimagined.',
     taglineSub: 'Next-generation cloud ERP connecting every department.',
     workspace: 'Workspace:',
-    logout: 'Logout',
-    security: 'Account & Security',
-    darkMode: 'Dark Mode 🌙',
-    lightMode: 'Light Mode ☀️',
     dashboard: '📊 Dashboard',
     sales: '🛍️ Smart Sales',
     customers: '👥 Client Directory',
     inventory: '📦 Live Inventory',
     reports: '📈 Invoices & Reports',
+    settings: '⚙️ Settings',
     welcome: 'Welcome,',
     invValue: 'Total Inventory Value (TiDB)',
     salesTotal: 'Total Sales (Incl. VAT)',
@@ -130,21 +137,33 @@ const dict = {
     saveProd: 'Save to TiDB Database',
     stockRepo: '📦 Warehouse Products (TiDB Connected)',
     availableStock: 'Available Stock',
-    changePassTitle: '🔒 Account Security & Password',
+
+    // Settings Screen
+    settingsHeader: 'System Settings & Account Management',
+    settingsSub: 'Control enterprise preferences, display, language, and security',
+    prefTitle: '🌐 Language & Display Preferences',
+    prefDesc: 'Customize interface language and visual workspace theme',
+    langLabel: 'System Language:',
+    themeLabel: 'Color Theme:',
+    darkMode: 'Dark Mode 🌙',
+    lightMode: 'Light Mode ☀️',
+    securityTitle: '🔒 Account Security & Password',
+    securityDesc: 'Update your password under strict security rules (8+ characters)',
     oldPass: 'Current Password',
     newPass: 'New Password (8+ characters)',
-    updatePassBtn: 'Update Password',
-    deleteAccTitle: '⚠️ Danger Zone: Delete Account',
-    deleteAccNote: 'Your account will be permanently deactivated. Enter password to confirm:',
-    deleteAccBtn: 'Permanently Deactivate Account',
-    close: 'Close'
+    updatePassBtn: 'Update Password Now',
+    sessionTitle: '🚪 Session & Account Controls',
+    sessionDesc: 'Sign out or manage permanent account status',
+    logoutBtn: 'Sign Out from System',
+    dangerZoneTitle: '⚠️ Danger Zone: Deactivate Account',
+    dangerZoneDesc: 'Your account will be permanently deactivated. Enter password to confirm:',
+    deleteAccBtn: 'Permanently Deactivate Account'
   }
 };
 
 function App() {
   const [lang, setLang] = useState('ar');
   const [isDark, setIsDark] = useState(false);
-  const [showSecurityModal, setShowSecurityModal] = useState(false);
 
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('mihwar_user');
@@ -189,7 +208,7 @@ function App() {
   const [amount, setAmount] = useState('');
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
-  // الأمان
+  // أمان الحساب
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [deleteConfirmPass, setDeleteConfirmPass] = useState('');
@@ -360,7 +379,6 @@ function App() {
       alert(`✅ ${res.data.message}`);
       setCurrentPass('');
       setNewPass('');
-      setShowSecurityModal(false);
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to change password');
     }
@@ -413,7 +431,6 @@ function App() {
     localStorage.removeItem('mihwar_user');
     delete API.defaults.headers.common['user-id'];
     setAuthView('login');
-    setShowSecurityModal(false);
   };
 
   const currentSubtotal = (Number(amount) || 0) * (Number(qty) || 0);
@@ -484,55 +501,42 @@ function App() {
 
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark }}>
-      {/* الترويسة الرئيسية */}
-      <header style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '12px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+      
+      {/* الترويسة العلوية النظيفة والأنيقة (دون أزرار متناثرة) */}
+      <header style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 35px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          {/* أيقونة الشركة والشعار */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #0f766e, #0f172a)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '900', fontSize: '18px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+            {/* أيقونة الشركة الرسمية */}
+            <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #0f766e, #0f172a)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '18px', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}>
               🏢
             </div>
-            <span style={{ fontWeight: '900', color: theme.textDark, fontSize: '18px' }}>{t.brand}</span>
+            <span style={{ fontWeight: '900', color: theme.textDark, fontSize: '19px' }}>{t.brand}</span>
           </div>
-          <span style={{ fontSize: '13px', background: isDark ? '#334155' : '#f1f5f9', padding: '6px 12px', borderRadius: '6px' }}>
+          <span style={{ fontSize: '13px', background: isDark ? '#334155' : '#f1f5f9', padding: '6px 14px', borderRadius: '8px', color: theme.textDark }}>
             {t.workspace} <strong>{businessName}</strong>
           </span>
         </div>
 
-        {/* أدوات التحكم: اللغة، الوضع الليلي، الأمان، الخروج */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* تبديل اللغة */}
-          <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textDark, padding: '7px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
-            🌐 {lang === 'ar' ? 'English' : 'عربي'}
-          </button>
-
-          {/* تبديل الوضع الليلي / النهاري */}
-          <button onClick={() => setIsDark(!isDark)} style={{ background: 'transparent', border: `1px solid ${theme.border}`, color: theme.textDark, padding: '7px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-            {isDark ? t.lightMode : t.darkMode}
-          </button>
-
-          {/* زر إعدادات الأمان */}
-          <button onClick={() => setShowSecurityModal(true)} style={{ background: isDark ? '#334155' : '#e2e8f0', border: 'none', color: theme.textDark, padding: '7px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-            ⚙️ {t.security}
-          </button>
-
-          {/* تسجيل الخروج */}
-          <button onClick={handleLogout} style={{ background: '#fee2e2', border: 'none', color: '#dc2626', padding: '7px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-            🚪 {t.logout}
-          </button>
+        {/* بطاقة المستخدم المعتمدة */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: theme.primary, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}>
+            {user.name ? user.name[0] : 'U'}
+          </div>
+          <span style={{ fontSize: '14px', fontWeight: '800', color: theme.textDark }}>{user.name}</span>
         </div>
       </header>
 
-      {/* شريط الأقسام */}
+      {/* الشريط الأسود الرئيسي: وضعت الإعدادات في المكان المؤشر عليه */}
       <div style={{ background: theme.secondary, color: '#fff', padding: '0 30px', display: 'flex', gap: '4px', fontSize: '13px', overflowX: 'auto' }}>
         {[
           { id: 'dashboard', label: t.dashboard },
           { id: 'sales', label: t.sales },
           { id: 'customers', label: t.customers },
           { id: 'inventory', label: t.inventory },
-          { id: 'reports', label: t.reports }
+          { id: 'reports', label: t.reports },
+          { id: 'settings', label: t.settings } // 👈 الخيار الذي طلبته هنا
         ].map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ background: activeTab === tab.id ? theme.primary : 'transparent', border: 'none', color: '#fff', cursor: 'pointer', padding: '16px 20px', fontWeight: activeTab === tab.id ? 'bold' : 'normal', whiteSpace: 'nowrap' }}>
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ background: activeTab === tab.id ? theme.primary : 'transparent', border: 'none', color: '#fff', cursor: 'pointer', padding: '16px 20px', fontWeight: activeTab === tab.id ? 'bold' : 'normal', whiteSpace: 'nowrap', transition: '0.2s' }}>
             {tab.label}
           </button>
         ))}
@@ -776,35 +780,91 @@ function App() {
             </table>
           </div>
         )}
-      </main>
 
-      {/* نافذة الأمان والحساب المنبثقة */}
-      {showSecurityModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: theme.cardBg, padding: '30px', borderRadius: '16px', width: '90%', maxWidth: '480px', border: `1px solid ${theme.border}`, boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ margin: 0, fontSize: '18px', color: theme.textDark }}>{t.security}</h2>
-              <button onClick={() => setShowSecurityModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
+        {/* ⚙️ مركز الإعدادات المتكامل (القسم الجديد في الشريط) */}
+        {activeTab === 'settings' && (
+          <div>
+            <div style={{ marginBottom: '25px' }}>
+              <h1 style={{ margin: '0 0 8px 0', fontSize: '24px', color: theme.textDark }}>{t.settingsHeader}</h1>
+              <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{t.settingsSub}</p>
             </div>
 
-            {/* تغيير كلمة المرور المشدد */}
-            <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderBottom: `1px solid ${theme.border}`, paddingBottom: '20px', marginBottom: '20px' }}>
-              <h4 style={{ margin: 0, color: theme.primary }}>{t.changePassTitle}</h4>
-              <input type="password" placeholder={t.oldPass} value={currentPass} onChange={e=>setCurrentPass(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark }} />
-              <input type="password" placeholder={t.newPass} value={newPass} onChange={e=>setNewPass(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark }} />
-              <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '10px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.updatePassBtn}</button>
-            </form>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '25px' }}>
+              {/* بطاقة 1: اللغة والمظهر */}
+              <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 6px 0', color: theme.textDark }}>{t.prefTitle}</h3>
+                  <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.prefDesc}</p>
+                </div>
 
-            {/* منطقة الخطر: حذف الحساب */}
-            <form onSubmit={handleDeleteAccount} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <h4 style={{ margin: 0, color: '#dc2626' }}>{t.deleteAccTitle}</h4>
-              <p style={{ margin: 0, fontSize: '12px', color: theme.textMuted }}>{t.deleteAccNote}</p>
-              <input type="password" placeholder={t.oldPass} value={deleteConfirmPass} onChange={e=>setDeleteConfirmPass(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark }} />
-              <button type="submit" style={{ background: '#dc2626', color: '#fff', padding: '10px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.deleteAccBtn}</button>
-            </form>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div>
+                    <label style={{ fontSize: '13px', fontWeight: 'bold', color: theme.textDark, display: 'block', marginBottom: '8px' }}>{t.langLabel}</label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button onClick={() => setLang('ar')} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `2px solid ${lang === 'ar' ? theme.primary : theme.border}`, background: lang === 'ar' ? theme.primary : 'transparent', color: lang === 'ar' ? '#fff' : theme.textDark, fontWeight: 'bold', cursor: 'pointer' }}>
+                        🇸🇦 العربية
+                      </button>
+                      <button onClick={() => setLang('en')} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `2px solid ${lang === 'en' ? theme.primary : theme.border}`, background: lang === 'en' ? theme.primary : 'transparent', color: lang === 'en' ? '#fff' : theme.textDark, fontWeight: 'bold', cursor: 'pointer' }}>
+                        🇺🇸 English
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '13px', fontWeight: 'bold', color: theme.textDark, display: 'block', marginBottom: '8px' }}>{t.themeLabel}</label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button onClick={() => setIsDark(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `2px solid ${!isDark ? theme.primary : theme.border}`, background: !isDark ? theme.primary : 'transparent', color: !isDark ? '#fff' : theme.textDark, fontWeight: 'bold', cursor: 'pointer' }}>
+                        {t.lightMode}
+                      </button>
+                      <button onClick={() => setIsDark(true)} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `2px solid ${isDark ? theme.primary : theme.border}`, background: isDark ? theme.primary : 'transparent', color: isDark ? '#fff' : theme.textDark, fontWeight: 'bold', cursor: 'pointer' }}>
+                        {t.darkMode}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* بطاقة 2: أمان الحساب وتغيير كلمة المرور */}
+              <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+                <h3 style={{ margin: '0 0 6px 0', color: theme.textDark }}>{t.securityTitle}</h3>
+                <p style={{ margin: '0 0 15px 0', color: theme.textMuted, fontSize: '13px' }}>{t.securityDesc}</p>
+
+                <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <input type="password" placeholder={t.oldPass} value={currentPass} onChange={e=>setCurrentPass(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark }} />
+                  <input type="password" placeholder={t.newPass} value={newPass} onChange={e=>setNewPass(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark }} />
+                  <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                    {t.updatePassBtn}
+                  </button>
+                </form>
+              </div>
+
+              {/* بطاقة 3: الجلسة وحذف الحساب */}
+              <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '20px' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 6px 0', color: theme.textDark }}>{t.sessionTitle}</h3>
+                  <p style={{ margin: '0 0 15px 0', color: theme.textMuted, fontSize: '13px' }}>{t.sessionDesc}</p>
+
+                  <button onClick={handleLogout} style={{ width: '100%', background: '#fee2e2', color: '#dc2626', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
+                    🚪 {t.logoutBtn}
+                  </button>
+                </div>
+
+                {/* منطقة الخطر */}
+                <div style={{ borderTop: `1px dashed ${theme.border}`, paddingTop: '15px' }}>
+                  <h4 style={{ margin: '0 0 6px 0', color: '#dc2626' }}>{t.dangerZoneTitle}</h4>
+                  <p style={{ margin: '0 0 10px 0', color: theme.textMuted, fontSize: '12px' }}>{t.dangerZoneDesc}</p>
+                  <form onSubmit={handleDeleteAccount} style={{ display: 'flex', gap: '10px' }}>
+                    <input type="password" placeholder={t.oldPass} value={deleteConfirmPass} onChange={e=>setDeleteConfirmPass(e.target.value)} required style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark }} />
+                    <button type="submit" style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                      {t.deleteAccBtn}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </main>
     </div>
   );
 }
