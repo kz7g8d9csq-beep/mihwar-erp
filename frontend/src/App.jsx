@@ -8,7 +8,7 @@ const dict = {
     tagline: 'إدارة متكاملة برؤية مستقبلية.',
     taglineSub: 'نظام سحابي متطور لربط كافة أقسام منشأتك.',
     workspace: 'مساحة العمل:',
-    dashboard: '📊 لوحة التحكم',
+    dashboard: '📊 لوحة التحكم والتحليلات',
     sales: '🛍️ المبيعات والفوترة',
     purchases: '📥 المشتريات والتوريد',
     customers: '👥 العملاء',
@@ -17,12 +17,25 @@ const dict = {
     reports: '📈 الفواتير والتقارير',
     settings: '⚙️ الإعدادات',
     welcome: 'مرحباً بك،',
-    invValue: 'قيمة المخزون الحالي (TiDB)',
-    salesTotal: 'إجمالي المبيعات مع الضريبة',
-    purchasesTotal: 'إجمالي المشتريات مع الضريبة',
-    customersTotal: 'العملاء المسجلين',
-    suppliersTotal: 'الموردين المسجلين',
     currency: 'ر.س',
+
+    // بطاقات التحليلات
+    invValue: 'قيمة المخزون الإجمالية',
+    salesTotal: 'إجمالي المبيعات (شامل الضريبة)',
+    purchasesTotal: 'إجمالي المشتريات (شامل الضريبة)',
+    netProfit: 'صافي الربح التقديري',
+    profitMargin: 'هامش الربحية',
+    lowStockTitle: '⚠️ رادار نواقص المخزون (أقل من 5 وحدات)',
+    lowStockClean: '✅ مستويات المخزون ممتازة، لا توجد أصناف أوشكت على النفاد.',
+    reorderBtn: 'طلب توريد فوراً',
+    topSellingTitle: '🏆 تقرير أداء المنتجات وربحية الأصناف',
+    productCol: 'المنتج',
+    stockCol: 'الرصيد الحالي',
+    priceCol: 'سعر البيع',
+    costCol: 'التكلفة',
+    unitProfitCol: 'ربح الوحدة',
+    statusCol: 'حالة التوفر',
+    cashflowTitle: 'ميزان التدفق المالي (المبيعات مقابل المشتريات)',
 
     // العملاء
     addNewCust: '👤 فتح حساب عميل جديد',
@@ -78,7 +91,7 @@ const dict = {
     confirmPurchaseBtn: '📦 اعتماد الفاتورة وتوريد المخزون',
     purchaseVatNote: '💡 ستتم زيادة رصيد المستودع فوراً وتحديث تكلفة الصنف آلياً.',
 
-    // التقارير والطباعة
+    // الفواتير والطباعة
     invRepo: 'سجل الفواتير والمبيعات المعتمدة',
     purchasesRepo: 'سجل فواتير المشتريات والتوريد',
     invNo: 'رقم الفاتورة',
@@ -138,7 +151,7 @@ const dict = {
     tagline: 'Enterprise Management Reimagined.',
     taglineSub: 'Next-generation cloud ERP connecting every department.',
     workspace: 'Workspace:',
-    dashboard: '📊 Dashboard',
+    dashboard: '📊 Dashboard & Analytics',
     sales: '🛍️ Sales & POS',
     purchases: '📥 Purchasing & Inbound',
     customers: '👥 Clients',
@@ -147,12 +160,25 @@ const dict = {
     reports: '📈 Reports & Invoices',
     settings: '⚙️ Settings',
     welcome: 'Welcome,',
-    invValue: 'Inventory Value (TiDB)',
-    salesTotal: 'Total Sales (Incl. VAT)',
-    purchasesTotal: 'Total Purchases (Incl. VAT)',
-    customersTotal: 'Registered Clients',
-    suppliersTotal: 'Registered Suppliers',
     currency: 'SAR',
+
+    // Analytics
+    invValue: 'Total Inventory Valuation',
+    salesTotal: 'Gross Sales (Incl. VAT)',
+    purchasesTotal: 'Gross Purchases (Incl. VAT)',
+    netProfit: 'Estimated Net Profit',
+    profitMargin: 'Profit Margin',
+    lowStockTitle: '⚠️ Low Stock Radar (≤ 5 units)',
+    lowStockClean: '✅ Warehouse inventory levels are optimal. No shortages detected.',
+    reorderBtn: 'Reorder Now',
+    topSellingTitle: '🏆 Product Performance & Profitability',
+    productCol: 'Product',
+    stockCol: 'Current Stock',
+    priceCol: 'Sale Price',
+    costCol: 'Unit Cost',
+    unitProfitCol: 'Unit Margin',
+    statusCol: 'Availability',
+    cashflowTitle: 'Operating Cashflow Balance (Sales vs Purchases)',
 
     // Customers
     addNewCust: '👤 Add New Client Account',
@@ -323,13 +349,12 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [businessName, setBusinessName] = useState('محور ERP');
 
-  // المخزون
+  // البيانات التشغيلية
   const [inventory, setInventory] = useState([]);
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
 
-  // العملاء
   const [customers, setCustomers] = useState([]);
   const [custName, setCustName] = useState('');
   const [custNationalId, setCustNationalId] = useState('');
@@ -338,7 +363,6 @@ function App() {
   const [editingCustId, setEditingCustId] = useState(null);
   const [isSavingCustomer, setIsSavingCustomer] = useState(false);
 
-  // الموردين
   const [suppliers, setSuppliers] = useState([]);
   const [suppName, setSuppName] = useState('');
   const [suppTaxNumber, setSuppTaxNumber] = useState('');
@@ -347,7 +371,6 @@ function App() {
   const [editingSuppId, setEditingSuppId] = useState(null);
   const [isSavingSupplier, setIsSavingSupplier] = useState(false);
 
-  // المبيعات
   const [invoices, setInvoices] = useState([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -355,7 +378,6 @@ function App() {
   const [amount, setAmount] = useState('');
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
-  // المشتريات
   const [purchaseInvoices, setPurchaseInvoices] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedPurchaseProdId, setSelectedPurchaseProdId] = useState('');
@@ -363,10 +385,8 @@ function App() {
   const [purchaseCost, setPurchaseCost] = useState('');
   const [isSubmittingPurchase, setIsSubmittingPurchase] = useState(false);
 
-  // معاينة الفاتورة
   const [printingInvoice, setPrintingInvoice] = useState(null);
 
-  // أمان الحساب
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [deleteConfirmPass, setDeleteConfirmPass] = useState('');
@@ -383,7 +403,8 @@ function App() {
     textMuted: isDark ? '#94a3b8' : '#64748b',
     border: isDark ? '#334155' : '#e2e8f0',
     accentGreen: '#10b981',
-    accentAmber: '#f59e0b'
+    accentAmber: '#f59e0b',
+    accentRose: '#f43f5e'
   };
 
   useEffect(() => {
@@ -446,7 +467,7 @@ function App() {
     }
   };
 
-  // معالجات العملاء
+  // معالجات العمليات
   const handleAddOrUpdateCustomer = async (e) => {
     e.preventDefault();
     if (!custName.trim()) return;
@@ -459,7 +480,6 @@ function App() {
           phone: custPhone.trim() || null,
           email: custEmail.trim() || null
         });
-        alert(lang === 'ar' ? '✅ تم تحديث بيانات العميل بنجاح!' : 'Client updated successfully!');
         setEditingCustId(null);
       } else {
         await API.post('/api/customers', {
@@ -468,7 +488,6 @@ function App() {
           phone: custPhone.trim() || null,
           email: custEmail.trim() || null
         });
-        alert(lang === 'ar' ? '✅ تم فتح حساب العميل في TiDB بنجاح!' : 'Client account created in TiDB!');
       }
       setCustName('');
       setCustNationalId('');
@@ -492,7 +511,6 @@ function App() {
     }
   };
 
-  // معالجات الموردين
   const handleAddOrUpdateSupplier = async (e) => {
     e.preventDefault();
     if (!suppName.trim()) return;
@@ -505,7 +523,6 @@ function App() {
           phone: suppPhone.trim() || null,
           email: suppEmail.trim() || null
         });
-        alert(lang === 'ar' ? '✅ تم تحديث بيانات المورد بنجاح!' : 'Supplier updated successfully!');
         setEditingSuppId(null);
       } else {
         await API.post('/api/suppliers', {
@@ -514,7 +531,6 @@ function App() {
           phone: suppPhone.trim() || null,
           email: suppEmail.trim() || null
         });
-        alert(lang === 'ar' ? '✅ تم فتح حساب المورد في TiDB بنجاح!' : 'Supplier account created in TiDB!');
       }
       setSuppName('');
       setSuppTaxNumber('');
@@ -538,7 +554,6 @@ function App() {
     }
   };
 
-  // إضافة منتج
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!newProdName || !newProdPrice) return;
@@ -558,7 +573,6 @@ function App() {
     }
   };
 
-  // اعتماد عملية بيع
   const handleSaveInvoice = async () => {
     if (!selectedProductId || !qty) return;
     setIsSubmittingSale(true);
@@ -571,7 +585,6 @@ function App() {
       });
 
       const newInv = res.data?.invoice;
-      alert(`✅ ${res.data.message || 'Invoice generated successfully!'}`);
       setSelectedProductId('');
       setAmount('');
       setQty(1);
@@ -585,22 +598,16 @@ function App() {
     }
   };
 
-  // اعتماد عملية شراء وتوريد
   const handleSavePurchase = async () => {
-    if (!selectedPurchaseProdId || !purchaseQty || !purchaseCost) {
-      alert(lang === 'ar' ? 'الرجاء اختيار المنتج وتحديد الكمية وسعر التكلفة' : 'Please select product, quantity, and cost');
-      return;
-    }
+    if (!selectedPurchaseProdId || !purchaseQty || !purchaseCost) return;
     setIsSubmittingPurchase(true);
     try {
-      const res = await API.post('/api/purchases', {
+      await API.post('/api/purchases', {
         productId: Number(selectedPurchaseProdId),
         quantity: Number(purchaseQty),
         unitCost: Number(purchaseCost),
         supplierId: selectedSupplierId ? Number(selectedSupplierId) : null
       });
-
-      alert(`✅ ${res.data.message || 'Purchase recorded & stock replenished!'}`);
       setSelectedPurchaseProdId('');
       setPurchaseCost('');
       setPurchaseQty(10);
@@ -613,7 +620,27 @@ function App() {
     }
   };
 
-  // الحسابات اللحظية
+  // الحسابات المالية والتحليلية الذكية
+  const inventoryVal = inventory.reduce((sum, i) => sum + (Number(i.price) * Number(i.stock)), 0);
+  const totalSalesVal = invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+  const totalPurchasesVal = purchaseInvoices.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
+  
+  // حساب تكلفة البضاعة المباعة COGS وصافي الأرباح
+  const totalRevenuePreTax = invoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
+  const totalCOGS = invoices.reduce((sum, inv) => {
+    const itemCostSum = (inv.items || []).reduce((iSum, it) => {
+      const prodCost = it.product?.cost || 0;
+      return iSum + (prodCost * it.quantity);
+    }, 0);
+    return sum + itemCostSum;
+  }, 0);
+
+  const netProfitVal = totalRevenuePreTax - totalCOGS;
+  const marginPercentage = totalRevenuePreTax > 0 ? ((netProfitVal / totalRevenuePreTax) * 100).toFixed(1) : '0.0';
+
+  // رادار نواقص المخزون (أقل من أو يساوي 5 وحدات)
+  const lowStockItems = inventory.filter(i => Number(i.stock) <= 5);
+
   const salesSubtotal = (Number(amount) || 0) * (Number(qty) || 0);
   const salesTax = salesSubtotal * 0.15;
   const salesTotal = salesSubtotal + salesTax;
@@ -622,17 +649,9 @@ function App() {
   const purchaseTax = purchaseSubtotal * 0.15;
   const purchaseTotal = purchaseSubtotal + purchaseTax;
 
-  const inventoryVal = inventory.reduce((sum, i) => sum + (Number(i.price) * Number(i.stock)), 0);
-  const totalSalesVal = invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-  const totalPurchasesVal = purchaseInvoices.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
-
-  // أمان الحساب
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    if (newPass.length < 8) {
-      alert(lang === 'ar' ? 'كلمة المرور يجب ألا تقل عن 8 خانات' : 'Password must be 8+ characters');
-      return;
-    }
+    if (newPass.length < 8) return;
     try {
       const res = await API.post('/api/change-password', { currentPassword: currentPass, newPassword: newPass });
       alert(`✅ ${res.data.message}`);
@@ -648,7 +667,6 @@ function App() {
     if (!window.confirm(lang === 'ar' ? 'تحذير نهائي: هل تريد تعطيل وحذف حسابك تماماً؟' : 'Final Warning: Permanently deactivate account?')) return;
     try {
       await API.post('/api/delete-account', { confirmPassword: deleteConfirmPass });
-      alert(lang === 'ar' ? 'تم تعطيل الحساب بنجاح' : 'Account deactivated successfully');
       handleLogout();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to delete account');
@@ -676,7 +694,6 @@ function App() {
         setUser(newUser);
         localStorage.setItem('mihwar_user', JSON.stringify(newUser));
         API.defaults.headers.common['user-id'] = newUser.id;
-        alert('تم إنشاء مساحة العمل بنجاح!');
       }
     } catch (err) {
       alert(err.response?.data?.error || 'Authentication error');
@@ -838,27 +855,116 @@ function App() {
       </div>
 
       <main style={{ padding: '30px', maxWidth: '1400px', margin: 'auto' }}>
-        {/* لوحة التحكم */}
+        {/* لوحة التحكم والتحليلات المالية والتشغيلية المتقدمة */}
         {activeTab === 'dashboard' && (
-          <div>
-            <h1 style={{ margin: '0 0 20px 0', fontSize: '24px', color: theme.textDark }}>{t.welcome} {user.name} 👋</h1>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h1 style={{ margin: 0, fontSize: '24px', color: theme.textDark }}>{t.welcome} {user.name} 👋</h1>
+              <span style={{ fontSize: '13px', background: isDark ? '#1e293b' : '#e2e8f0', padding: '6px 14px', borderRadius: '8px', fontWeight: 'bold' }}>
+                TiDB Cloud • مزامنة لحظية
+              </span>
+            </div>
+
+            {/* بطاقات المؤشرات المالية الحيوية (KPIs) */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
-              <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}>
+              <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}`, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                 <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.invValue}</p>
                 <h2 style={{ color: theme.primary, margin: '8px 0 0 0', fontSize: '24px' }}>{inventoryVal.toLocaleString()} {t.currency}</h2>
               </div>
-              <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}>
+              <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}`, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                 <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.salesTotal}</p>
                 <h2 style={{ color: theme.accentGreen, margin: '8px 0 0 0', fontSize: '24px' }}>{totalSalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2>
               </div>
-              <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}>
+              <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}`, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                 <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.purchasesTotal}</p>
                 <h2 style={{ color: theme.accentAmber, margin: '8px 0 0 0', fontSize: '24px' }}>{totalPurchasesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2>
               </div>
-              <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}>
-                <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.customersTotal} / {t.suppliersTotal}</p>
-                <h2 style={{ color: theme.textDark, margin: '8px 0 0 0', fontSize: '24px' }}>{customers.length} / {suppliers.length}</h2>
+              <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}`, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.netProfit}</p>
+                  <span style={{ fontSize: '11px', background: netProfitVal >= 0 ? '#dcfce7' : '#fee2e2', color: netProfitVal >= 0 ? '#15803d' : '#b91c1c', padding: '2px 8px', borderRadius: '6px', fontWeight: 'bold' }}>
+                    {marginPercentage}%
+                  </span>
+                </div>
+                <h2 style={{ color: netProfitVal >= 0 ? theme.accentGreen : theme.accentRose, margin: '8px 0 0 0', fontSize: '24px' }}>
+                  {netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}
+                </h2>
               </div>
+            </div>
+
+            {/* رادار نواقص المخزون والتنبيه الذكي */}
+            <div style={{ background: lowStockItems.length > 0 ? (isDark ? '#450a0a' : '#fff1f2') : theme.cardBg, border: `1px solid ${lowStockItems.length > 0 ? '#fecdd3' : theme.border}`, borderRadius: '14px', padding: '22px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: lowStockItems.length > 0 ? '15px' : '0' }}>
+                <h3 style={{ margin: 0, fontSize: '16px', color: lowStockItems.length > 0 ? '#be123c' : theme.textDark }}>
+                  {t.lowStockTitle}
+                </h3>
+                {lowStockItems.length > 0 && (
+                  <span style={{ background: '#be123c', color: '#fff', fontSize: '11px', fontWeight: 'bold', padding: '3px 8px', borderRadius: '6px' }}>
+                    {lowStockItems.length} أصناف
+                  </span>
+                )}
+              </div>
+
+              {lowStockItems.length === 0 ? (
+                <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.lowStockClean}</p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                  {lowStockItems.map(item => (
+                    <div key={item.id} style={{ background: isDark ? '#1e293b' : '#ffffff', padding: '14px', borderRadius: '10px', border: '1px solid #fda4af', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <strong style={{ fontSize: '14px', color: theme.textDark }}>{item.name}</strong>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#e11d48', fontWeight: 'bold' }}>
+                          المتبقي: {item.stock} وحدة فقط!
+                        </p>
+                      </div>
+                      <button onClick={() => { setSelectedPurchaseProdId(item.id); setActiveTab('purchases'); }} style={{ background: theme.accentAmber, color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+                        {t.reorderBtn}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* جدول أداء الأصناف وهامش ربح المنتجات */}
+            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+              <h3 style={{ marginTop: 0, color: theme.textDark, fontSize: '17px' }}>{t.topSellingTitle}</h3>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: isDark ? '#334155' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                    <th style={{ padding: '10px' }}>{t.productCol}</th>
+                    <th style={{ padding: '10px' }}>{t.stockCol}</th>
+                    <th style={{ padding: '10px' }}>{t.costCol}</th>
+                    <th style={{ padding: '10px' }}>{t.priceCol}</th>
+                    <th style={{ padding: '10px' }}>{t.unitProfitCol}</th>
+                    <th style={{ padding: '10px' }}>{t.statusCol}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inventory.length === 0 ? (
+                    <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: theme.textMuted }}>لا توجد منتجات مسجلة حتى الآن.</td></tr>
+                  ) : inventory.map(prod => {
+                    const unitProfit = Number(prod.price) - Number(prod.cost || prod.price);
+                    const isLow = Number(prod.stock) <= 5;
+                    return (
+                      <tr key={prod.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{prod.name}</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold', color: isLow ? '#e11d48' : theme.textDark }}>{prod.stock} وحدة</td>
+                        <td style={{ padding: '10px', color: theme.textMuted }}>{Number(prod.cost || prod.price).toFixed(2)} {t.currency}</td>
+                        <td style={{ padding: '10px' }}>{Number(prod.price).toFixed(2)} {t.currency}</td>
+                        <td style={{ padding: '10px', color: unitProfit >= 0 ? theme.accentGreen : theme.accentRose, fontWeight: 'bold' }}>
+                          +{unitProfit.toFixed(2)} {t.currency}
+                        </td>
+                        <td style={{ padding: '10px' }}>
+                          <span style={{ background: isLow ? '#fee2e2' : '#dcfce7', color: isLow ? '#be123c' : '#15803d', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold' }}>
+                            {isLow ? 'منخفض' : 'متوفر'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
@@ -908,7 +1014,6 @@ function App() {
               </div>
             </div>
 
-            {/* بطاقة الضريبة للمبيعات */}
             <div style={{ background: '#020617', borderRadius: '14px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 10px 25px rgba(0,0,0,0.3)' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
@@ -937,7 +1042,7 @@ function App() {
           </div>
         )}
 
-        {/* المشتريات والتوريد الذكي (جديد) */}
+        {/* المشتريات والتوريد الذكي */}
         {activeTab === 'purchases' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '25px' }}>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -982,7 +1087,6 @@ function App() {
               </div>
             </div>
 
-            {/* بطاقة ضريبة المشتريات */}
             <div style={{ background: '#0f172a', borderRadius: '14px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 10px 25px rgba(0,0,0,0.3)' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
@@ -1011,7 +1115,7 @@ function App() {
           </div>
         )}
 
-        {/* العملاء (إضافة + تعديل + حذف) */}
+        {/* العملاء */}
         {activeTab === 'customers' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.9fr', gap: '25px' }}>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1079,7 +1183,7 @@ function App() {
           </div>
         )}
 
-        {/* الموردين (جديد: إضافة + تعديل + حذف) */}
+        {/* الموردين */}
         {activeTab === 'suppliers' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.9fr', gap: '25px' }}>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1183,10 +1287,9 @@ function App() {
           </div>
         )}
 
-        {/* التقارير والفواتير (مبيعات + مشتريات) */}
+        {/* التقارير والفواتير */}
         {activeTab === 'reports' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-            {/* جدول المبيعات */}
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <h2 style={{ marginTop: 0, color: theme.textDark, fontSize: '18px' }}>{t.invRepo}</h2>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
@@ -1225,7 +1328,6 @@ function App() {
               </table>
             </div>
 
-            {/* جدول المشتريات والتوريد */}
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <h2 style={{ marginTop: 0, color: theme.textDark, fontSize: '18px' }}>{t.purchasesRepo}</h2>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
