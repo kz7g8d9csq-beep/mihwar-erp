@@ -25,8 +25,8 @@ const dict = {
     purchasesTotal: 'إجمالي المشتريات (شامل الضريبة)',
     netProfit: 'صافي الربح التقديري',
     profitMargin: 'هامش الربحية',
-    lowStockTitle: '⚠️ رادار نواقص المخزون',
-    lowStockClean: '✅ مستويات المخزون ممتازة، لا توجد أصناف تحت الحد المحدد.',
+    lowStockTitle: '⚠️ تنبيه: المخزون على وشك النفاد',
+    lowStockClean: '✅ مستويات المخزون ممتازة، لا توجد أصناف قاربت على النفاد.',
     reorderBtn: 'طلب توريد فوراً',
     topSellingTitle: '🏆 تقرير أداء المنتجات وربحية الأصناف',
     productCol: 'المنتج',
@@ -168,7 +168,7 @@ const dict = {
     purchasesTotal: 'Gross Purchases (Incl. VAT)',
     netProfit: 'Estimated Net Profit',
     profitMargin: 'Profit Margin',
-    lowStockTitle: '⚠️ Low Stock Radar',
+    lowStockTitle: '⚠️ Warning: Low Stock Alert',
     lowStockClean: '✅ Warehouse inventory levels are optimal. No shortages detected.',
     reorderBtn: 'Reorder Now',
     topSellingTitle: '🏆 Product Performance & Profitability',
@@ -385,10 +385,10 @@ function App() {
   const [purchaseCost, setPurchaseCost] = useState('');
   const [isSubmittingPurchase, setIsSubmittingPurchase] = useState(false);
 
-  // إعداد حد نواقص المخزون القابل للتخصيص
+  // إعداد حد نواقص المخزون المخصص
   const [lowStockThreshold, setLowStockThreshold] = useState(() => {
     const saved = localStorage.getItem('mihwar_low_stock_threshold');
-    return saved ? Number(saved) : 5;
+    return saved ? Number(saved) : 30;
   });
   const [isEditingThreshold, setIsEditingThreshold] = useState(false);
   const [tempThreshold, setTempThreshold] = useState(lowStockThreshold);
@@ -633,7 +633,6 @@ function App() {
   const totalSalesVal = invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
   const totalPurchasesVal = purchaseInvoices.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
   
-  // حساب تكلفة البضاعة المباعة COGS وصافي الأرباح
   const totalRevenuePreTax = invoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
   const totalCOGS = invoices.reduce((sum, inv) => {
     const itemCostSum = (inv.items || []).reduce((iSum, it) => {
@@ -899,12 +898,12 @@ function App() {
               </div>
             </div>
 
-            {/* رادار نواقص المخزون مع إمكانية تعديل الحد المخصص */}
+            {/* رادار نواقص المخزون بدون جملة حد الأمان في العنوان */}
             <div style={{ background: lowStockItems.length > 0 ? (isDark ? '#450a0a' : '#fff1f2') : theme.cardBg, border: `1px solid ${lowStockItems.length > 0 ? '#fecdd3' : theme.border}`, borderRadius: '14px', padding: '22px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: lowStockItems.length > 0 ? '15px' : '0' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '16px', color: lowStockItems.length > 0 ? '#be123c' : theme.textDark }}>
-                    {t.lowStockTitle} ({lang === 'ar' ? `الحد الحالي: ≤ ${lowStockThreshold} وحدات` : `Limit: ≤ ${lowStockThreshold} units`})
+                    {t.lowStockTitle}
                   </h3>
                   {lowStockItems.length > 0 && (
                     <span style={{ background: '#be123c', color: '#fff', fontSize: '11px', fontWeight: 'bold', padding: '3px 8px', borderRadius: '6px' }}>
@@ -913,11 +912,11 @@ function App() {
                   )}
                 </div>
 
-                {/* خيار تعديل حد النواقص الذي طلبته */}
+                {/* خيار تعديل حد الأمان */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {isEditingThreshold ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: theme.textDark }}>{lang === 'ar' ? 'حدد الحد الأدنى:' : 'New limit:'}</span>
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: theme.textDark }}>{lang === 'ar' ? 'الحد الجديد:' : 'New limit:'}</span>
                       <input 
                         type="number" 
                         min="1" 
@@ -956,7 +955,7 @@ function App() {
                       }} 
                       style={{ background: isDark ? '#334155' : '#e2e8f0', color: theme.textDark, border: `1px solid ${theme.border}`, padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}
                     >
-                      ⚙️ {lang === 'ar' ? `تعديل حد النواقص (${lowStockThreshold})` : `Adjust Limit (${lowStockThreshold})`}
+                      ⚙️ {lang === 'ar' ? `تعديل حد التنبيه (${lowStockThreshold} وحدة)` : `Adjust Alert Limit (${lowStockThreshold})`}
                     </button>
                   )}
                 </div>
@@ -971,7 +970,7 @@ function App() {
                       <div>
                         <strong style={{ fontSize: '14px', color: theme.textDark }}>{item.name}</strong>
                         <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#e11d48', fontWeight: 'bold' }}>
-                          المتبقي بالمخزن: {item.stock} وحدة فقط!
+                          المتبقي بالمستودع: {item.stock} وحدة فقط!
                         </p>
                       </div>
                       <button onClick={() => { setSelectedPurchaseProdId(item.id); setActiveTab('purchases'); }} style={{ background: theme.accentAmber, color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
@@ -1014,7 +1013,7 @@ function App() {
                         </td>
                         <td style={{ padding: '10px' }}>
                           <span style={{ background: isLow ? '#fee2e2' : '#dcfce7', color: isLow ? '#be123c' : '#15803d', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold' }}>
-                            {isLow ? `نواقص (≤ ${lowStockThreshold})` : 'متوفر'}
+                            {isLow ? 'قارَب على النفاد' : 'متوفر'}
                           </span>
                         </td>
                       </tr>
@@ -1155,7 +1154,7 @@ function App() {
                     <span>المبلغ قبل الضريبة:</span>
                     <strong style={{ color: '#fff' }}>{purchaseSubtotal.toFixed(2)} {t.currency}</strong>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#94a3b8' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#fde68a' }}>
                     <span>ضريبة القيمة المضافة (15%):</span>
                     <strong style={{ color: '#fde68a' }}>{purchaseTax.toFixed(2)} {t.currency}</strong>
                   </div>
