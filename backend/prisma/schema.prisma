@@ -1,15 +1,16 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 model Company {
   id               Int               @id @default(autoincrement())
   name             String
+  createdAt        DateTime          @default(now())
   users            User[]
   roles            Role[]
   products         Product[]
@@ -17,133 +18,124 @@ model Company {
   suppliers        Supplier[]
   invoices         Invoice[]
   purchaseInvoices PurchaseInvoice[]
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
 }
 
 model Role {
   id          Int      @id @default(autoincrement())
-  name        String
-  permissions Json?
   companyId   Int
-  company     Company  @relation(fields: [companyId], references: [id])
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String   // مثل: "مدير النظام", "محاسب / مبيعات", "أمين مستودع"
+  permissions Json?    // مصفوفة الصلاحيات (مثل: ["SALES", "INVENTORY", "REPORTS", "SETTINGS"])
   users       User[]
+  createdAt   DateTime @default(now())
 }
 
 model User {
-  id               Int               @id @default(autoincrement())
-  name             String
-  email            String            @unique
-  password         String
-  phone            String?
-  isActive         Boolean           @default(true)
-  companyId        Int
-  company          Company           @relation(fields: [companyId], references: [id])
-  roleId           Int?
-  role             Role?             @relation(fields: [roleId], references: [id])
-  invoices         Invoice[]
-  purchaseInvoices PurchaseInvoice[]
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  roleId    Int?
+  role      Role?    @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  name      String
+  email     String   @unique
+  password  String
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  invoices  Invoice[]
+  purchases PurchaseInvoice[]
+}
+
+model Product {
+  id             Int             @id @default(autoincrement())
+  companyId      Int
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name           String
+  sku            String?
+  price          Decimal         @default(0.00)
+  cost           Decimal         @default(0.00)
+  stock          Int             @default(0)
+  createdAt      DateTime        @default(now())
+  invoiceItems   InvoiceItem[]
+  purchaseItems  PurchaseItem[]
 }
 
 model Customer {
   id         Int       @id @default(autoincrement())
+  companyId  Int
+  company    Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name       String
-  nationalId String?   // رقم الهوية أو السجل التجاري / الضريبي
+  nationalId String?
   phone      String?
   email      String?
-  companyId  Int
-  company    Company   @relation(fields: [companyId], references: [id])
-  invoices   Invoice[]
   createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  invoices   Invoice[]
 }
 
 model Supplier {
   id               Int               @id @default(autoincrement())
+  companyId        Int
+  company          Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name             String
-  taxNumber        String?           // الرقم الضريبي / السجل التجاري للمورد
+  taxNumber        String?
   phone            String?
   email            String?
-  companyId        Int
-  company          Company           @relation(fields: [companyId], references: [id])
-  purchaseInvoices PurchaseInvoice[]
   createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-}
-
-model Product {
-  id                   Int                   @id @default(autoincrement())
-  name                 String
-  price                Float
-  cost                 Float
-  stock                Int                   @default(0)
-  sku                  String
-  companyId            Int
-  company              Company               @relation(fields: [companyId], references: [id])
-  invoiceItems         InvoiceItem[]
-  purchaseInvoiceItems PurchaseInvoiceItem[]
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  purchaseInvoices PurchaseInvoice[]
 }
 
 model Invoice {
   id          Int           @id @default(autoincrement())
   invoiceNo   String        @unique
-  subtotal    Float
-  taxRate     Float         @default(0.15)
-  taxAmount   Float
-  totalAmount Float
   companyId   Int
-  company     Company       @relation(fields: [companyId], references: [id])
-  userId      Int?
-  user        User?         @relation(fields: [userId], references: [id])
+  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId      Int
+  user        User          @relation(fields: [userId], references: [id])
   customerId  Int?
-  customer    Customer?     @relation(fields: [customerId], references: [id])
-  items       InvoiceItem[]
+  customer    Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  subtotal    Decimal       @default(0.00)
+  taxRate     Decimal       @default(0.15)
+  taxAmount   Decimal       @default(0.00)
+  totalAmount Decimal       @default(0.00)
   createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  items       InvoiceItem[]
 }
 
 model InvoiceItem {
-  id        Int      @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   invoiceId Int
-  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   productId Int
-  product   Product  @relation(fields: [productId], references: [id])
-  quantity  Int      @default(1)
-  unitPrice Float
-  subtotal  Float
-  createdAt DateTime @default(now())
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal
+  subtotal  Decimal
 }
 
 model PurchaseInvoice {
-  id          Int                   @id @default(autoincrement())
-  invoiceNo   String                @unique
-  subtotal    Float
-  taxRate     Float                 @default(0.15)
-  taxAmount   Float
-  totalAmount Float
+  id          Int            @id @default(autoincrement())
+  invoiceNo   String         @unique
   companyId   Int
-  company     Company               @relation(fields: [companyId], references: [id])
+  company     Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId      Int
+  user        User           @relation(fields: [userId], references: [id])
   supplierId  Int?
-  supplier    Supplier?             @relation(fields: [supplierId], references: [id])
-  userId      Int?
-  user        User?                 @relation(fields: [userId], references: [id])
-  items       PurchaseInvoiceItem[]
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
+  supplier    Supplier?      @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  subtotal    Decimal        @default(0.00)
+  taxRate     Decimal        @default(0.15)
+  taxAmount   Decimal        @default(0.00)
+  totalAmount Decimal        @default(0.00)
+  createdAt   DateTime       @default(now())
+  items       PurchaseItem[]
 }
 
-model PurchaseInvoiceItem {
+model PurchaseItem {
   id                Int             @id @default(autoincrement())
   purchaseInvoiceId Int
   purchaseInvoice   PurchaseInvoice @relation(fields: [purchaseInvoiceId], references: [id], onDelete: Cascade)
   productId         Int
   product           Product         @relation(fields: [productId], references: [id])
-  quantity          Int             @default(1)
-  unitCost          Float
-  subtotal          Float
-  createdAt         DateTime        @default(now())
+  quantity          Int
+  unitCost          Decimal
+  subtotal          Decimal
 }

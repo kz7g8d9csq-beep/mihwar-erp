@@ -45,13 +45,14 @@ app.use(async (req, res, next) => {
       verifiedUserId = Number(legacyUserId);
     }
 
-    const user = await prisma.user.findUnique({ where: { id: verifiedUserId } });
+    const user = await prisma.user.findUnique({ where: { id: verifiedUserId }, include: { role: true } });
     if (!user || !user.isActive) {
       return res.status(401).json({ error: 'جلسة الدخول منتهية أو تم تعطيل هذا الحساب' });
     }
 
     req.companyId = user.companyId;
     req.userId = user.id;
+    req.userRole = user.role?.name || 'مستخدم';
     next();
   } catch (error) {
     return res.status(401).json({ error: 'رمز التوثيق الرقمي غير صالح أو منتهي الصلاحية' });
@@ -122,7 +123,7 @@ app.post(['/login', '/api/login', '/api/api/login'], async (req, res) => {
     if (!isPasswordValid) return res.status(401).json({ error: 'بيانات الدخول غير صحيحة' });
 
     const token = jwt.sign({ id: user.id, companyId: user.companyId }, JWT_SECRET, { expiresIn: '7d' });
-    const userData = { id: user.id, email: user.email, name: user.name, role: user.role?.name || 'مستخدم', businessName: user.company?.name || 'محور ERP' };
+    const userData = { id: user.id, email: user.email, name: user.name, role: user.role?.name || 'مدير النظام', businessName: user.company?.name || 'محور ERP' };
 
     res.json({ message: 'تم تسجيل الدخول بنجاح', user: userData, token });
   } catch (error) {
@@ -216,354 +217,223 @@ app.post(['/delete-account', '/api/delete-account', '/api/api/delete-account'], 
   }
 });
 
-// ==================== إدارة العملاء ====================
+// ==================== إدارة الأدوار والمستخدمين (RBAC) ====================
+app.get(['/roles', '/api/roles', '/api/api/roles'], async (req, res) => {
+  try {
+    const roles = await prisma.role.findMany({ where: { companyId: req.companyId } });
+    res.json(roles);
+  } catch (error) {
+    res.status(500).json({ error: 'خطأ في جلب الأدوار' });
+  }
+});
+
+app.post(['/roles', '/api/roles', '/api/api/roles'], async (req, res) => {
+  const { name } = req.body;
+  try {
+    if (!name) return res.status(400).json({ error: 'اسم الدور مطلوب' });
+    const newRole = await prisma.role.create({
+      data: { companyId: req.companyId, name: String(name) }
+    });
+    res.json({ message: 'تم إنشاء الدور بنجاح', role: newRole });
+  } catch (error) {
+    res.status(500).json({ error: 'تعذر إنشاء الدور' });
+  }
+});
+
+app.get(['/users', '/api/users', '/api/api/users'], async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: { companyId: req.companyId },
+      include: { role: true },
+      select: { id: true, name: true, email: true, phone: true, isActive: true, createdAt: true, role: true }
+    });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'خطأ في جلب المستخدمين' });
+  }
+});
+
+app.post(['/users', '/api/users', '/api/api/users'], async (req, res) => {
+  const { name, email, password, roleId, phone } = req.body;
+  try {
+    if (!name || !email || !password) return res.status(400).json({ error: 'الاسم، البريد وكلمة المرور مطلوبون' });
+    const cleanEmail = email.trim().toLowerCase();
+    const existing = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    if (existing) return res.status(400).json({ error: 'البريد الإلكتروني مستخدم مسبقاً' });
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = await prisma.user.create({
+      data: {
+        companyId: req.companyId,
+        name: String(name),
+        email: cleanEmail,
+        password: hashedPassword,
+        phone: phone ? String(phone) : null,
+        roleId: roleId ? Number(roleId) : null
+      },
+      include: { role: true }
+    });
+    res.json({ message: 'تم إنشاء حساب الموظف بنجاح', user: newUser });
+  } catch (error) {
+    res.status(500).json({ error: 'تعذر إنشاء المستخدم' });
+  }
+});
+
+// ==================== إدارة العملاء والموردين والمخزون والفواتير ====================
 app.get(['/customers', '/api/customers', '/api/api/customers'], async (req, res) => {
   try {
-    const customers = await prisma.customer.findMany({
-      where: { companyId: req.companyId },
-      orderBy: { createdAt: 'desc' }
-    });
+    const customers = await prisma.customer.findMany({ where: { companyId: req.companyId }, orderBy: { createdAt: 'desc' } });
     res.json(customers);
-  } catch (error) {
-    res.status(500).json({ error: 'خطأ في جلب بيانات العملاء' });
-  }
+  } catch (error) { res.status(500).json({ error: 'خطأ في العملاء' }); }
 });
 
 app.post(['/customers', '/api/customers', '/api/api/customers'], async (req, res) => {
   const { name, nationalId, phone, email } = req.body;
   try {
-    if (!name) return res.status(400).json({ error: 'اسم العميل مطلوب' });
-    const newCustomer = await prisma.customer.create({
-      data: {
-        companyId: req.companyId,
-        name: String(name),
-        nationalId: nationalId ? String(nationalId) : null,
-        phone: phone ? String(phone) : null,
-        email: email ? String(email) : null
-      }
-    });
-    res.json({ message: 'تم حفظ حساب العميل بنجاح', customer: newCustomer });
-  } catch (error) {
-    res.status(500).json({ error: 'تعذر حفظ العميل' });
-  }
+    const newCust = await prisma.customer.create({ data: { companyId: req.companyId, name, nationalId, phone, email } });
+    res.json({ message: 'تم حفظ العميل', customer: newCust });
+  } catch (error) { res.status(500).json({ error: 'تعذر الحفظ' }); }
 });
 
 app.put(['/customers/:id', '/api/customers/:id', '/api/api/customers/:id'], async (req, res) => {
   const { id } = req.params;
   const { name, nationalId, phone, email } = req.body;
   try {
-    const updated = await prisma.customer.update({
-      where: { id: Number(id) },
-      data: {
-        name: name ? String(name) : undefined,
-        nationalId: nationalId !== undefined ? (nationalId ? String(nationalId) : null) : undefined,
-        phone: phone !== undefined ? (phone ? String(phone) : null) : undefined,
-        email: email !== undefined ? (email ? String(email) : null) : undefined
-      }
-    });
-    res.json({ message: 'تم تحديث بيانات العميل بنجاح', customer: updated });
-  } catch (error) {
-    res.status(500).json({ error: 'تعذر تعديل العميل' });
-  }
+    const updated = await prisma.customer.update({ where: { id: Number(id) }, data: { name, nationalId, phone, email } });
+    res.json({ message: 'تم التحديث', customer: updated });
+  } catch (error) { res.status(500).json({ error: 'تعذر التحديث' }); }
 });
 
 app.delete(['/customers/:id', '/api/customers/:id', '/api/api/customers/:id'], async (req, res) => {
   const { id } = req.params;
   try {
-    const invoiceCount = await prisma.invoice.count({ where: { customerId: Number(id) } });
-    if (invoiceCount > 0) return res.status(400).json({ error: 'لا يمكن حذف العميل لوجود فواتير مبيعات مرتبطة به' });
-
     await prisma.customer.delete({ where: { id: Number(id) } });
-    res.json({ message: 'تم حذف العميل بنجاح' });
-  } catch (error) {
-    res.status(500).json({ error: 'تعذر حذف العميل' });
-  }
+    res.json({ message: 'تم الحذف' });
+  } catch (error) { res.status(500).json({ error: 'تعذر الحذف' }); }
 });
 
-// ==================== إدارة الموردين ====================
 app.get(['/suppliers', '/api/suppliers', '/api/api/suppliers'], async (req, res) => {
   try {
-    const suppliers = await prisma.supplier.findMany({
-      where: { companyId: req.companyId },
-      orderBy: { createdAt: 'desc' }
-    });
+    const suppliers = await prisma.supplier.findMany({ where: { companyId: req.companyId }, orderBy: { createdAt: 'desc' } });
     res.json(suppliers);
-  } catch (error) {
-    res.status(500).json({ error: 'خطأ في جلب بيانات الموردين' });
-  }
+  } catch (error) { res.status(500).json({ error: 'خطأ في الموردين' }); }
 });
 
 app.post(['/suppliers', '/api/suppliers', '/api/api/suppliers'], async (req, res) => {
   const { name, taxNumber, phone, email } = req.body;
   try {
-    if (!name) return res.status(400).json({ error: 'اسم المورد مطلوب' });
-    const newSupplier = await prisma.supplier.create({
-      data: {
-        companyId: req.companyId,
-        name: String(name),
-        taxNumber: taxNumber ? String(taxNumber) : null,
-        phone: phone ? String(phone) : null,
-        email: email ? String(email) : null
-      }
-    });
-    res.json({ message: 'تم فتح حساب المورد بنجاح', supplier: newSupplier });
-  } catch (error) {
-    res.status(500).json({ error: 'تعذر حفظ المورد' });
-  }
+    const newSupp = await prisma.supplier.create({ data: { companyId: req.companyId, name, taxNumber, phone, email } });
+    res.json({ message: 'تم الحفظ', supplier: newSupp });
+  } catch (error) { res.status(500).json({ error: 'تعذر الحفظ' }); }
 });
 
 app.put(['/suppliers/:id', '/api/suppliers/:id', '/api/api/suppliers/:id'], async (req, res) => {
   const { id } = req.params;
   const { name, taxNumber, phone, email } = req.body;
   try {
-    const updated = await prisma.supplier.update({
-      where: { id: Number(id) },
-      data: {
-        name: name ? String(name) : undefined,
-        taxNumber: taxNumber !== undefined ? (taxNumber ? String(taxNumber) : null) : undefined,
-        phone: phone !== undefined ? (phone ? String(phone) : null) : undefined,
-        email: email !== undefined ? (email ? String(email) : null) : undefined
-      }
-    });
-    res.json({ message: 'تم تحديث بيانات المورد بنجاح', supplier: updated });
-  } catch (error) {
-    res.status(500).json({ error: 'تعذر تعديل المورد' });
-  }
+    const updated = await prisma.supplier.update({ where: { id: Number(id) }, data: { name, taxNumber, phone, email } });
+    res.json({ message: 'تم التحديث', supplier: updated });
+  } catch (error) { res.status(500).json({ error: 'تعذر التحديث' }); }
 });
 
 app.delete(['/suppliers/:id', '/api/suppliers/:id', '/api/api/suppliers/:id'], async (req, res) => {
   const { id } = req.params;
   try {
-    const purchasesCount = await prisma.purchaseInvoice.count({ where: { supplierId: Number(id) } });
-    if (purchasesCount > 0) return res.status(400).json({ error: 'لا يمكن حذف المورد لوجود فواتير شراء مرتبطة به' });
-
     await prisma.supplier.delete({ where: { id: Number(id) } });
-    res.json({ message: 'تم حذف المورد بنجاح' });
-  } catch (error) {
-    res.status(500).json({ error: 'تعذر حذف المورد' });
-  }
+    res.json({ message: 'تم الحذف' });
+  } catch (error) { res.status(500).json({ error: 'تعذر الحذف' }); }
 });
 
-// ==================== المخزون ====================
 app.get(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res) => {
   try {
-    const products = await prisma.product.findMany({ 
-      where: { companyId: req.companyId },
-      orderBy: { createdAt: 'desc' }
-    });
+    const products = await prisma.product.findMany({ where: { companyId: req.companyId }, orderBy: { createdAt: 'desc' } });
     res.json(products);
-  } catch (error) {
-    res.status(500).json({ error: 'خطأ في جلب بيانات المخزون' });
-  }
+  } catch (error) { res.status(500).json({ error: 'خطأ في المخزون' }); }
 });
 
 app.post(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res) => {
   const { name, price, cost, stock } = req.body;
   try {
-    if (!name || price === undefined) return res.status(400).json({ error: 'اسم المنتج والسعر مطلوبان' });
-    const numericPrice = Number(price);
-    const numericCost = cost !== undefined ? Number(cost) : numericPrice;
-
-    const newProduct = await prisma.product.create({
-      data: {
-        companyId: req.companyId,
-        name: String(name),
-        price: numericPrice,
-        cost: numericCost,
-        stock: Number(stock) || 0,
-        sku: `SKU-${Date.now().toString().slice(-6)}`
-      }
+    const product = await prisma.product.create({
+      data: { companyId: req.companyId, name, price: Number(price), cost: Number(cost || price), stock: Number(stock || 0), sku: `SKU-${Date.now().slice(-6)}` }
     });
-    res.json({ message: 'تم إضافة المنتج للمخزون بنجاح', product: newProduct });
-  } catch (error) {
-    res.status(500).json({ error: 'تعذر حفظ المنتج' });
-  }
+    res.json({ message: 'تم حفظ المنتج', product });
+  } catch (error) { res.status(500).json({ error: 'تعذر حفظ المنتج' }); }
 });
 
-// ==================== المبيعات والفوترة الذكية ====================
 app.get(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
   try {
     const invoices = await prisma.invoice.findMany({
       where: { companyId: req.companyId },
-      include: {
-        items: { include: { product: true } },
-        user: { select: { name: true } },
-        customer: true
-      },
+      include: { items: { include: { product: true } }, user: { select: { name: true } }, customer: true },
       orderBy: { createdAt: 'desc' }
     });
     res.json(invoices);
-  } catch (error) {
-    res.status(500).json({ error: 'خطأ في جلب الفواتير' });
-  }
+  } catch (error) { res.status(500).json({ error: 'خطأ في الفواتير' }); }
 });
 
 app.post(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
-  const { items, customerId, productId, quantity, price } = req.body;
+  const { items, customerId } = req.body;
   try {
-    let itemsToProcess = items;
-    if (!itemsToProcess || !itemsToProcess.length) {
-      if (productId && quantity) {
-        itemsToProcess = [{ productId, quantity, price }];
-      } else {
-        return res.status(400).json({ error: 'يجب إضافة صنف واحد على الأقل في الفاتورة' });
-      }
-    }
-
-    const custId = customerId ? Number(customerId) : null;
-
+    if (!items || !items.length) return res.status(400).json({ error: 'السلة فارغة' });
     const result = await prisma.$transaction(async (tx) => {
-      let totalSubtotal = 0;
-      const preparedInvoiceItems = [];
-
-      for (const it of itemsToProcess) {
-        const pId = Number(it.productId);
-        const q = Number(it.quantity);
-        if (q <= 0) throw new Error('الكمية يجب أن تكون أكبر من صفر');
-
-        const product = await tx.product.findFirst({
-          where: { id: pId, companyId: req.companyId }
-        });
-
-        if (!product) throw new Error(`المنتج رقم ${pId} غير موجود بالمخزن`);
-        if (product.stock < q) {
-          throw new Error(`الرصيد غير كافٍ للمنتج "${product.name}"! المتاح: ${product.stock}`);
-        }
-
-        const uPrice = it.price !== undefined ? Number(it.price) : product.price;
-        const lineSubtotal = Number((uPrice * q).toFixed(2));
-        totalSubtotal += lineSubtotal;
-
-        await tx.product.update({
-          where: { id: pId },
-          data: { stock: { decrement: q } }
-        });
-
-        preparedInvoiceItems.push({
-          productId: pId,
-          quantity: q,
-          unitPrice: uPrice,
-          subtotal: lineSubtotal
-        });
+      let totalSub = 0;
+      const prepItems = [];
+      for (const it of items) {
+        const prod = await tx.product.findFirst({ where: { id: Number(it.productId), companyId: req.companyId } });
+        if (!prod || prod.stock < it.quantity) throw new Error(`الرصيد غير كافٍ للمنتج ${prod?.name || ''}`);
+        const lineSub = Number((prod.price * it.quantity).toFixed(2));
+        totalSub += lineSub;
+        await tx.product.update({ where: { id: prod.id }, data: { stock: { decrement: it.quantity } } });
+        prepItems.push({ productId: prod.id, quantity: it.quantity, unitPrice: prod.price, subtotal: lineSub });
       }
-
-      const taxRate = 0.15;
-      const subtotalRounded = Number(totalSubtotal.toFixed(2));
-      const taxAmount = Number((subtotalRounded * taxRate).toFixed(2));
-      const totalAmount = Number((subtotalRounded + taxAmount).toFixed(2));
-
+      const taxAmount = Number((totalSub * 0.15).toFixed(2));
+      const totalAmount = Number((totalSub + taxAmount).toFixed(2));
       const invoiceNo = `INV-${Date.now().toString().slice(-6)}`;
       const invoice = await tx.invoice.create({
-        data: {
-          invoiceNo,
-          subtotal: subtotalRounded,
-          taxRate,
-          taxAmount,
-          totalAmount,
-          companyId: req.companyId,
-          userId: req.userId,
-          customerId: custId,
-          items: {
-            create: preparedInvoiceItems
-          }
-        },
-        include: {
-          items: { include: { product: true } },
-          customer: true
-        }
+        data: { invoiceNo, subtotal: totalSub, taxRate: 0.15, taxAmount, totalAmount, companyId: req.companyId, userId: req.userId, customerId: customerId ? Number(customerId) : null, items: { create: prepItems } },
+        include: { items: { include: { product: true } }, customer: true }
       });
-
       return invoice;
     });
-
-    res.json({ message: 'تم إصدار الفاتورة واعتماد خصم جميع الأصناف بنجاح', invoice: result });
-  } catch (error) {
-    res.status(400).json({ error: error.message || 'فشلت عملية إصدار الفاتورة' });
-  }
+    res.json({ message: 'تم إصدار الفاتورة بنجاح', invoice: result });
+  } catch (error) { res.status(400).json({ error: error.message || 'فشلت الفوترة' }); }
 });
 
-// ==================== المشتريات والتوريد الذكي ====================
 app.get(['/purchases', '/api/purchases', '/api/api/purchases'], async (req, res) => {
   try {
-    const purchaseInvoices = await prisma.purchaseInvoice.findMany({
+    const purchases = await prisma.purchaseInvoice.findMany({
       where: { companyId: req.companyId },
-      include: {
-        items: { include: { product: true } },
-        supplier: true,
-        user: { select: { name: true } }
-      },
+      include: { items: { include: { product: true } }, supplier: true, user: { select: { name: true } } },
       orderBy: { createdAt: 'desc' }
     });
-    res.json(purchaseInvoices);
-  } catch (error) {
-    res.status(500).json({ error: 'خطأ في جلب فواتير الشراء' });
-  }
+    res.json(purchases);
+  } catch (error) { res.status(500).json({ error: 'خطأ في المشتريات' }); }
 });
 
 app.post(['/purchases', '/api/purchases', '/api/api/purchases'], async (req, res) => {
   const { productId, quantity, unitCost, supplierId } = req.body;
   try {
-    if (!productId || !quantity || unitCost === undefined) {
-      return res.status(400).json({ error: 'المنتج، الكمية، وسعر الشراء مطلوبون' });
-    }
-
     const qty = Number(quantity);
-    const prodId = Number(productId);
     const cost = Number(unitCost);
-    const suppId = supplierId ? Number(supplierId) : null;
-
     const result = await prisma.$transaction(async (tx) => {
-      const product = await tx.product.findFirst({
-        where: { id: prodId, companyId: req.companyId }
-      });
-
-      if (!product) throw new Error('المنتج المحدد غير موجود');
-
+      const prod = await tx.product.findFirst({ where: { id: Number(productId), companyId: req.companyId } });
+      if (!prod) throw new Error('المنتج غير موجود');
       const subtotal = Number((cost * qty).toFixed(2));
-      const taxRate = 0.15;
-      const taxAmount = Number((subtotal * taxRate).toFixed(2));
+      const taxAmount = Number((subtotal * 0.15).toFixed(2));
       const totalAmount = Number((subtotal + taxAmount).toFixed(2));
-
-      await tx.product.update({
-        where: { id: prodId },
-        data: {
-          stock: { increment: qty },
-          cost: cost
-        }
-      });
-
+      await tx.product.update({ where: { id: prod.id }, data: { stock: { increment: qty }, cost } });
       const invoiceNo = `PUR-${Date.now().toString().slice(-6)}`;
-      const purchaseInvoice = await tx.purchaseInvoice.create({
-        data: {
-          invoiceNo,
-          subtotal,
-          taxRate,
-          taxAmount,
-          totalAmount,
-          companyId: req.companyId,
-          userId: req.userId,
-          supplierId: suppId,
-          items: {
-            create: [
-              {
-                productId: prodId,
-                quantity: qty,
-                unitCost: cost,
-                subtotal: subtotal
-              }
-            ]
-          }
-        },
+      const pur = await tx.purchaseInvoice.create({
+        data: { invoiceNo, subtotal, taxRate: 0.15, taxAmount, totalAmount, companyId: req.companyId, userId: req.userId, supplierId: supplierId ? Number(supplierId) : null, items: { create: [{ productId: prod.id, quantity: qty, unitCost: cost, subtotal }] } },
         include: { items: true, supplier: true }
       });
-
-      return purchaseInvoice;
+      return pur;
     });
-
-    res.json({ message: 'تم تسجيل فاتورة الشراء وتوريد الكمية للمخزون بنجاح', purchaseInvoice: result });
-  } catch (error) {
-    res.status(400).json({ error: error.message || 'فشلت عملية الشراء' });
-  }
+    res.json({ message: 'تم التوريد بنجاح', purchaseInvoice: result });
+  } catch (error) { res.status(400).json({ error: error.message || 'فشل التوريد' }); }
 });
 
 const PORT = process.env.PORT || 3001;
