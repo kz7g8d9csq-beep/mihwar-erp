@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// طبقة الحماية وعزل البيانات
+// طبقة الحماية وعزل بيانات الشركات
 app.use(async (req, res, next) => {
   if (req.method === 'OPTIONS') return next();
 
@@ -81,10 +81,13 @@ app.post(['/login', '/api/login', '/api/api/login'], async (req, res) => {
   }
 });
 
-// مسارات المخزون المستقرة
+// مسارات إدارة المخزون
 app.get(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res) => {
   try {
-    const products = await prisma.product.findMany({ where: { companyId: req.companyId } });
+    const products = await prisma.product.findMany({ 
+      where: { companyId: req.companyId },
+      orderBy: { createdAt: 'desc' }
+    });
     res.json(products);
   } catch (error) {
     console.error('Inventory Fetch Error:', error);
@@ -116,6 +119,99 @@ app.post(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res
   } catch (error) {
     console.error('PRISMA CREATE PRODUCT ERROR:', error);
     res.status(500).json({ error: 'تعذر حفظ المنتج في قاعدة البيانات' });
+  }
+});
+
+// مسارات المبيعات والفواتير مع الضريبة الآلية (15%) وخصم المخزون الذري
+app.get(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
+  try {
+    const invoices = await prisma.invoice.findMany({
+      where: { companyId: req.companyId },
+      include: {
+        items: { include: { product: true } },
+        user: { select: { name: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(invoices);
+  } catch (error) {
+    console.error('Sales Fetch Error:', error);
+    res.status(500).json({ error: 'خطأ في جلب سجل المبيعات' });
+  }
+});
+
+app.post(['/sales', '/api/sales', '/api/api/sales'], async (req, res) => {
+  const { productId, quantity, price } = req.body;
+  try {
+    if (!productId || !quantity) {
+      return res.status(400).json({ error: 'المنتج والكمية مطلوبان لإتمام عملية البيع' });
+    }
+
+    const qty = Number(quantity);
+    const prodId = Number(productId);
+
+    // عملية ذرية لضمان سلامة العمليات المالية وخصم المخزون معاً
+    const result = await prisma.$transaction(async (tx) => {
+      const product = await tx.product.findFirst({
+        where: { id: prodId, companyId: req.companyId }
+      });
+
+      if (!product) {
+        throw new Error('المنتج غير موجود');
+      }
+
+      if (product.stock < qty) {
+        throw new Error(`الرصيد غير كافٍ بالمستودع! المتوفر حالياً: ${product.stock}`);
+      }
+
+      // حسابات ضريبة القيمة المضافة 15% تلقائياً دون تدخل يدوي
+      const unitPrice = price !== undefined ? Number(price) : product.price;
+      const subtotal = Number((unitPrice * qty).toFixed(2));
+      const taxRate = 0.15; // 15% الضريبة المعتمدة
+      const taxAmount = Number((subtotal * taxRate).toFixed(2));
+      const totalAmount = Number((subtotal + taxAmount).toFixed(2));
+
+      // 1. خصم الكمية من رصيد المستودع فوراً
+      await tx.product.update({
+        where: { id: prodId },
+        data: { stock: { decrement: qty } }
+      });
+
+      // 2. إصدار الفاتورة وحفظ بياناتها
+      const invoiceNo = `INV-${Date.now().toString().slice(-6)}`;
+      const invoice = await tx.invoice.create({
+        data: {
+          invoiceNo,
+          subtotal,
+          taxRate,
+          taxAmount,
+          totalAmount,
+          companyId: req.companyId,
+          userId: req.userId,
+          items: {
+            create: [
+              {
+                productId: prodId,
+                quantity: qty,
+                unitPrice: unitPrice,
+                subtotal: subtotal
+              }
+            ]
+          }
+        },
+        include: { items: true }
+      });
+
+      return invoice;
+    });
+
+    res.json({
+      message: 'تم تسجيل عملية البيع وخصم المخزون بنجاح',
+      invoice: result
+    });
+  } catch (error) {
+    console.error('Sales Transaction Error:', error);
+    res.status(400).json({ error: error.message || 'فشلت عملية البيع' });
   }
 });
 
