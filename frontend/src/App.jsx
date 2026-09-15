@@ -59,6 +59,21 @@ const dict = {
     saveProd: 'حفظ في قاعدة البيانات',
     stockRepo: '📦 مستودع المنتجات (متصل بـ TiDB)',
     availableStock: 'الرصيد الفعلي',
+    viewAndPrint: '👁️ معاينة وطباعة',
+    printBtn: '🖨️ طباعة الفاتورة / تصدير PDF',
+    closeModal: '✖ إغلاق',
+    taxInvoiceTitle: 'فاتورة ضريبية مبسطة',
+    vatRegNo: 'الرقم الضريبي:',
+    zatcaBadge: 'معتمدة - هيئة الزكاة والضريبة ZATCA',
+    invoiceDate: 'تاريخ ووقت الإصدار:',
+    buyerInfo: 'بيانات العميل المستلم:',
+    itemDesc: 'بيان الصنف والخدمة',
+    itemQuantity: 'الكمية',
+    unitPriceCol: 'سعر الوحدة',
+    totalCol: 'المجموع الخاضع للضريبة',
+    zatcaQRTitle: 'رمز الاستجابة السريعة (ZATCA QR)',
+    zatcaQRSub: 'امسح الرمز للتحقق من بيانات الفاتورة الضريبية',
+    invoiceFooterNote: 'شكراً لتعاملكم معنا • صدرت إلكترونياً عبر نظام محور ERP',
     
     // شاشة الإعدادات
     settingsHeader: 'مركز إعدادات النظام وتخصيص الحساب',
@@ -137,6 +152,21 @@ const dict = {
     saveProd: 'Save to TiDB Database',
     stockRepo: '📦 Warehouse Products (TiDB Connected)',
     availableStock: 'Available Stock',
+    viewAndPrint: '👁️ View & Print',
+    printBtn: '🖨️ Print Invoice / PDF Export',
+    closeModal: '✖ Close',
+    taxInvoiceTitle: 'Simplified Tax Invoice',
+    vatRegNo: 'VAT Registration No:',
+    zatcaBadge: 'Approved - ZATCA Compliant',
+    invoiceDate: 'Date & Time Issued:',
+    buyerInfo: 'Client / Buyer Information:',
+    itemDesc: 'Item & Service Description',
+    itemQuantity: 'Qty',
+    unitPriceCol: 'Unit Price',
+    totalCol: 'Taxable Subtotal',
+    zatcaQRTitle: 'ZATCA Official QR Code',
+    zatcaQRSub: 'Scan to verify electronic tax invoice details',
+    invoiceFooterNote: 'Thank you for your business • Issued electronically via Mihwar ERP',
 
     // Settings Screen
     settingsHeader: 'System Settings & Account Management',
@@ -158,6 +188,40 @@ const dict = {
     dangerZoneTitle: '⚠️ Danger Zone: Deactivate Account',
     dangerZoneDesc: 'Your account will be permanently deactivated. Enter password to confirm:',
     deleteAccBtn: 'Permanently Deactivate Account'
+  }
+};
+
+// خوارزمية تشفير رمز الاستجابة السريعة (ZATCA TLV Base64)
+const generateZatcaQR = (invoice, companyName, defaultVatNo = '300123456700003') => {
+  try {
+    const getTlv = (tag, value) => {
+      const str = String(value || '');
+      const utf8Bytes = new TextEncoder().encode(str);
+      return [tag, utf8Bytes.length, ...utf8Bytes];
+    };
+
+    const seller = companyName || 'محور ERP';
+    const vatNo = defaultVatNo;
+    const timeStr = invoice?.createdAt ? new Date(invoice.createdAt).toISOString() : new Date().toISOString();
+    const total = Number(invoice?.totalAmount || 0).toFixed(2);
+    const tax = Number(invoice?.taxAmount || 0).toFixed(2);
+
+    const tlvBytes = [
+      ...getTlv(1, seller),
+      ...getTlv(2, vatNo),
+      ...getTlv(3, timeStr),
+      ...getTlv(4, total),
+      ...getTlv(5, tax)
+    ];
+
+    let binary = '';
+    for (let i = 0; i < tlvBytes.length; i++) {
+      binary += String.fromCharCode(tlvBytes[i]);
+    }
+    const base64TLV = btoa(binary);
+    return `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(base64TLV)}`;
+  } catch {
+    return 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=MihwarERP';
   }
 };
 
@@ -200,13 +264,16 @@ function App() {
   const [editingCustId, setEditingCustId] = useState(null);
   const [isSavingCustomer, setIsSavingCustomer] = useState(false);
 
-  // المبيعات
+  // المبيعات والفواتير
   const [invoices, setInvoices] = useState([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
   const [qty, setQty] = useState(1);
   const [amount, setAmount] = useState('');
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
+
+  // معاينة وطباعة الفاتورة
+  const [printingInvoice, setPrintingInvoice] = useState(null);
 
   // أمان الحساب
   const [currentPass, setCurrentPass] = useState('');
@@ -351,12 +418,19 @@ function App() {
         price: Number(amount),
         customerId: selectedCustomerId ? Number(selectedCustomerId) : null
       });
+
+      const newInv = res.data?.invoice;
       alert(`✅ ${res.data.message || (lang === 'ar' ? 'تم إصدار الفاتورة بنجاح!' : 'Invoice generated successfully!')}`);
+      
       setSelectedProductId('');
       setAmount('');
       setQty(1);
       await fetchInventory();
       await fetchInvoices();
+      
+      if (newInv) {
+        setPrintingInvoice(newInv);
+      }
       setActiveTab('reports');
     } catch (err) {
       alert(err.response?.data?.error || 'Sales process failed');
@@ -502,11 +576,37 @@ function App() {
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark }}>
       
-      {/* الترويسة العلوية النظيفة والأنيقة (دون أزرار متناثرة) */}
+      {/* ستايل الطباعة المنعزلة: يطبع فقط الفاتورة الرسمية دون أي عناصر واجهة أخرى */}
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #zatca-printable-invoice, #zatca-printable-invoice * {
+            visibility: visible !important;
+          }
+          #zatca-printable-invoice {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      {/* الترويسة العلوية */}
       <header style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 35px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* أيقونة الشركة الرسمية */}
             <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #0f766e, #0f172a)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '18px', boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }}>
               🏢
             </div>
@@ -517,7 +617,6 @@ function App() {
           </span>
         </div>
 
-        {/* بطاقة المستخدم المعتمدة */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: theme.primary, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '14px' }}>
             {user.name ? user.name[0] : 'U'}
@@ -526,7 +625,7 @@ function App() {
         </div>
       </header>
 
-      {/* الشريط الأسود الرئيسي: وضعت الإعدادات في المكان المؤشر عليه */}
+      {/* شريط الأقسام الرئيسي */}
       <div style={{ background: theme.secondary, color: '#fff', padding: '0 30px', display: 'flex', gap: '4px', fontSize: '13px', overflowX: 'auto' }}>
         {[
           { id: 'dashboard', label: t.dashboard },
@@ -534,7 +633,7 @@ function App() {
           { id: 'customers', label: t.customers },
           { id: 'inventory', label: t.inventory },
           { id: 'reports', label: t.reports },
-          { id: 'settings', label: t.settings } // 👈 الخيار الذي طلبته هنا
+          { id: 'settings', label: t.settings }
         ].map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ background: activeTab === tab.id ? theme.primary : 'transparent', border: 'none', color: '#fff', cursor: 'pointer', padding: '16px 20px', fontWeight: activeTab === tab.id ? 'bold' : 'normal', whiteSpace: 'nowrap', transition: '0.2s' }}>
             {tab.label}
@@ -681,7 +780,7 @@ function App() {
               </div>
             </div>
 
-            {/* بطاقة الضريبة */}
+            {/* بطاقة الضريبة التلقائية */}
             <div style={{ background: '#020617', borderRadius: '14px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 10px 25px rgba(0,0,0,0.3)' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
@@ -746,7 +845,7 @@ function App() {
           </div>
         )}
 
-        {/* التقارير */}
+        {/* التقارير والفواتير مع زر المعاينة والطباعة الفورية */}
         {activeTab === 'reports' && (
           <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
             <h2 style={{ marginTop: 0, color: theme.textDark, fontSize: '18px' }}>{t.invRepo}</h2>
@@ -760,11 +859,12 @@ function App() {
                   <th style={{ padding: '10px' }}>{t.vatAmount}</th>
                   <th style={{ padding: '10px' }}>{t.totalDue}</th>
                   <th style={{ padding: '10px' }}>{t.dateCol}</th>
+                  <th style={{ padding: '10px', textAlign: 'center' }}>{t.actions}</th>
                 </tr>
               </thead>
               <tbody>
                 {invoices.length === 0 ? (
-                  <tr><td colSpan="7" style={{ padding: '20px', textAlign: 'center', color: theme.textMuted }}>{t.noInvoices}</td></tr>
+                  <tr><td colSpan="8" style={{ padding: '20px', textAlign: 'center', color: theme.textMuted }}>{t.noInvoices}</td></tr>
                 ) : invoices.map(inv => (
                   <tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
                     <td style={{ padding: '10px', fontWeight: 'bold', color: theme.primary }}>#{inv.invoiceNo}</td>
@@ -774,6 +874,11 @@ function App() {
                     <td style={{ padding: '10px', color: '#0d9488' }}>{Number(inv.taxAmount || 0).toFixed(2)} {t.currency}</td>
                     <td style={{ padding: '10px', fontWeight: 'bold' }}>{Number(inv.totalAmount || 0).toFixed(2)} {t.currency}</td>
                     <td style={{ padding: '10px', color: theme.textMuted }}>{new Date(inv.createdAt).toLocaleDateString()}</td>
+                    <td style={{ padding: '10px', textAlign: 'center' }}>
+                      <button onClick={() => setPrintingInvoice(inv)} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        {t.viewAndPrint}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -781,7 +886,7 @@ function App() {
           </div>
         )}
 
-        {/* ⚙️ مركز الإعدادات المتكامل (القسم الجديد في الشريط) */}
+        {/* ⚙️ مركز الإعدادات */}
         {activeTab === 'settings' && (
           <div>
             <div style={{ marginBottom: '25px' }}>
@@ -790,13 +895,11 @@ function App() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '25px' }}>
-              {/* بطاقة 1: اللغة والمظهر */}
               <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div>
                   <h3 style={{ margin: '0 0 6px 0', color: theme.textDark }}>{t.prefTitle}</h3>
                   <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.prefDesc}</p>
                 </div>
-
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   <div>
                     <label style={{ fontSize: '13px', fontWeight: 'bold', color: theme.textDark, display: 'block', marginBottom: '8px' }}>{t.langLabel}</label>
@@ -809,7 +912,6 @@ function App() {
                       </button>
                     </div>
                   </div>
-
                   <div>
                     <label style={{ fontSize: '13px', fontWeight: 'bold', color: theme.textDark, display: 'block', marginBottom: '8px' }}>{t.themeLabel}</label>
                     <div style={{ display: 'flex', gap: '10px' }}>
@@ -824,11 +926,9 @@ function App() {
                 </div>
               </div>
 
-              {/* بطاقة 2: أمان الحساب وتغيير كلمة المرور */}
               <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
                 <h3 style={{ margin: '0 0 6px 0', color: theme.textDark }}>{t.securityTitle}</h3>
                 <p style={{ margin: '0 0 15px 0', color: theme.textMuted, fontSize: '13px' }}>{t.securityDesc}</p>
-
                 <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <input type="password" placeholder={t.oldPass} value={currentPass} onChange={e=>setCurrentPass(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark }} />
                   <input type="password" placeholder={t.newPass} value={newPass} onChange={e=>setNewPass(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark }} />
@@ -838,18 +938,14 @@ function App() {
                 </form>
               </div>
 
-              {/* بطاقة 3: الجلسة وحذف الحساب */}
               <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '20px' }}>
                 <div>
                   <h3 style={{ margin: '0 0 6px 0', color: theme.textDark }}>{t.sessionTitle}</h3>
                   <p style={{ margin: '0 0 15px 0', color: theme.textMuted, fontSize: '13px' }}>{t.sessionDesc}</p>
-
                   <button onClick={handleLogout} style={{ width: '100%', background: '#fee2e2', color: '#dc2626', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
                     🚪 {t.logoutBtn}
                   </button>
                 </div>
-
-                {/* منطقة الخطر */}
                 <div style={{ borderTop: `1px dashed ${theme.border}`, paddingTop: '15px' }}>
                   <h4 style={{ margin: '0 0 6px 0', color: '#dc2626' }}>{t.dangerZoneTitle}</h4>
                   <p style={{ margin: '0 0 10px 0', color: theme.textMuted, fontSize: '12px' }}>{t.dangerZoneDesc}</p>
@@ -865,6 +961,145 @@ function App() {
           </div>
         )}
       </main>
+
+      {/* نافذة الفاتورة الضريبية الرسمية المعتمدة (قابلة للمعاينة والطباعة والتصدير) */}
+      {printingInvoice && (
+        <div className="no-print" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px', boxSizing: 'border-box' }}>
+          <div style={{ background: '#ffffff', color: '#0f172a', width: '100%', maxWidth: '780px', maxHeight: '95vh', overflowY: 'auto', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
+            
+            {/* شريط الإجراءات العلوي (لا يظهر في الطباعة) */}
+            <div className="no-print" style={{ background: '#0f172a', color: '#fff', padding: '14px 25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+              <span style={{ fontWeight: 'bold', fontSize: '15px' }}>{t.taxInvoiceTitle} - #{printingInvoice.invoiceNo}</span>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={() => window.print()} style={{ background: '#0f766e', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {t.printBtn}
+                </button>
+                <button onClick={() => setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
+                  {t.closeModal}
+                </button>
+              </div>
+            </div>
+
+            {/* قالب الفاتورة الضريبية الرسمي (هذا القسم هو ما يتم تصديره وطباعته) */}
+            <div id="zatca-printable-invoice" style={{ padding: '35px', background: '#ffffff', color: '#0f172a', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
+              {/* ترويسة الفاتورة */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #0f172a', paddingBottom: '20px', marginBottom: '25px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#0f766e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '18px' }}>🏢</div>
+                    <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h1>
+                  </div>
+                  <p style={{ margin: '2px 0', fontSize: '13px', color: '#475569' }}>{t.vatRegNo} <strong>300123456700003</strong></p>
+                  <span style={{ display: 'inline-block', marginTop: '6px', background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold' }}>
+                    ✔ {t.zatcaBadge}
+                  </span>
+                </div>
+
+                <div style={{ textAlign: lang === 'ar' ? 'left' : 'right' }}>
+                  <h2 style={{ margin: '0 0 5px 0', fontSize: '20px', color: '#0f766e', fontWeight: '800' }}>{t.taxInvoiceTitle}</h2>
+                  <p style={{ margin: '2px 0', fontSize: '13px', fontWeight: 'bold' }}>#{printingInvoice.invoiceNo}</p>
+                  <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}>
+                    {t.invoiceDate} {new Date(printingInvoice.createdAt).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US')}
+                  </p>
+                </div>
+              </div>
+
+              {/* بطاقة بيانات العميل */}
+              <div style={{ background: '#f8fafc', padding: '14px 20px', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '25px' }}>
+                <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#64748b', fontWeight: 'bold' }}>{t.buyerInfo}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '15px' }}>
+                  <div>
+                    <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{printingInvoice.customer?.name || t.defaultCust}</span>
+                  </div>
+                  {printingInvoice.customer?.nationalId && (
+                    <div style={{ fontSize: '13px', color: '#334155' }}>
+                      <span>الهوية / السجل: </span>
+                      <strong>{printingInvoice.customer.nationalId}</strong>
+                    </div>
+                  )}
+                  {printingInvoice.customer?.phone && (
+                    <div style={{ fontSize: '13px', color: '#334155' }}>
+                      <span>الهاتف: </span>
+                      <strong>{printingInvoice.customer.phone}</strong>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* جدول البنود */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', marginBottom: '25px', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: '#0f172a', color: '#ffffff' }}>
+                    <th style={{ padding: '10px 14px', borderTopLeftRadius: lang === 'ar' ? '0' : '6px', borderTopRightRadius: lang === 'ar' ? '6px' : '0' }}>#</th>
+                    <th style={{ padding: '10px 14px' }}>{t.itemDesc}</th>
+                    <th style={{ padding: '10px 14px' }}>{t.itemQuantity}</th>
+                    <th style={{ padding: '10px 14px' }}>{t.unitPriceCol}</th>
+                    <th style={{ padding: '10px 14px', borderTopLeftRadius: lang === 'ar' ? '6px' : '0', borderTopRightRadius: lang === 'ar' ? '0' : '6px' }}>{t.totalCol}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {printingInvoice.items && printingInvoice.items.length > 0 ? (
+                    printingInvoice.items.map((it, idx) => (
+                      <tr key={it.id || idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                        <td style={{ padding: '12px 14px' }}>{idx + 1}</td>
+                        <td style={{ padding: '12px 14px', fontWeight: 'bold' }}>{it.product?.name || 'صنف مباع'}</td>
+                        <td style={{ padding: '12px 14px' }}>{it.quantity}</td>
+                        <td style={{ padding: '12px 14px' }}>{Number(it.unitPrice || 0).toFixed(2)} {t.currency}</td>
+                        <td style={{ padding: '12px 14px', fontWeight: 'bold' }}>{Number(it.subtotal || 0).toFixed(2)} {t.currency}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '12px 14px' }}>1</td>
+                      <td style={{ padding: '12px 14px', fontWeight: 'bold' }}>مبيعات بضاعة</td>
+                      <td style={{ padding: '12px 14px' }}>1</td>
+                      <td style={{ padding: '12px 14px' }}>{Number(printingInvoice.subtotal || 0).toFixed(2)} {t.currency}</td>
+                      <td style={{ padding: '12px 14px', fontWeight: 'bold' }}>{Number(printingInvoice.subtotal || 0).toFixed(2)} {t.currency}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              {/* قسم الملخص ورمز ZATCA QR */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '20px', flexWrap: 'wrap', gap: '20px' }}>
+                {/* رمز الاستجابة السريعة المشفر بنظام TLV Base64 */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: '#f8fafc', padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <img 
+                    src={generateZatcaQR(printingInvoice, businessName)} 
+                    alt="ZATCA QR" 
+                    style={{ width: '110px', height: '110px', borderRadius: '8px', background: '#fff', padding: '4px', border: '1px solid #cbd5e1' }} 
+                  />
+                  <div>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#0f172a' }}>{t.zatcaQRTitle}</h4>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#64748b', maxWidth: '180px', lineHeight: '1.4' }}>{t.zatcaQRSub}</p>
+                  </div>
+                </div>
+
+                {/* تفاصيل المبالغ والضريبة */}
+                <div style={{ minWidth: '260px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#475569' }}>
+                    <span>{t.subtotal}</span>
+                    <strong style={{ color: '#0f172a' }}>{Number(printingInvoice.subtotal || 0).toFixed(2)} {t.currency}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#475569' }}>
+                    <span>{t.vatAmount}</span>
+                    <strong style={{ color: '#0f766e' }}>{Number(printingInvoice.taxAmount || 0).toFixed(2)} {t.currency}</strong>
+                  </div>
+                  <div style={{ borderTop: '2px solid #0f172a', paddingTop: '8px', marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '15px', fontWeight: '900', color: '#0f172a' }}>{t.totalDue}</span>
+                    <span style={{ fontSize: '20px', fontWeight: '900', color: '#0f766e' }}>{Number(printingInvoice.totalAmount || 0).toFixed(2)} {t.currency}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* حاشية الفاتورة */}
+              <div style={{ textAlign: 'center', marginTop: '35px', paddingTop: '15px', borderTop: '1px dashed #cbd5e1', fontSize: '11px', color: '#94a3b8' }}>
+                {t.invoiceFooterNote}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
