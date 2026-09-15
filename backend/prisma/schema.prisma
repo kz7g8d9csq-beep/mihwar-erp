@@ -50,7 +50,7 @@ model User {
 model Customer {
   id         Int       @id @default(autoincrement())
   name       String
-  nationalId String?   // رقم الهوية أو السجل التجاري / الضريبي
+  nationalId String?   
   phone      String?
   email      String?
   companyId  Int
@@ -63,7 +63,7 @@ model Customer {
 model Supplier {
   id               Int               @id @default(autoincrement())
   name             String
-  taxNumber        String?           // الرقم الضريبي / السجل التجاري للمورد
+  taxNumber        String?           
   phone            String?
   email            String?
   companyId        Int
