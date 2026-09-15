@@ -8,14 +8,15 @@ datasource db {
 }
 
 model Company {
-  id        Int       @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   name      String
   users     User[]
   roles     Role[]
   products  Product[]
+  customers Customer[]
   invoices  Invoice[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Role {
@@ -43,6 +44,19 @@ model User {
   updatedAt DateTime  @updatedAt
 }
 
+model Customer {
+  id         Int       @id @default(autoincrement())
+  name       String
+  nationalId String?   // رقم الهوية أو السجل التجاري / الرقم الضريبي
+  phone      String?
+  email      String?
+  companyId  Int
+  company    Company   @relation(fields: [companyId], references: [id])
+  invoices   Invoice[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
 model Product {
   id           Int           @id @default(autoincrement())
   name         String
@@ -61,13 +75,15 @@ model Invoice {
   id          Int           @id @default(autoincrement())
   invoiceNo   String        @unique
   subtotal    Float         // المجموع قبل الضريبة
-  taxRate     Float         @default(0.15) // نسبة الضريبة 15% تلقائياً
-  taxAmount   Float         // مبلغ الضريبة المحسوب
+  taxRate     Float         @default(0.15) // 15% ضريبة آلية
+  taxAmount   Float         // مبلغ الضريبة
   totalAmount Float         // الإجمالي شامل الضريبة
   companyId   Int
   company     Company       @relation(fields: [companyId], references: [id])
   userId      Int?
   user        User?         @relation(fields: [userId], references: [id])
+  customerId  Int?
+  customer    Customer?     @relation(fields: [customerId], references: [id])
   items       InvoiceItem[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
