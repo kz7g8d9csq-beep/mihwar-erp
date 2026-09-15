@@ -576,29 +576,48 @@ function App() {
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark }}>
       
-      {/* ستايل الطباعة المنعزلة: يطبع فقط الفاتورة الرسمية دون أي عناصر واجهة أخرى */}
+      {/* ستايل الطباعة المنعزل والموثوق 100% */}
       <style>{`
         @media print {
-          body * {
-            visibility: hidden !important;
+          /* إخفاء شريط الترويسة، القائمة الرئيسية، وجميع أقسام الموقع الخلفية */
+          header, .main-navbar, main, .no-print-zone {
+            display: none !important;
           }
-          #zatca-printable-invoice, #zatca-printable-invoice * {
-            visibility: visible !important;
+          /* ضبط إعدادات الصفحة والألوان */
+          @page {
+            size: A4 portrait;
+            margin: 10mm;
           }
-          #zatca-printable-invoice {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 20px !important;
+          body {
             background: #ffffff !important;
             color: #000000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          /* تفريغ خلفية النافذة المنبثقة لتصبح ورقة بيضاء فقط */
+          .invoice-modal-backdrop {
+            position: static !important;
+            background: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            display: block !important;
+          }
+          .invoice-modal-card {
             box-shadow: none !important;
             border: none !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            max-height: none !important;
+            overflow: visible !important;
+            border-radius: 0 !important;
           }
-          .no-print {
-            display: none !important;
+          #zatca-printable-invoice {
+            display: block !important;
+            width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
           }
         }
       `}</style>
@@ -626,7 +645,7 @@ function App() {
       </header>
 
       {/* شريط الأقسام الرئيسي */}
-      <div style={{ background: theme.secondary, color: '#fff', padding: '0 30px', display: 'flex', gap: '4px', fontSize: '13px', overflowX: 'auto' }}>
+      <div className="main-navbar" style={{ background: theme.secondary, color: '#fff', padding: '0 30px', display: 'flex', gap: '4px', fontSize: '13px', overflowX: 'auto' }}>
         {[
           { id: 'dashboard', label: t.dashboard },
           { id: 'sales', label: t.sales },
@@ -780,7 +799,7 @@ function App() {
               </div>
             </div>
 
-            {/* بطاقة الضريبة التلقائية */}
+            {/* بطاقة الضريبة */}
             <div style={{ background: '#020617', borderRadius: '14px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 10px 25px rgba(0,0,0,0.3)' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
@@ -962,13 +981,13 @@ function App() {
         )}
       </main>
 
-      {/* نافذة الفاتورة الضريبية الرسمية المعتمدة (قابلة للمعاينة والطباعة والتصدير) */}
+      {/* نافذة الفاتورة الضريبية الرسمية المعتمدة */}
       {printingInvoice && (
-        <div className="no-print" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px', boxSizing: 'border-box' }}>
-          <div style={{ background: '#ffffff', color: '#0f172a', width: '100%', maxWidth: '780px', maxHeight: '95vh', overflowY: 'auto', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
+        <div className="invoice-modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px', boxSizing: 'border-box' }}>
+          <div className="invoice-modal-card" style={{ background: '#ffffff', color: '#0f172a', width: '100%', maxWidth: '780px', maxHeight: '95vh', overflowY: 'auto', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column' }}>
             
-            {/* شريط الإجراءات العلوي (لا يظهر في الطباعة) */}
-            <div className="no-print" style={{ background: '#0f172a', color: '#fff', padding: '14px 25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
+            {/* شريط الإجراءات العلوي (محمي بـ no-print-zone ليختفي هو فقط عند الطباعة) */}
+            <div className="no-print-zone" style={{ background: '#0f172a', color: '#fff', padding: '14px 25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTopLeftRadius: '16px', borderTopRightRadius: '16px' }}>
               <span style={{ fontWeight: 'bold', fontSize: '15px' }}>{t.taxInvoiceTitle} - #{printingInvoice.invoiceNo}</span>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button onClick={() => window.print()} style={{ background: '#0f766e', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -980,7 +999,7 @@ function App() {
               </div>
             </div>
 
-            {/* قالب الفاتورة الضريبية الرسمي (هذا القسم هو ما يتم تصديره وطباعته) */}
+            {/* قالب الفاتورة الرسمي: هذا الجزء سيظهر بالكامل في الطباعة وبأعلى دقة */}
             <div id="zatca-printable-invoice" style={{ padding: '35px', background: '#ffffff', color: '#0f172a', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
               {/* ترويسة الفاتورة */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #0f172a', paddingBottom: '20px', marginBottom: '25px' }}>
@@ -1004,7 +1023,7 @@ function App() {
                 </div>
               </div>
 
-              {/* بطاقة بيانات العميل */}
+              {/* بيانات العميل */}
               <div style={{ background: '#f8fafc', padding: '14px 20px', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '25px' }}>
                 <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#64748b', fontWeight: 'bold' }}>{t.buyerInfo}</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '15px' }}>
@@ -1026,7 +1045,7 @@ function App() {
                 </div>
               </div>
 
-              {/* جدول البنود */}
+              {/* جدول الأصناف والكميات */}
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', marginBottom: '25px', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#0f172a', color: '#ffffff' }}>
@@ -1060,9 +1079,8 @@ function App() {
                 </tbody>
               </table>
 
-              {/* قسم الملخص ورمز ZATCA QR */}
+              {/* قسم الملخص الضريبي ورمز ZATCA QR */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '20px', flexWrap: 'wrap', gap: '20px' }}>
-                {/* رمز الاستجابة السريعة المشفر بنظام TLV Base64 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: '#f8fafc', padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                   <img 
                     src={generateZatcaQR(printingInvoice, businessName)} 
@@ -1075,7 +1093,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* تفاصيل المبالغ والضريبة */}
                 <div style={{ minWidth: '260px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#475569' }}>
                     <span>{t.subtotal}</span>
@@ -1092,7 +1109,7 @@ function App() {
                 </div>
               </div>
 
-              {/* حاشية الفاتورة */}
+              {/* تذييل الفاتورة */}
               <div style={{ textAlign: 'center', marginTop: '35px', paddingTop: '15px', borderTop: '1px dashed #cbd5e1', fontSize: '11px', color: '#94a3b8' }}>
                 {t.invoiceFooterNote}
               </div>
