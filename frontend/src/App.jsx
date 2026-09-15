@@ -619,6 +619,10 @@ function App() {
     setSelectedProductId(''); setItemQty(1); setItemPrice('');
   };
 
+  const handleRemoveItemFromCart = (index) => {
+    setCartItems(cartItems.filter((_, idx) => idx !== index));
+  };
+
   const handleSaveInvoice = async () => {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
@@ -651,6 +655,77 @@ function App() {
   const netProfitVal = totalRev - totalCogs;
   const marginPercentage = totalRev > 0 ? ((netProfitVal / totalRev) * 100).toFixed(1) : '0.0';
   const lowStockItems = inventory.filter(i => i.stock <= lowStockThreshold);
+
+  const handleAddOrUpdateCustomer = async (e) => {
+    e.preventDefault();
+    if (!custName.trim()) return;
+    setIsSavingCustomer(true);
+    try {
+      if (editingCustId) {
+        await API.put(`/api/customers/${editingCustId}`, { name: custName.trim(), nationalId: custNationalId.trim()||null, phone: custPhone.trim()||null, email: custEmail.trim()||null });
+        setEditingCustId(null);
+      } else {
+        await API.post('/api/customers', { name: custName.trim(), nationalId: custNationalId.trim()||null, phone: custPhone.trim()||null, email: custEmail.trim()||null });
+      }
+      setCustName(''); setCustNationalId(''); setCustPhone(''); setCustEmail('');
+      fetchCustomers();
+    } catch (err) { alert(err.response?.data?.error || 'Error saving client'); } finally { setIsSavingCustomer(false); }
+  };
+
+  const handleDeleteCustomer = async (id) => {
+    if (!window.confirm(t.confirmDeleteCust)) return;
+    try { await API.delete(`/api/customers/${id}`); fetchCustomers(); } catch (err) { alert('Failed'); }
+  };
+
+  const handleAddOrUpdateSupplier = async (e) => {
+    e.preventDefault();
+    if (!suppName.trim()) return;
+    setIsSavingSupplier(true);
+    try {
+      if (editingSuppId) {
+        await API.put(`/api/suppliers/${editingSuppId}`, { name: suppName.trim(), taxNumber: suppTaxNumber.trim()||null, phone: suppPhone.trim()||null, email: suppEmail.trim()||null });
+        setEditingSuppId(null);
+      } else {
+        await API.post('/api/suppliers', { name: suppName.trim(), taxNumber: suppTaxNumber.trim()||null, phone: suppPhone.trim()||null, email: suppEmail.trim()||null });
+      }
+      setSuppName(''); setSuppTaxNumber(''); setSuppPhone(''); setSuppEmail('');
+      fetchSuppliers();
+    } catch (err) { alert(err.response?.data?.error || 'Error saving supplier'); } finally { setIsSavingSupplier(false); }
+  };
+
+  const handleDeleteSupplier = async (id) => {
+    if (!window.confirm(t.confirmDeleteSupp)) return;
+    try { await API.delete(`/api/suppliers/${id}`); fetchSuppliers(); } catch (err) { alert('Failed'); }
+  };
+
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
+    if (!newProdName || !newProdPrice) return;
+    try {
+      await API.post('/api/inventory', { name: newProdName, price: newProdPrice, stock: newProdStock || 0 });
+      setNewProdName(''); setNewProdPrice(''); setNewProdStock('');
+      fetchInventory();
+    } catch (err) { alert(err.response?.data?.error || 'Error saving product'); }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (newPass.length < 8) return;
+    try {
+      const res = await API.post('/api/change-password', { currentPassword: currentPass, newPassword: newPass });
+      alert(`✅ ${res.data.message}`);
+      setCurrentPass(''); setNewPass('');
+    } catch (err) { alert(err.response?.data?.error || 'Failed'); }
+  };
+
+  const handleDeleteAccount = async (e) => {
+    e.preventDefault();
+    if (!window.confirm(lang === 'ar' ? 'تحذير نهائي: هل تريد تعطيل وحذف حسابك تماماً؟' : 'Final Warning?')) return;
+    try {
+      await API.post('/api/delete-account', { confirmPassword: deleteConfirmPass });
+      handleLogout();
+    } catch (err) { alert(err.response?.data?.error || 'Failed'); }
+  };
 
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
@@ -948,10 +1023,33 @@ function App() {
                 <button onClick={()=>setLang('ar')} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: lang==='ar'?theme.primary:'transparent', color: lang==='ar'?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold' }}>🇸🇦 العربية</button>
                 <button onClick={()=>setLang('en')} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: lang==='en'?theme.primary:'transparent', color: lang==='en'?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold' }}>🇺🇸 English</button>
               </div>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                <button onClick={()=>setIsDark(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: !isDark?theme.primary:'transparent', color: !isDark?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold' }}>☀️ {t.lightMode}</button>
+                <button onClick={()=>setIsDark(true)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: isDark?theme.primary:'transparent', color: isDark?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold' }}>🌙 {t.darkMode}</button>
+              </div>
             </div>
+
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
-              <h3>{t.sessionTitle}</h3>
-              <button onClick={handleLogout} style={{ width: '100%', background: '#fee2e2', color: '#dc2626', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px' }}>🚪 {t.logoutBtn}</button>
+              <h3>{t.securityTitle}</h3>
+              <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
+                <input type="password" placeholder={t.oldPass} value={currentPass} onChange={e=>setCurrentPass(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
+                <input type="password" placeholder={t.newPass} value={newPass} onChange={e=>setNewPass(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
+                <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '10px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.updatePassBtn}</button>
+              </form>
+            </div>
+
+            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <h3>{t.sessionTitle}</h3>
+                <button onClick={handleLogout} style={{ width: '100%', background: '#fee2e2', color: '#dc2626', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px' }}>🚪 {t.logoutBtn}</button>
+              </div>
+              <div style={{ borderTop: `1px dashed ${theme.border}`, paddingTop: '15px', marginTop: '20px' }}>
+                <h4 style={{ color: '#dc2626', margin: '0 0 5px 0' }}>{t.dangerZoneTitle}</h4>
+                <form onSubmit={handleDeleteAccount} style={{ display: 'flex', gap: '10px' }}>
+                  <input type="password" placeholder={t.oldPass} value={deleteConfirmPass} onChange={e=>setDeleteConfirmPass(e.target.value)} required style={{ flex: 1, padding: '8px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
+                  <button type="submit" style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>{t.deleteAccBtn}</button>
+                </form>
+              </div>
             </div>
           </div>
         )}
