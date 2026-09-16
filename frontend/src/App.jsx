@@ -1082,7 +1082,7 @@ function App() {
               </div>
             </div>
 
-            {/* قسم الرسوم البيانية والتحليلات البصرية */}
+            {/* قسم الرسوم البيانية والتحليلات البصرية المضافة حديثاً */}
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -1128,29 +1128,72 @@ function App() {
                 </div>
               </div>
 
-              {/* رادار التنبيهات الذكية */}
+              {/* رادار التنبيهات الذكية وتعديل الحد */}
               <div style={{ background: lowStockItems.length > 0 ? (isDark ? '#450a0a' : '#fff1f2') : theme.cardBg, border: `1px solid ${lowStockItems.length > 0 ? '#fecdd3' : theme.border}`, borderRadius: '14px', padding: '22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
-                  <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#be123c' : theme.textDark }}>
-                    {t.lowStockTitle}
-                  </h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <h3 style={{ margin: 0, fontSize: '16px', color: lowStockItems.length > 0 ? '#be123c' : theme.textDark }}>
+                      {t.lowStockTitle}
+                    </h3>
+                  </div>
+
+                  <div style={{ marginBottom: '12px' }}>
+                    {isEditingThreshold ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <input 
+                          type="number" 
+                          min="1" 
+                          value={tempThreshold} 
+                          onChange={e => setTempThreshold(e.target.value)} 
+                          style={{ width: '65px', padding: '5px 8px', borderRadius: '6px', border: `1px solid ${theme.border}`, background: theme.cardBg, color: theme.textDark, textAlign: 'center', fontWeight: 'bold', fontSize: '13px' }} 
+                        />
+                        <button 
+                          onClick={() => {
+                            const val = Number(tempThreshold);
+                            if (val > 0) {
+                              setLowStockThreshold(val);
+                              localStorage.setItem('mihwar_low_stock_threshold', String(val));
+                            }
+                            setIsEditingThreshold(false);
+                          }} 
+                          style={{ background: theme.primary, color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                        >
+                          {lang === 'ar' ? 'حفظ' : 'Save'}
+                        </button>
+                        <button 
+                          onClick={() => setIsEditingThreshold(false)} 
+                          style={{ background: '#94a3b8', color: '#fff', border: 'none', padding: '6px 8px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => { setTempThreshold(lowStockThreshold); setIsEditingThreshold(true); }} 
+                        style={{ background: isDark ? '#334155' : '#e2e8f0', color: theme.textDark, border: `1px solid ${theme.border}`, padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}
+                      >
+                        ⚙️ {lang === 'ar' ? `تعديل حد التنبيه (${lowStockThreshold})` : `Adjust Limit (${lowStockThreshold})`}
+                      </button>
+                    )}
+                  </div>
+
                   {lowStockItems.length === 0 ? (
                     <p style={{ color: theme.accentGreen, fontSize: '14px', lineHeight: '1.6' }}>{t.lowStockClean}</p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '180px', overflowY: 'auto' }}>
                       {lowStockItems.map(item => (
-                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: theme.cardBg, borderRadius: '8px', fontSize: '13px', border: '1px solid #fda4af' }}>
+                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: theme.cardBg, borderRadius: '8px', fontSize: '13px', border: '1px solid #fda4af', alignItems: 'center' }}>
                           <span style={{ fontWeight: 'bold' }}>{item.name}</span>
-                          <strong style={{ color: '#e11d48' }}>{item.stock} {lang === 'ar' ? 'متبقي' : 'left'}</strong>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <strong style={{ color: '#e11d48' }}>{item.stock}</strong>
+                            <button onClick={() => { setSelectedPurchaseProdId(item.id); setActiveTab('purchases'); }} style={{ background: theme.accentAmber, color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
+                              توريد
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
-                </div>
-                <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '15px', marginTop: '15px' }}>
-                  <button onClick={() => setActiveTab('purchases')} style={{ width: '100%', background: theme.primary, color: '#fff', border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
-                    {t.reorderBtn}
-                  </button>
                 </div>
               </div>
             </div>
