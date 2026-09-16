@@ -1046,13 +1046,13 @@ function App() {
       </div>
 
       <main style={{ padding: '30px', maxWidth: '1400px', margin: 'auto' }}>
-        {/* لوحة التحكم */}
+        {/* لوحة التحكم والرسوم البيانية */}
         {activeTab === 'dashboard' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h1 style={{ margin: 0, fontSize: '24px', color: theme.textDark }}>{t.welcome} {user.name} 👋</h1>
               <span style={{ fontSize: '13px', background: isDark ? '#1e293b' : '#e2e8f0', padding: '6px 14px', borderRadius: '8px', fontWeight: 'bold' }}>
-                TiDB Cloud • مزامنة لحظية
+                🟢 TiDB Cloud • مزامنة لحظية
               </span>
             </div>
 
@@ -1082,87 +1082,77 @@ function App() {
               </div>
             </div>
 
-            {/* رادار نواقص المخزون */}
-            <div style={{ background: lowStockItems.length > 0 ? (isDark ? '#450a0a' : '#fff1f2') : theme.cardBg, border: `1px solid ${lowStockItems.length > 0 ? '#fecdd3' : theme.border}`, borderRadius: '14px', padding: '22px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: lowStockItems.length > 0 ? '15px' : '0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <h3 style={{ margin: 0, fontSize: '16px', color: lowStockItems.length > 0 ? '#be123c' : theme.textDark }}>
-                    {t.lowStockTitle}
-                  </h3>
-                  {lowStockItems.length > 0 && (
-                    <span style={{ background: '#be123c', color: '#fff', fontSize: '11px', fontWeight: 'bold', padding: '3px 8px', borderRadius: '6px' }}>
-                      {lowStockItems.length} {lang === 'ar' ? 'أصناف' : 'items'}
-                    </span>
-                  )}
+            {/* قسم الرسوم البيانية والتحليلات البصرية */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '25px' }}>
+              <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', color: theme.textDark }}>{lang === 'ar' ? '📈 تحليل الأداء المالي والمبيعات الحية' : '📈 Financial Performance & Sales Analysis'}</h3>
+                  <span style={{ fontSize: '12px', color: theme.textMuted }}>TiDB Live Stream</span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {isEditingThreshold ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: theme.textDark }}>{lang === 'ar' ? 'الحد الجديد:' : 'New limit:'}</span>
-                      <input 
-                        type="number" 
-                        min="1" 
-                        value={tempThreshold} 
-                        onChange={e => setTempThreshold(e.target.value)} 
-                        style={{ width: '65px', padding: '5px 8px', borderRadius: '6px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, textAlign: 'center', fontWeight: 'bold', fontSize: '13px' }} 
-                      />
-                      <button 
-                        onClick={() => {
-                          const val = Number(tempThreshold);
-                          if (val > 0) {
-                            setLowStockThreshold(val);
-                            localStorage.setItem('mihwar_low_stock_threshold', String(val));
-                          }
-                          setIsEditingThreshold(false);
-                        }} 
-                        style={{ background: theme.primary, color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
-                      >
-                        {lang === 'ar' ? 'حفظ' : 'Save'}
-                      </button>
-                      <button 
-                        onClick={() => {
-                          setTempThreshold(lowStockThreshold);
-                          setIsEditingThreshold(false);
-                        }} 
-                        style={{ background: '#94a3b8', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
-                      >
-                        {lang === 'ar' ? 'إلغاء' : 'Cancel'}
-                      </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: '10px 0' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
+                      <span style={{ fontWeight: 'bold', color: theme.textDark }}>{t.salesTotal}</span>
+                      <span style={{ color: theme.accentGreen, fontWeight: 'bold' }}>{totalSalesVal.toLocaleString()} {t.currency}</span>
                     </div>
-                  ) : (
-                    <button 
-                      onClick={() => {
-                        setTempThreshold(lowStockThreshold);
-                        setIsEditingThreshold(true);
-                      }} 
-                      style={{ background: isDark ? '#334155' : '#e2e8f0', color: theme.textDark, border: `1px solid ${theme.border}`, padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}
-                    >
-                      ⚙️ {lang === 'ar' ? `تعديل حد التنبيه (${lowStockThreshold} وحدة)` : `Adjust Alert Limit (${lowStockThreshold})`}
-                    </button>
-                  )}
+                    <div style={{ width: '100%', height: '12px', background: theme.bgMain, borderRadius: '6px', overflow: 'hidden', border: `1px solid ${theme.border}` }}>
+                      <div style={{ width: `${Math.min(100, (totalSalesVal / (totalSalesVal + totalPurchasesVal || 1)) * 100)}%`, height: '100%', background: theme.accentGreen, borderRadius: '6px', transition: 'width 0.6s ease' }}></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
+                      <span style={{ fontWeight: 'bold', color: theme.textDark }}>{t.purchasesTotal}</span>
+                      <span style={{ color: theme.accentAmber, fontWeight: 'bold' }}>{totalPurchasesVal.toLocaleString()} {t.currency}</span>
+                    </div>
+                    <div style={{ width: '100%', height: '12px', background: theme.bgMain, borderRadius: '6px', overflow: 'hidden', border: `1px solid ${theme.border}` }}>
+                      <div style={{ width: `${Math.min(100, (totalPurchasesVal / (totalSalesVal + totalPurchasesVal || 1)) * 100)}%`, height: '100%', background: theme.accentAmber, borderRadius: '6px', transition: 'width 0.6s ease' }}></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
+                      <span style={{ fontWeight: 'bold', color: theme.textDark }}>{t.invValue}</span>
+                      <span style={{ color: theme.primary, fontWeight: 'bold' }}>{inventoryVal.toLocaleString()} {t.currency}</span>
+                    </div>
+                    <div style={{ width: '100%', height: '12px', background: theme.bgMain, borderRadius: '6px', overflow: 'hidden', border: `1px solid ${theme.border}` }}>
+                      <div style={{ width: '70%', height: '100%', background: theme.primary, borderRadius: '6px', transition: 'width 0.6s ease' }}></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '25px', padding: '15px', background: theme.bgMain, borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${theme.border}` }}>
+                  <span style={{ fontSize: '13px', color: theme.textMuted }}>{lang === 'ar' ? 'إجمالي الفواتير الصادرة:' : 'Total Issued Invoices:'}</span>
+                  <strong style={{ fontSize: '16px', color: theme.primary }}>{invoices.length} {lang === 'ar' ? 'فاتورة معتمدة' : 'Invoices'}</strong>
                 </div>
               </div>
 
-              {lowStockItems.length === 0 ? (
-                <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.lowStockClean}</p>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
-                  {lowStockItems.map(item => (
-                    <div key={item.id} style={{ background: isDark ? '#1e293b' : '#ffffff', padding: '14px', borderRadius: '10px', border: '1px solid #fda4af', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <strong style={{ fontSize: '14px', color: theme.textDark }}>{item.name}</strong>
-                        <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#e11d48', fontWeight: 'bold' }}>
-                          المتبقي بالمستودع: {item.stock} وحدة فقط!
-                        </p>
-                      </div>
-                      <button onClick={() => { setSelectedPurchaseProdId(item.id); setActiveTab('purchases'); }} style={{ background: theme.accentAmber, color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
-                        {t.reorderBtn}
-                      </button>
+              {/* رادار التنبيهات الذكية */}
+              <div style={{ background: lowStockItems.length > 0 ? (isDark ? '#450a0a' : '#fff1f2') : theme.cardBg, border: `1px solid ${lowStockItems.length > 0 ? '#fecdd3' : theme.border}`, borderRadius: '14px', padding: '22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#be123c' : theme.textDark }}>
+                    {t.lowStockTitle}
+                  </h3>
+                  {lowStockItems.length === 0 ? (
+                    <p style={{ color: theme.accentGreen, fontSize: '14px', lineHeight: '1.6' }}>{t.lowStockClean}</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '180px', overflowY: 'auto' }}>
+                      {lowStockItems.map(item => (
+                        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: theme.cardBg, borderRadius: '8px', fontSize: '13px', border: '1px solid #fda4af' }}>
+                          <span style={{ fontWeight: 'bold' }}>{item.name}</span>
+                          <strong style={{ color: '#e11d48' }}>{item.stock} {lang === 'ar' ? 'متبقي' : 'left'}</strong>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
+                <div style={{ borderTop: `1px solid ${theme.border}`, paddingTop: '15px', marginTop: '15px' }}>
+                  <button onClick={() => setActiveTab('purchases')} style={{ width: '100%', background: theme.primary, color: '#fff', border: 'none', padding: '10px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+                    {t.reorderBtn}
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* جدول أداء الأصناف */}
@@ -1913,7 +1903,7 @@ function App() {
               </div>
             </div>
           </div>
-        </div>
+        )}
       )}
     </div>
   );
