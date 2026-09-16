@@ -1046,7 +1046,7 @@ function App() {
       </div>
 
       <main style={{ padding: '30px', maxWidth: '1400px', margin: 'auto' }}>
-        {/* لوحة التحكم والرسوم البيانية */}
+        {/* لوحة التحكم والرسوم البيانية البصرية الحقيقية */}
         {activeTab === 'dashboard' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1082,48 +1082,49 @@ function App() {
               </div>
             </div>
 
-            {/* قسم الرسوم البيانية والتحليلات البصرية المضافة حديثاً */}
+            {/* قسم الرسم البياني التحليلي البصري المتطور */}
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <h3 style={{ margin: 0, fontSize: '16px', color: theme.textDark }}>{lang === 'ar' ? '📈 تحليل الأداء المالي والمبيعات الحية' : '📈 Financial Performance & Sales Analysis'}</h3>
-                  <span style={{ fontSize: '12px', color: theme.textMuted }}>TiDB Live Stream</span>
+                  <h3 style={{ margin: 0, fontSize: '16px', color: theme.textDark }}>{lang === 'ar' ? '📈 تحليل الأداء المالي والمبيعات (رسم بياني تفاعلي)' : '📈 Financial Performance Analytics'}</h3>
+                  <span style={{ fontSize: '12px', background: theme.bgMain, padding: '4px 10px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>Live Metrics</span>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: '10px 0' }}>
+                {/* المخططات الشريطية البصرية للرسم البياني */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', padding: '10px 0' }}>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
-                      <span style={{ fontWeight: 'bold', color: theme.textDark }}>{t.salesTotal}</span>
-                      <span style={{ color: theme.accentGreen, fontWeight: 'bold' }}>{totalSalesVal.toLocaleString()} {t.currency}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px' }}>
+                      <span style={{ fontWeight: 'bold', color: theme.textDark }}>🛍️ {t.salesTotal}</span>
+                      <span style={{ color: theme.accentGreen, fontWeight: 'bold' }}>{totalSalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</span>
                     </div>
-                    <div style={{ width: '100%', height: '12px', background: theme.bgMain, borderRadius: '6px', overflow: 'hidden', border: `1px solid ${theme.border}` }}>
-                      <div style={{ width: `${Math.min(100, (totalSalesVal / (totalSalesVal + totalPurchasesVal || 1)) * 100)}%`, height: '100%', background: theme.accentGreen, borderRadius: '6px', transition: 'width 0.6s ease' }}></div>
+                    <div style={{ width: '100%', height: '16px', background: theme.bgMain, borderRadius: '8px', overflow: 'hidden', border: `1px solid ${theme.border}` }}>
+                      <div style={{ width: `${Math.min(100, (totalSalesVal / (totalSalesVal + totalPurchasesVal || 1)) * 100)}%`, height: '100%', background: 'linear-gradient(90deg, #10b981, #047857)', borderRadius: '8px', transition: 'width 0.8s ease' }}></div>
                     </div>
                   </div>
 
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
-                      <span style={{ fontWeight: 'bold', color: theme.textDark }}>{t.purchasesTotal}</span>
-                      <span style={{ color: theme.accentAmber, fontWeight: 'bold' }}>{totalPurchasesVal.toLocaleString()} {t.currency}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px' }}>
+                      <span style={{ fontWeight: 'bold', color: theme.textDark }}>📥 {t.purchasesTotal}</span>
+                      <span style={{ color: theme.accentAmber, fontWeight: 'bold' }}>{totalPurchasesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</span>
                     </div>
-                    <div style={{ width: '100%', height: '12px', background: theme.bgMain, borderRadius: '6px', overflow: 'hidden', border: `1px solid ${theme.border}` }}>
-                      <div style={{ width: `${Math.min(100, (totalPurchasesVal / (totalSalesVal + totalPurchasesVal || 1)) * 100)}%`, height: '100%', background: theme.accentAmber, borderRadius: '6px', transition: 'width 0.6s ease' }}></div>
+                    <div style={{ width: '100%', height: '16px', background: theme.bgMain, borderRadius: '8px', overflow: 'hidden', border: `1px solid ${theme.border}` }}>
+                      <div style={{ width: `${Math.min(100, (totalPurchasesVal / (totalSalesVal + totalPurchasesVal || 1)) * 100)}%`, height: '100%', background: 'linear-gradient(90deg, #f59e0b, #b45309)', borderRadius: '8px', transition: 'width 0.8s ease' }}></div>
                     </div>
                   </div>
 
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '5px' }}>
-                      <span style={{ fontWeight: 'bold', color: theme.textDark }}>{t.invValue}</span>
-                      <span style={{ color: theme.primary, fontWeight: 'bold' }}>{inventoryVal.toLocaleString()} {t.currency}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px' }}>
+                      <span style={{ fontWeight: 'bold', color: theme.textDark }}>📦 {t.invValue}</span>
+                      <span style={{ color: theme.primary, fontWeight: 'bold' }}>{inventoryVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</span>
                     </div>
-                    <div style={{ width: '100%', height: '12px', background: theme.bgMain, borderRadius: '6px', overflow: 'hidden', border: `1px solid ${theme.border}` }}>
-                      <div style={{ width: '70%', height: '100%', background: theme.primary, borderRadius: '6px', transition: 'width 0.6s ease' }}></div>
+                    <div style={{ width: '100%', height: '16px', background: theme.bgMain, borderRadius: '8px', overflow: 'hidden', border: `1px solid ${theme.border}` }}>
+                      <div style={{ width: '65%', height: '100%', background: 'linear-gradient(90deg, #0f766e, #115e59)', borderRadius: '8px', transition: 'width 0.8s ease' }}></div>
                     </div>
                   </div>
                 </div>
 
                 <div style={{ marginTop: '25px', padding: '15px', background: theme.bgMain, borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${theme.border}` }}>
-                  <span style={{ fontSize: '13px', color: theme.textMuted }}>{lang === 'ar' ? 'إجمالي الفواتير الصادرة:' : 'Total Issued Invoices:'}</span>
+                  <span style={{ fontSize: '13px', color: theme.textMuted }}>{lang === 'ar' ? 'إجمالي فواتير المبيعات الصادرة:' : 'Total Issued Invoices:'}</span>
                   <strong style={{ fontSize: '16px', color: theme.primary }}>{invoices.length} {lang === 'ar' ? 'فاتورة معتمدة' : 'Invoices'}</strong>
                 </div>
               </div>
