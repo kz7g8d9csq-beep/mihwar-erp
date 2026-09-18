@@ -891,45 +891,40 @@ function App() {
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark, display: 'flex' }}>
       
-      {/* ضبط إعدادات الطباعة لتكون بحجم A4 طولي عمودي (portrait) تماماً */}
+      {/* تصليح قاطع لخصائص الطباعة لعزل الفاتورة بحجم A4 عمودي (طولي) نظيف تماماً وخالٍ من خلفيات المتصفح */}
       <style>{`
         @media print {
-          header, .sidebar-nav, main, .no-print-zone, button {
+          body * {
+            visibility: hidden !important;
+          }
+          #zatca-printable-invoice, #zatca-printable-invoice * {
+            visibility: visible !important;
+          }
+          #zatca-printable-invoice {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 15mm !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            box-sizing: border-box !important;
+          }
+          .invoice-modal-backdrop {
+            background: #ffffff !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+          }
+          .no-print-zone {
             display: none !important;
           }
           @page {
             size: A4 portrait;
-            margin: 10mm;
-          }
-          body, html {
-            background: #ffffff !important;
-            color: #000000 !important;
-            width: 100% !important;
-            height: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          .invoice-modal-backdrop {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: #ffffff !important;
-            display: block !important;
-            z-index: 99999 !important;
-          }
-          .invoice-modal-card {
-            box-shadow: none !important;
-            border: none !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            height: auto !important;
-            border-radius: 0 !important;
-            padding: 0 !important;
-            margin: 0 !important;
+            margin: 0mm;
           }
         }
         @media (max-width: 900px) {
@@ -1244,35 +1239,66 @@ function App() {
       </div>
 
       {printingInvoice && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
-          <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
+        <div className="invoice-modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
+          <div className="invoice-modal-card" style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
               <h2>{t.taxInvoiceTitle}</h2>
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={() => window.print()} style={{ background: '#d97706', color: '#fff', border: 'none', printColorAdjust: 'exact', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>📥 حفظ PDF / طباعة</button>
+                <button onClick={() => window.print()} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>📥 حفظ PDF / طباعة</button>
                 <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.closeModal}</button>
               </div>
             </div>
-            <div id="zatca-printable-invoice">
-              <p><strong>{t.invNo}</strong> #{printingInvoice.invoiceNo}</p>
-              <p><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'Cash'}</p>
+            
+            {/* عنصر الفاتورة المعزول تماماً للطباعة بنظام A4 العمودي الصحيح */}
+            <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '10px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, color: '#0f172a' }}>{businessName}</h2>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0' }}>{t.taxInvoiceTitle}</p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '15px', borderBottom: '1px solid #cbd5e1', paddingBottom: '10px' }}>
+                <div>
+                  <p style={{ margin: '3px 0' }}><strong>{t.invNo}</strong> #{printingInvoice.invoiceNo}</p>
+                  <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي'}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ margin: '3px 0' }}><strong>{t.invoiceDate}</strong> {new Date(printingInvoice.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
+
               <table style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0', fontSize: '13px' }}>
-                <thead><tr style={{ background: '#0f172a', color: '#fff' }}><th style={{ padding: '8px' }}>Item</th><th style={{ padding: '8px' }}>Qty</th><th style={{ padding: '8px' }}>Price</th><th style={{ padding: '8px' }}>Total</th></tr></thead>
+                <thead>
+                  <tr style={{ background: '#0f172a', color: '#fff' }}>
+                    <th style={{ padding: '8px', textAlign: 'right' }}>{t.itemDesc}</th>
+                    <th style={{ padding: '8px', textAlign: 'center' }}>{t.itemQuantity}</th>
+                    <th style={{ padding: '8px', textAlign: 'center' }}>{t.unitPriceCol}</th>
+                    <th style={{ padding: '8px', textAlign: 'left' }}>{t.totalCol}</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {printingInvoice.items?.map((it, idx)=>(
-                    <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}><td style={{ padding: '8px' }}>{it.product?.name}</td><td style={{ padding: '8px' }}>{it.quantity}</td><td style={{ padding: '8px' }}>{it.unitPrice}</td><td style={{ padding: '8px' }}>{it.subtotal}</td></tr>
+                    <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}>
+                      <td style={{ padding: '8px', textAlign: 'right' }}>{it.product?.name || 'صنف'}</td>
+                      <td style={{ padding: '8px', textAlign: 'center' }}>{it.quantity}</td>
+                      <td style={{ padding: '8px', textAlign: 'center' }}>{it.unitPrice}</td>
+                      <td style={{ padding: '8px', textAlign: 'left' }}>{it.subtotal}</td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <img src={generateZatcaQR(printingInvoice, businessName)} alt="QR" style={{ width: '100px', height: '100px' }} />
-                <div style={{ textAlign: 'right' }}>
-                  <p>{t.subtotal} {printingInvoice.subtotal} {t.currency}</p>
-                  <p>{t.vatAmount} {printingInvoice.taxAmount} {t.currency}</p>
-                  <h3>{t.totalDue} {printingInvoice.totalAmount} {t.currency}</h3>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', borderTop: '1px solid #cbd5e1', paddingTop: '15px' }}>
+                <img src={generateZatcaQR(printingInvoice, businessName)} alt="QR" style={{ width: '110px', height: '110px' }} />
+                <div style={{ textAlign: 'right', fontSize: '14px' }}>
+                  <p style={{ margin: '4px 0' }}>{t.subtotal} <strong>{printingInvoice.subtotal}</strong> {t.currency}</p>
+                  <p style={{ margin: '4px 0' }}>{t.vatAmount} <strong>{printingInvoice.taxAmount}</strong> {t.currency}</p>
+                  <h3 style={{ margin: '8px 0 0 0', color: '#0f172a' }}>{t.totalDue} <strong>{printingInvoice.totalAmount}</strong> {t.currency}</h3>
                 </div>
               </div>
+              <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>
+                {t.invoiceFooterNote}
+              </div>
             </div>
+
           </div>
         </div>
       )}
