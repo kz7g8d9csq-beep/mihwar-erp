@@ -4,7 +4,7 @@ import API from './services/api';
 const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
   const isAr = lang === 'ar';
   const cleanTitle = sheetTitle.replace(/[/\\?*[\]]/g, '');
-  const brandName = isAr ? 'محور ERP' : 'Mihwar ERP';
+  const brandName = isAr ? 'قمة البارون' : 'Baron ERP';
   const metaText = isAr
     ? `تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')} | وثيقة معتمدة ومصدرة آلياً من النظام`
     : `Export Date: ${new Date().toLocaleDateString('en-US')} | Official System Generated Report`;
@@ -31,9 +31,9 @@ const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
       <![endif]-->
       <style>
         table { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; border-collapse: collapse; direction: ${isAr ? 'rtl' : 'ltr'}; width: 100%; }
-        .main-title { font-size: 16pt; font-weight: bold; color: #0f766e; text-align: center; padding: 12px; }
+        .main-title { font-size: 16pt; font-weight: bold; color: #d97706; text-align: center; padding: 12px; }
         .meta-text { font-size: 10pt; color: #64748b; text-align: center; padding-bottom: 10px; }
-        th { background-color: #0f766e; color: #ffffff; font-weight: bold; border: 1px solid #042f2e; padding: 10px 14px; text-align: center; font-size: 11pt; }
+        th { background-color: #d97706; color: #ffffff; font-weight: bold; border: 1px solid #b45309; padding: 10px 14px; text-align: center; font-size: 11pt; }
         td { border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 10pt; text-align: ${isAr ? 'right' : 'left'}; }
         .text-cell { mso-number-format: "\\@"; text-align: center; }
         .num-cell { mso-number-format: "#\\,##0\\.00"; text-align: right; }
@@ -83,37 +83,40 @@ const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
 
 const dict = {
   ar: {
-    brand: 'محور ERP',
+    brand: 'قمة البارون',
     tagline: 'إدارة متكاملة برؤية مستقبلية.',
-    taglineSub: 'نظام سحابي متطور لربط كافة أقسام منشأتك التجارية والصناعية بأعلى معايير الأمان والكفاءة.',
+    taglineSub: 'نظام سحابي متطور لربط كافة أقسام منشأتك التجارية والصناعية.',
     workspace: 'مساحة العمل:',
-    dashboard: '📊 لوحة التحكم',
-    pos: '🛒 نقاط البيع (POS)',
-    sales: '🛍️ المبيعات',
-    purchases: '📥 المشتريات',
-    customers: '👥 العملاء',
-    suppliers: '🏭 الموردين',
-    inventory: '📦 المخزون الحي',
-    reports: '📈 التقارير',
-    settings: '⚙️ الإعدادات',
-    welcome: 'أهلاً بك مجدداً،',
+    dashboard: 'لوحة التحكم',
+    pos: 'نقطة البيع (POS)',
+    sales: 'الفواتير',
+    purchases: 'المشتريات',
+    customers: 'العملاء',
+    suppliers: 'الموردين',
+    inventory: 'المخزون',
+    reports: 'التقارير',
+    settings: 'الإعدادات',
+    production: 'الإنتاج',
+    hr: 'الموارد البشرية',
+    ai: 'الذكاء الاصطناعي',
+    welcome: 'مرحباً بك،',
     currency: 'ر.س',
-    roleLabel: 'صلاحية الدخول:',
+    roleLabel: 'اختر نوع الدخول:',
     roleAdmin: 'مدير النظام (Admin)',
-    roleCashier: 'كاشير مبيعات (Cashier)',
-    adminSecretLabel: '🔑 كلمة المرور الإدارية السرية:',
+    roleCashier: 'كاشير (Cashier)',
+    adminSecretLabel: '🔑 كلمة المرور الإدارية الخاصة بمدير النظام:',
     adminSecretPlaceholder: 'أدخل كلمة سر الإدارة المعتمدة',
 
-    landingTitle: 'منظومة محور ERP السحابية للأعمال',
-    landingDesc: 'الحل الأمثل والذكي لإدارة المبيعات، المخزون المتصل بـ TiDB، الفوترة الإلكترونية المعتمدة من ZATCA، ونقاط البيع السريعة بتصميم استثنائي.',
+    landingTitle: 'منظومة قمة البارون السحابية',
+    landingDesc: 'الحل الأمثل والذكي لإدارة المبيعات، المخزون المتصل بـ TiDB، الفوترة الإلكترونية المعتمدة من ZATCA، ونقاط البيع السريعة.',
     enterAppBtn: 'ابدأ العمل الآن 🚀',
-    featuresTitle: '✨ لماذا يثق رواد الأعمال في نظام محور ERP؟',
-    feature1Title: '⚡ نقطة بيع (POS) فائقة السرعة',
-    feature1Desc: 'إدارة عمليات البيع وسلة المشتريات بأزرار تفاعلية مريحة وعدادات كميات فورية باللمس.',
-    feature2Title: '🧾 فوترة إلكترونية متوافقة تماماً',
-    feature2Desc: 'توليد رموز الاستجابة السريعة QR تلقائياً وتصدير فواتير A4 رسمية وموثوقة.',
-    feature3Title: '🔒 أمان وتحكم كامل في الصلاحيات',
-    feature3Desc: 'فصل ذكي ومحكم بين صلاحيات الإدارة العليا وصلاحيات الكاشير لحماية بياناتك.',
+    featuresTitle: '✨ لماذا يختار رواد الأعمال نظام قمة البارون؟',
+    feature1Title: '⚡ نقطة بيع (POS) سريعة باللمس',
+    feature1Desc: 'إدارة المبيعات وسلة الشراء بأزرار تفاعلية وعدادات كميات فورية.',
+    feature2Title: '🧾 فوترة إلكترونية معتمدة (ZATCA)',
+    feature2Desc: 'توليد رموز الاستجابة السريعة QR وتصدير فواتير A4 رسمية بدقة.',
+    feature3Title: '🔒 صلاحيات أمان مشددة (RBAC)',
+    feature3Desc: 'فصل تام بين صلاحيات الإدارة العليا وصلاحيات الكاشير لحماية المنشأة.',
 
     forgotPassLink: 'نسيت كلمة المرور؟',
     forgotPassTitle: 'إعادة تعيين كلمة المرور',
@@ -122,8 +125,8 @@ const dict = {
     backToLogin: 'العودة لتسجيل الدخول',
 
     invValue: 'قيمة المخزون الإجمالية',
-    salesTotal: 'إجمالي المبيعات (شامل الضريبة)',
-    purchasesTotal: 'إجمالي المشتريات (شامل الضريبة)',
+    salesTotal: 'إجمالي المبيعات',
+    purchasesTotal: 'إجمالي المشتريات',
     netProfit: 'صافي الربح التقديري',
     profitMargin: 'هامش الربحية',
     lowStockTitle: '⚠️ تنبيه: المخزون على وشك النفاد',
@@ -217,7 +220,7 @@ const dict = {
     totalCol: 'المجموع الخاضع للضريبة',
     zatcaQRTitle: 'رمز الاستجابة السريعة (ZATCA QR)',
     zatcaQRSub: 'امسح الرمز للتحقق من بيانات الفاتورة الضريبية',
-    invoiceFooterNote: 'شكراً لتعاملكم معنا • صدرت إلكترونياً عبر نظام محور ERP',
+    invoiceFooterNote: 'شكراً لتعاملكم معنا • صدرت إلكترونياً عبر نظام قمة البارون',
 
     prodName: 'اسم المنتج',
     prodPrice: 'سعر البيع الافتراضي (ر.س)',
@@ -247,37 +250,29 @@ const dict = {
     deleteAccBtn: 'تعطيل الحساب نهائياً'
   },
   en: {
-    brand: 'Mihwar ERP',
+    brand: 'Baron ERP',
     tagline: 'Enterprise Management Reimagined.',
-    taglineSub: 'Next-generation cloud ERP connecting every commercial department with maximum security and efficiency.',
+    taglineSub: 'Next-generation cloud ERP connecting every department.',
     workspace: 'Workspace:',
-    dashboard: '📊 Dashboard',
-    pos: '🛒 POS Touch',
-    sales: '🛍️ Sales',
-    purchases: '📥 Purchases',
-    customers: '👥 Clients',
-    suppliers: '🏭 Suppliers',
-    inventory: '📦 Live Inventory',
-    reports: '📈 Reports',
-    settings: '⚙️ Settings',
-    welcome: 'Welcome back,',
+    dashboard: 'Dashboard',
+    pos: 'POS Touch',
+    sales: 'Invoices',
+    purchases: 'Purchasing',
+    customers: 'Clients',
+    suppliers: 'Suppliers',
+    inventory: 'Inventory',
+    reports: 'Reports',
+    settings: 'Settings',
+    production: 'Production',
+    hr: 'HR',
+    ai: 'AI Assistant',
+    welcome: 'Welcome,',
     currency: 'SAR',
     roleLabel: 'Select Login Role:',
     roleAdmin: 'System Administrator (Admin)',
-    roleCashier: 'Sales Cashier (Cashier)',
+    roleCashier: 'Cashier (POS Only)',
     adminSecretLabel: '🔑 Master Admin Secret Key:',
     adminSecretPlaceholder: 'Enter master admin secret password',
-
-    landingTitle: 'Mihwar ERP Cloud Enterprise Suite',
-    landingDesc: 'The ultimate smart solution for managing sales, live TiDB inventory, ZATCA-compliant electronic tax invoicing, and lightning-fast POS with exquisite design.',
-    enterAppBtn: 'Get Started 🚀',
-    featuresTitle: '✨ Why Businesses Choose Mihwar ERP?',
-    feature1Title: '⚡ Lightning Fast POS',
-    feature1Desc: 'Manage sales and shopping carts effortlessly with touch-friendly product grids.',
-    feature2Title: '🧾 ZATCA Compliant Invoicing',
-    feature2Desc: 'Generate official QR codes and export pristine A4 tax invoices instantly.',
-    feature3Title: '🔒 Strict Role-Based Security',
-    feature3Desc: 'Complete smart separation between management dashboards and cashier terminals.',
 
     forgotPassLink: 'Forgot password?',
     forgotPassTitle: 'Reset Password',
@@ -286,8 +281,8 @@ const dict = {
     backToLogin: 'Back to Sign In',
 
     invValue: 'Total Inventory Valuation',
-    salesTotal: 'Gross Sales (Incl. VAT)',
-    purchasesTotal: 'Gross Purchases (Incl. VAT)',
+    salesTotal: 'Gross Sales',
+    purchasesTotal: 'Gross Purchases',
     netProfit: 'Estimated Net Profit',
     profitMargin: 'Profit Margin',
     lowStockTitle: '⚠️ Warning: Low Stock Alert',
@@ -381,7 +376,7 @@ const dict = {
     totalCol: 'Taxable Subtotal',
     zatcaQRTitle: 'ZATCA Official QR Code',
     zatcaQRSub: 'Scan to verify electronic tax invoice details',
-    invoiceFooterNote: 'Thank you for your business • Issued electronically via Mihwar ERP',
+    invoiceFooterNote: 'Thank you for your business • Issued electronically via Baron ERP',
 
     prodName: 'Product Name',
     prodPrice: 'Default Sale Price (SAR)',
@@ -419,7 +414,7 @@ const generateZatcaQR = (invoice, companyName, defaultVatNo = '300123456700003')
       const utf8Bytes = new TextEncoder().encode(str);
       return [tag, utf8Bytes.length, ...utf8Bytes];
     };
-    const seller = companyName || 'محور ERP';
+    const seller = companyName || 'قمة البارون';
     const vatNo = defaultVatNo;
     const timeStr = invoice?.createdAt ? new Date(invoice.createdAt).toISOString() : new Date().toISOString();
     const total = Number(invoice?.totalAmount || 0).toFixed(2);
@@ -430,13 +425,13 @@ const generateZatcaQR = (invoice, companyName, defaultVatNo = '300123456700003')
     for (let i = 0; i < tlvBytes.length; i++) binary += String.fromCharCode(tlvBytes[i]);
     return `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(btoa(binary))}`;
   } catch {
-    return 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=MihwarERP';
+    return 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=BaronERP';
   }
 };
 
 function App() {
   const [lang, setLang] = useState('ar');
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true); // الثيم الافتراضي داكن مخصص كما في الصور
 
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('mihwar_user');
@@ -461,7 +456,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
 
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [businessName, setBusinessName] = useState('محور ERP');
+  const [businessName, setBusinessName] = useState('قمة البارون');
 
   const [inventory, setInventory] = useState([]);
   const [newProdName, setNewProdName] = useState('');
@@ -499,13 +494,6 @@ function App() {
   const [purchaseCost, setPurchaseCost] = useState('');
   const [isSubmittingPurchase, setIsSubmittingPurchase] = useState(false);
 
-  const [lowStockThreshold, setLowStockThreshold] = useState(() => {
-    const saved = localStorage.getItem('mihwar_low_stock_threshold');
-    return saved ? Number(saved) : 30;
-  });
-  const [isEditingThreshold, setIsEditingThreshold] = useState(false);
-  const [tempThreshold, setTempThreshold] = useState(lowStockThreshold);
-
   const [printingInvoice, setPrintingInvoice] = useState(null);
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
@@ -513,23 +501,24 @@ function App() {
 
   const t = dict[lang];
 
+  // ألوان مخصصة ومطابقة تماماً لصور "قمة البارون" (ثيم داكن احترافي مع زر ذهبي/برتقالي بارز)
   const theme = {
-    primary: '#0d9488', // تدرج تيل فخم وعصري (Teal 600)
-    primaryHover: '#0f766e',
-    secondary: isDark ? '#090d16' : '#1e293b',
-    bgMain: isDark ? '#030712' : '#f8fafc',
-    cardBg: isDark ? '#111827' : '#ffffff',
-    textDark: isDark ? '#f3f4f6' : '#0f172a',
-    textMuted: isDark ? '#9ca3af' : '#64748b',
-    border: isDark ? '#1f2937' : '#e2e8f0',
+    primary: '#d97706', // برتقالي ذهبي بارز
+    primaryHover: '#b45309',
+    bgMain: isDark ? '#141824' : '#f8fafc',
+    cardBg: isDark ? '#1b2230' : '#ffffff',
+    sidebarBg: '#11151f', // شريط جانبي داكن
+    textDark: isDark ? '#f8fafc' : '#0f172a',
+    textMuted: isDark ? '#94a3b8' : '#64748b',
+    border: isDark ? '#263147' : '#e2e8f0',
     accentGreen: '#10b981',
-    accentAmber: '#f59e0b',
+    accentAmber: '#d97706',
     accentRose: '#f43f5e'
   };
 
   useEffect(() => {
     if (user) {
-      setBusinessName(user.businessName || 'محور ERP');
+      setBusinessName(user.businessName || 'قمة البارون');
       fetchAllData();
       if (user.role === 'cashier' && activeTab !== 'pos') {
         setActiveTab('pos');
@@ -769,192 +758,137 @@ function App() {
     setUser(null); localStorage.clear(); delete API.defaults.headers.common['Authorization']; setShowLanding(true); setAuthView('login');
   };
 
-  // 1. واجهة الصفحة الترحيبية الاحترافية (Landing Page)
+  // 1. الصفحة الترحيبية (Landing Page) بتصميم "قمة البارون"
   if (!user && showLanding) {
     return (
-      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        <header style={{ background: theme.cardBg, backdropFilter: 'blur(10px)', borderBottom: `1px solid ${theme.border}`, padding: '18px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
+      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', minHeight: '100vh', color: '#f8fafc', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <header style={{ background: '#1b2230', borderBottom: '1px solid #263147', padding: '18px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, #0d9488, #1e293b)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '20px', boxShadow: '0 4px 12px rgba(13, 148, 136, 0.3)' }}>⚡</div>
-            <span style={{ fontWeight: '900', color: theme.textDark, fontSize: '22px', letterSpacing: '-0.5px' }}>{t.brand}</span>
+            <div style={{ background: '#d97706', color: '#fff', padding: '6px 14px', borderRadius: '8px', fontWeight: '900', fontSize: '14px' }}>قب</div>
+            <span style={{ fontWeight: '900', color: '#f8fafc', fontSize: '18px' }}>قمة البارون</span>
           </div>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} style={{ padding: '8px 16px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: 'transparent', cursor: 'pointer', fontWeight: 'bold', color: theme.textDark, transition: '0.2s' }}>
+            <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #263147', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', color: '#f8fafc' }}>
               {lang === 'ar' ? 'English' : 'عربي'}
             </button>
-            <button onClick={() => setShowLanding(false)} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '10px 22px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 14px rgba(13, 148, 136, 0.4)', transition: '0.2s' }}>
+            <button onClick={() => setShowLanding(false)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '10px 22px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
               {t.enterAppBtn}
             </button>
           </div>
         </header>
 
-        <main style={{ padding: '80px 20px', maxWidth: '1200px', margin: 'auto', textAlign: 'center' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: isDark ? 'rgba(13, 148, 136, 0.15)' : 'rgba(13, 148, 136, 0.1)', color: theme.primary, padding: '8px 18px', borderRadius: '30px', fontSize: '13px', fontWeight: '800', marginBottom: '25px', border: `1px solid ${isDark ? 'rgba(13, 148, 136, 0.3)' : 'rgba(13, 148, 136, 0.2)'}` }}>
-            <span>🚀</span> {lang === 'ar' ? 'نظام السحاب المالي المتكامل 2026' : 'Next-Gen Cloud ERP Suite 2026'}
-          </div>
-          <h1 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 20px 0', color: theme.textDark, lineHeight: '1.2' }}>{t.landingTitle}</h1>
-          <p style={{ fontSize: '18px', color: theme.textMuted, maxWidth: '780px', margin: '0 auto 45px auto', lineHeight: '1.7' }}>{t.landingDesc}</p>
+        <main style={{ padding: '80px 20px', maxWidth: '1100px', margin: 'auto', textAlign: 'center' }}>
+          <h1 style={{ fontSize: '44px', fontWeight: '900', margin: '0 0 20px 0', color: '#f8fafc' }}>{t.landingTitle}</h1>
+          <p style={{ fontSize: '17px', color: '#94a3b8', maxWidth: '750px', margin: '0 auto 40px auto', lineHeight: '1.7' }}>{t.landingDesc}</p>
           
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginBottom: '70px', flexWrap: 'wrap' }}>
-            <button onClick={() => { setShowLanding(false); setAuthView('login'); }} style={{ background: theme.primary, color: '#fff', padding: '16px 34px', borderRadius: '12px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', boxShadow: '0 10px 25px rgba(13, 148, 136, 0.35)', transition: '0.2s' }}>
-              {lang === 'ar' ? 'تسجيل الدخول إلى النظام 🔑' : 'Sign In 🔑'}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '60px', flexWrap: 'wrap' }}>
+            <button onClick={() => { setShowLanding(false); setAuthView('login'); }} style={{ background: '#d97706', color: '#fff', padding: '14px 30px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
+              تسجيل الدخول 🔑
             </button>
-            <button onClick={() => { setShowLanding(false); setAuthView('register'); }} style={{ background: theme.cardBg, color: theme.textDark, border: `2px solid ${theme.border}`, padding: '16px 34px', borderRadius: '12px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', transition: '0.2s' }}>
-              {lang === 'ar' ? 'إنشاء مساحة عمل جديدة 🏢' : 'Create Workspace 🏢'}
+            <button onClick={() => { setShowLanding(false); setAuthView('register'); }} style={{ background: '#1b2230', color: '#f8fafc', border: '1px solid #263147', padding: '14px 30px', borderRadius: '10px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
+              إنشاء مساحة عمل 🏢
             </button>
-          </div>
-
-          <h2 style={{ fontSize: '26px', fontWeight: '800', marginBottom: '35px', color: theme.textDark }}>{t.featuresTitle}</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', textAlign: lang === 'ar' ? 'right' : 'left' }}>
-            <div style={{ background: theme.cardBg, padding: '30px', borderRadius: '20px', border: `1px solid ${theme.border}`, boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(13, 148, 136, 0.1)', color: theme.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', marginBottom: '20px' }}>⚡</div>
-              <h3 style={{ color: theme.textDark, margin: '0 0 12px 0', fontSize: '19px', fontWeight: '800' }}>{t.feature1Title}</h3>
-              <p style={{ margin: 0, color: theme.textMuted, fontSize: '15px', lineHeight: '1.6' }}>{t.feature1Desc}</p>
-            </div>
-            <div style={{ background: theme.cardBg, padding: '30px', borderRadius: '20px', border: `1px solid ${theme.border}`, boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(13, 148, 136, 0.1)', color: theme.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', marginBottom: '20px' }}>🧾</div>
-              <h3 style={{ color: theme.textDark, margin: '0 0 12px 0', fontSize: '19px', fontWeight: '800' }}>{t.feature2Title}</h3>
-              <p style={{ margin: 0, color: theme.textMuted, fontSize: '15px', lineHeight: '1.6' }}>{t.feature2Desc}</p>
-            </div>
-            <div style={{ background: theme.cardBg, padding: '30px', borderRadius: '20px', border: `1px solid ${theme.border}`, boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(13, 148, 136, 0.1)', color: theme.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', marginBottom: '20px' }}>🔒</div>
-              <h3 style={{ color: theme.textDark, margin: '0 0 12px 0', fontSize: '19px', fontWeight: '800' }}>{t.feature3Title}</h3>
-              <p style={{ margin: 0, color: theme.textMuted, fontSize: '15px', lineHeight: '1.6' }}>{t.feature3Desc}</p>
-            </div>
           </div>
         </main>
 
-        <footer style={{ background: theme.cardBg, borderTop: `1px solid ${theme.border}`, padding: '25px', textAlign: 'center', fontSize: '13px', color: theme.textMuted }}>
-          {lang === 'ar' ? '© 2026 نظام محور ERP السحابي • جميع الحقوق محفوظة' : '© 2026 Mihwar ERP Cloud • All Rights Reserved'}
+        <footer style={{ background: '#1b2230', borderTop: '1px solid #263147', padding: '20px', textAlign: 'center', fontSize: '13px', color: '#94a3b8' }}>
+          © 2026 قمة البارون • Smart Food-ERP
         </footer>
       </div>
     );
   }
 
-  // 2. واجهة تسجيل الدخول وإنشاء الحساب المطورة كلياً (Modern Split-Screen Auth)
+  // 2. شاشة تسجيل الدخول بتصميم "قمة البارون"
   if (!user) {
     return (
-      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain }}>
-        <style>{`
-          @media (min-width: 768px) {
-            .auth-container { flex-direction: row !important; }
-            .auth-form-side { flex: 0.5 1 50% !important; padding: 50px !important; }
-            .auth-brand-side { flex: 0.5 1 50% !important; padding: 80px !important; display: flex !important; }
-          }
-          @media (max-width: 767px) {
-            .auth-container { flex-direction: column !important; }
-            .auth-form-side { width: 100% !important; padding: 30px !important; }
-            .auth-brand-side { display: none !important; }
-          }
-        `}</style>
-        <div className="auth-container" style={{ display: 'flex', flex: 1, width: '100%' }}>
-          <div className="auth-form-side" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: theme.cardBg, boxSizing: 'border-box' }}>
-            <div style={{ width: '100%', maxWidth: '440px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', color: '#f8fafc' }}>
+        <div style={{ display: 'flex', flex: 1, width: '100%', minHeight: '100vh' }}>
+          <div style={{ flex: '1 1 50%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '40px', background: '#1b2230', boxSizing: 'border-box' }}>
+            <div style={{ width: '100%', maxWidth: '420px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '28px' }}>⚡</span>
-                  <span style={{ fontSize: '22px', fontWeight: '900', color: theme.primary }}>{t.brand}</span>
+                  <div style={{ background: '#d97706', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontWeight: '900', fontSize: '14px' }}>قب</div>
+                  <span style={{ fontSize: '20px', fontWeight: '900', color: '#f8fafc' }}>قمة البارون</span>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => setShowLanding(true)} style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', color: theme.textDark }}>
-                    {lang === 'ar' ? 'الرئيسية' : 'Home'}
-                  </button>
-                  <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} style={{ padding: '6px 14px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', color: theme.textDark }}>
-                    {lang === 'ar' ? 'English' : 'عربي'}
-                  </button>
-                </div>
+                <button onClick={() => setShowLanding(true)} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #263147', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', color: '#f8fafc' }}>
+                  الرئيسية
+                </button>
               </div>
 
-              <h1 style={{ color: theme.textDark, fontSize: '26px', fontWeight: '900', margin: '0 0 8px 0' }}>
-                {authView === 'login' ? (lang === 'ar' ? 'مرحباً بك مجدداً 👋' : 'Welcome Back 👋') : authView === 'register' ? (lang === 'ar' ? 'أنشئ مساحة عملك 🏢' : 'Create Workspace 🏢') : t.forgotPassTitle}
+              <h1 style={{ color: '#f8fafc', fontSize: '24px', fontWeight: '900', margin: '0 0 20px 0' }}>
+                {authView === 'login' ? 'تسجيل الدخول' : 'إنشاء مساحة عمل'}
               </h1>
-              <p style={{ color: theme.textMuted, fontSize: '14px', margin: '0 0 25px 0' }}>
-                {authView === 'login' ? (lang === 'ar' ? 'أدخل بيانات حسابك للمتابعة إلى النظام' : 'Enter your credentials to access system') : (lang === 'ar' ? 'املأ الحقول التالية لتأسيس حسابك السحابي' : 'Fill in the details to set up your account')}
-              </p>
 
-              {authView === 'forgot' ? (
-                <form onSubmit={handleForgotPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <input type="email" placeholder="Email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '14px', borderRadius: '10px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, fontSize: '14px', outline: 'none' }} />
-                  <input type="password" placeholder="New Password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ padding: '14px', borderRadius: '10px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, fontSize: '14px', outline: 'none' }} />
-                  <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '14px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>{t.resetPassBtn}</button>
-                  <span onClick={() => setAuthView('login')} style={{ color: theme.primary, cursor: 'pointer', textAlign: 'center', fontWeight: 'bold', fontSize: '14px' }}>{t.backToLogin}</span>
-                </form>
-              ) : (
-                <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  
-                  <div style={{ background: isDark ? '#1f2937' : '#f8fafc', padding: '14px', borderRadius: '12px', border: `1px solid ${theme.border}` }}>
-                    <label style={{ fontSize: '12px', fontWeight: '800', display: 'block', marginBottom: '8px', color: theme.primary }}>{t.roleLabel}</label>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button type="button" onClick={() => setLoginRole('admin')} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `2px solid ${loginRole === 'admin' ? theme.primary : theme.border}`, background: loginRole === 'admin' ? theme.primary : 'transparent', color: loginRole === 'admin' ? '#fff' : theme.textDark, fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', transition: '0.2s' }}>
-                        🛡️ مدير النظام
-                      </button>
-                      <button type="button" onClick={() => setLoginRole('cashier')} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `2px solid ${loginRole === 'cashier' ? theme.primary : theme.border}`, background: loginRole === 'cashier' ? theme.primary : 'transparent', color: loginRole === 'cashier' ? '#fff' : theme.textDark, fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', transition: '0.2s' }}>
-                        🛒 كاشير فقط
-                      </button>
-                    </div>
+              <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div style={{ background: '#141824', padding: '12px', borderRadius: '8px', border: '1px solid #263147' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '6px', color: '#d97706' }}>{t.roleLabel}</label>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button type="button" onClick={() => setLoginRole('admin')} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `2px solid ${loginRole === 'admin' ? '#d97706' : '#263147'}`, background: loginRole === 'admin' ? '#d97706' : 'transparent', color: '#fff', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                      🛡️ مدير النظام
+                    </button>
+                    <button type="button" onClick={() => setLoginRole('cashier')} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `2px solid ${loginRole === 'cashier' ? '#d97706' : '#263147'}`, background: loginRole === 'cashier' ? '#d97706' : 'transparent', color: '#fff', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                      🛒 كاشير فقط
+                    </button>
                   </div>
+                </div>
 
-                  {authView === 'register' && (
-                    <>
-                      <input type="text" placeholder={lang === 'ar' ? 'اسم الشركة أو المنشأة' : 'Company Name'} value={authBusinessName} onChange={e=>setAuthBusinessName(e.target.value)} required style={{ padding: '14px', borderRadius: '10px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, fontSize: '14px', outline: 'none' }} />
-                      <input type="text" placeholder={lang === 'ar' ? 'اسم المسؤول أو المدير' : 'Manager Name'} value={authClientName} onChange={e=>setAuthClientName(e.target.value)} required style={{ padding: '14px', borderRadius: '10px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, fontSize: '14px', outline: 'none' }} />
-                    </>
-                  )}
+                {authView === 'register' && (
+                  <>
+                    <input type="text" placeholder="اسم الشركة" value={authBusinessName} onChange={e=>setAuthBusinessName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none' }} />
+                    <input type="text" placeholder="اسم المدير" value={authClientName} onChange={e=>setAuthClientName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none' }} />
+                  </>
+                )}
 
-                  <input type="email" placeholder={lang === 'ar' ? 'البريد الإلكتروني' : 'Email Address'} value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '14px', borderRadius: '10px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, fontSize: '14px', outline: 'none' }} />
-                  <input type="password" placeholder={lang === 'ar' ? 'كلمة المرور' : 'Password'} value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '14px', borderRadius: '10px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+                <input type="email" placeholder="البريد الإلكتروني" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none' }} />
+                <input type="password" placeholder="كلمة المرور" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
 
-                  {loginRole === 'admin' && (
-                    <div style={{ background: isDark ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2', border: `1px solid ${isDark ? 'rgba(239, 68, 68, 0.3)' : '#fca5a5'}`, padding: '14px', borderRadius: '10px' }}>
-                      <label style={{ fontSize: '12px', fontWeight: '800', display: 'block', marginBottom: '6px', color: '#ef4444' }}>{t.adminSecretLabel}</label>
-                      <input 
-                        type="password" 
-                        placeholder={t.adminSecretPlaceholder} 
-                        value={adminSecretKey} 
-                        onChange={e => setAdminSecretKey(e.target.value)} 
-                        required 
-                        style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #f87171', background: '#fff', color: '#0f172a', fontSize: '14px', boxSizing: 'border-box', outline: 'none' }} 
-                      />
-                    </div>
-                  )}
-
-                  <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '15px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px', boxShadow: '0 4px 14px rgba(13, 148, 136, 0.35)', transition: '0.2s', marginTop: '5px' }}>
-                    {authView === 'login' ? (lang === 'ar' ? 'تسجيل الدخول' : 'Sign In') : (lang === 'ar' ? 'إتمام التسجيل' : 'Complete Registration')}
-                  </button>
-
-                  <div style={{ textAlign: 'center', marginTop: '10px' }}>
-                    <span onClick={()=>setAuthView(authView === 'login' ? 'register' : 'login')} style={{ color: theme.primary, cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>
-                      {authView === 'login' ? (lang === 'ar' ? 'ليس لديك حساب؟ أنشئ مساحة عمل' : "Don't have an account? Register") : (lang === 'ar' ? 'لديك حساب بالفعل؟ سجل دخولك' : 'Already registered? Sign in')}
-                    </span>
+                {loginRole === 'admin' && (
+                  <div style={{ background: '#2a1a1a', border: '1px solid #7f1d1d', padding: '12px', borderRadius: '8px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '5px', color: '#fca5a5' }}>{t.adminSecretLabel}</label>
+                    <input 
+                      type="password" 
+                      placeholder={t.adminSecretPlaceholder} 
+                      value={adminSecretKey} 
+                      onChange={e => setAdminSecretKey(e.target.value)} 
+                      required 
+                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ef4444', background: '#141824', color: '#fff', boxSizing: 'border-box', outline: 'none' }} 
+                    />
                   </div>
-                </form>
-              )}
+                )}
+
+                <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
+                  {authView === 'login' ? 'تسجيل الدخول' : 'إنشاء الحساب'}
+                </button>
+                <span onClick={()=>setAuthView(authView === 'login' ? 'register' : 'login')} style={{ color: '#d97706', cursor: 'pointer', textAlign: 'center', fontWeight: 'bold', fontSize: '13px' }}>
+                  {authView === 'login' ? 'ليس لديك حساب؟ سجل الآن' : 'لديك حساب بالفعل؟ سجل دخولك'}
+                </span>
+              </form>
             </div>
           </div>
 
-          <div className="auth-brand-side" style={{ background: theme.secondary, color: '#fff', flexDirection: 'column', justifyContent: 'center', boxSizing: 'border-box' }}>
-            <div style={{ maxWidth: '480px' }}>
-              <span style={{ fontSize: '40px', display: 'block', marginBottom: '20px' }}>💡</span>
-              <h1 style={{ fontSize: '38px', margin: '0 0 20px 0', fontWeight: '900', lineHeight: '1.3' }}>{t.tagline}</h1>
-              <p style={{ fontSize: '16px', opacity: 0.8, lineHeight: '1.7', margin: 0 }}>{t.taglineSub}</p>
-            </div>
+          <div style={{ flex: '1 1 50%', background: '#141824', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '80px', boxSizing: 'border-box' }}>
+            <h1 style={{ fontSize: '40px', margin: '0 0 20px 0', fontWeight: '900' }}>قمة البارون • Smart Food-ERP</h1>
+            <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: '1.6' }}>إدارة متكاملة لجميع عمليات المبيعات، الفواتير، المخزون، والإنتاج بدقة واحترافية عالية.</p>
           </div>
         </div>
       </div>
     );
   }
 
-  // 3. داخل النظام (App Dashboard & Operations UI)
+  // 3. داخل النظام بتصميم القائمة الجانبية (Sidebar) والألوان المطابقة لصورك
   const allTabs = [
-    { id: 'dashboard', label: t.dashboard, adminOnly: true },
-    { id: 'pos', label: t.pos, adminOnly: false },
-    { id: 'sales', label: t.sales, adminOnly: true },
-    { id: 'purchases', label: t.purchases, adminOnly: true },
-    { id: 'customers', label: t.customers, adminOnly: true },
-    { id: 'suppliers', label: t.suppliers, adminOnly: true },
-    { id: 'inventory', label: t.inventory, adminOnly: false },
-    { id: 'reports', label: t.reports, adminOnly: true },
-    { id: 'settings', label: t.settings, adminOnly: false }
+    { id: 'dashboard', label: t.dashboard, adminOnly: true, icon: '📊' },
+    { id: 'pos', label: t.pos, adminOnly: false, icon: '🛒' },
+    { id: 'sales', label: t.sales, adminOnly: true, icon: '🧾' },
+    { id: 'purchases', label: t.purchases, adminOnly: true, icon: '📥' },
+    { id: 'customers', label: t.customers, adminOnly: true, icon: '👥' },
+    { id: 'suppliers', label: t.suppliers, adminOnly: true, icon: '🏭' },
+    { id: 'inventory', label: t.inventory, adminOnly: false, icon: '📦' },
+    { id: 'production', label: t.production, adminOnly: true, icon: '⚙️' },
+    { id: 'hr', label: t.hr, adminOnly: true, icon: '👔' },
+    { id: 'reports', label: t.reports, adminOnly: true, icon: '📈' },
+    { id: 'ai', label: t.ai, adminOnly: true, icon: '🤖' },
+    { id: 'settings', label: t.settings, adminOnly: false, icon: '⚙️' }
   ];
 
   const availableTabs = user.role === 'cashier' 
@@ -962,11 +896,11 @@ function App() {
     : allTabs;
 
   return (
-    <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark }}>
+    <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark, display: 'flex' }}>
       
       <style>{`
         @media print {
-          header, .main-navbar, main, .no-print-zone, button {
+          header, .sidebar-nav, main, .no-print-zone, button {
             display: none !important;
           }
           @page {
@@ -983,505 +917,378 @@ function App() {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          .invoice-modal-backdrop {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: #ffffff !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            z-index: 99999 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-          }
-          .invoice-modal-card {
-            box-shadow: none !important;
-            border: none !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            height: 100% !important;
-            max-height: 100% !important;
-            border-radius: 0 !important;
-            padding: 15mm !important;
-            box-sizing: border-box !important;
-            overflow: visible !important;
-          }
-          #zatca-printable-invoice {
-            display: block !important;
-            width: 100% !important;
-            height: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
-          }
         }
-
         @media (max-width: 900px) {
-          .responsive-grid {
-            grid-template-columns: 1fr !important;
-          }
-          .main-header-bar {
-            padding: 12px 15px !important;
-            flex-direction: column !important;
-            gap: 12px !important;
-            align-items: flex-start !important;
-          }
-          main {
-            padding: 15px !important;
-          }
+          .app-layout { flex-direction: column !important; }
+          .sidebar-nav { width: 100% !important; flex-direction: row !important; overflow-x: auto !important; height: auto !important; }
         }
       `}</style>
 
-      <header className="main-header-bar" style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 35px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #0d9488, #1e293b)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '18px' }}>🏢</div>
-            <span style={{ fontWeight: '900', color: theme.textDark, fontSize: '19px' }}>{t.brand}</span>
-          </div>
-          <span style={{ fontSize: '13px', background: isDark ? '#1f2937' : '#f1f5f9', padding: '6px 14px', borderRadius: '8px', color: theme.textDark }}>
-            {t.workspace} <strong>{businessName}</strong> ({user.role === 'cashier' ? t.roleCashier : t.roleAdmin})
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: theme.primary, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '15px' }}>{user.name[0]}</div>
-          <span style={{ fontSize: '14px', fontWeight: '800', color: theme.textDark }}>{user.name}</span>
-        </div>
-      </header>
-
-      <div className="main-navbar" style={{ background: theme.secondary, color: '#fff', padding: '0 20px', display: 'flex', gap: '4px', fontSize: '13px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        {availableTabs.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ background: activeTab === tab.id ? theme.primary : 'transparent', border: 'none', color: '#fff', cursor: 'pointer', padding: '16px 18px', fontWeight: activeTab === tab.id ? 'bold' : 'normal', whiteSpace: 'nowrap', transition: '0.2s' }}>
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      <main style={{ padding: '30px', maxWidth: '1400px', margin: 'auto' }}>
-        {activeTab === 'dashboard' && user.role !== 'cashier' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '900' }}>{t.welcome} {user.name} 👋</h1>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
-              <div style={{ background: theme.cardBg, padding: '24px', borderRadius: '16px', border: `1px solid ${theme.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px', fontWeight: '600' }}>{t.invValue}</p><h2 style={{ color: theme.primary, margin: '10px 0 0 0', fontSize: '26px', fontWeight: '900' }}>{inventoryVal.toLocaleString()} {t.currency}</h2></div>
-              <div style={{ background: theme.cardBg, padding: '24px', borderRadius: '16px', border: `1px solid ${theme.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px', fontWeight: '600' }}>{t.salesTotal}</p><h2 style={{ color: theme.accentGreen, margin: '10px 0 0 0', fontSize: '26px', fontWeight: '900' }}>{totalSalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
-              <div style={{ background: theme.cardBg, padding: '24px', borderRadius: '16px', border: `1px solid ${theme.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px', fontWeight: '600' }}>{t.purchasesTotal}</p><h2 style={{ color: theme.accentAmber, margin: '10px 0 0 0', fontSize: '26px', fontWeight: '900' }}>{totalPurchasesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
-              <div style={{ background: theme.cardBg, padding: '24px', borderRadius: '16px', border: `1px solid ${theme.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px', fontWeight: '600' }}>{t.netProfit}</p><h2 style={{ color: theme.accentGreen, margin: '10px 0 0 0', fontSize: '26px', fontWeight: '900' }}>{netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
-            </div>
-
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: '800' }}>📅 تحليل أداء مبيعات السنة الحالية ({currentYear})</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
-                <thead>
-                  <tr style={{ background: isDark ? '#1f2937' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                    <th style={{ padding: '12px' }}>الشهر</th>
-                    <th style={{ padding: '12px' }}>عدد الفواتير</th>
-                    <th style={{ padding: '12px' }}>إجمالي المبيعات (ر.س)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {monthlyData.map((m, idx) => (
-                    <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                      <td style={{ padding: '12px', fontWeight: 'bold' }}>{m.monthName}</td>
-                      <td style={{ padding: '12px' }}>{m.count} فاتورة</td>
-                      <td style={{ padding: '12px', fontWeight: 'bold', color: theme.accentGreen }}>{m.total.toFixed(2)} {t.currency}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: '800' }}>📊 سجل النمو المالي للسنوات الماضية</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
-                <thead>
-                  <tr style={{ background: isDark ? '#1f2937' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                    <th style={{ padding: '12px' }}>السنة المالية</th>
-                    <th style={{ padding: '12px' }}>عدد الفواتير الكلي</th>
-                    <th style={{ padding: '12px' }}>إجمالي المبيعات</th>
-                    <th style={{ padding: '12px' }}>صافي الربح التقديري</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pastYearsData.map((y, idx) => (
-                    <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                      <td style={{ padding: '12px', fontWeight: 'bold', color: theme.primary }}>{y.year}</td>
-                      <td style={{ padding: '12px' }}>{y.count} فاتورة</td>
-                      <td style={{ padding: '12px', fontWeight: 'bold' }}>{y.totalSales.toFixed(2)} {t.currency}</td>
-                      <td style={{ padding: '12px', fontWeight: 'bold', color: theme.accentGreen }}>+{y.totalProfit.toFixed(2)} {t.currency}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {/* الشريط الجانبي (Sidebar) على اليمين تماماً مثل صور "قمة البارون" */}
+      <aside className="sidebar-nav" style={{ width: '260px', background: theme.sidebarBg, borderLeft: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '20px 0', boxSizing: 'border-box', minHeight: '100vh', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div>
+          {/* شعار الشركة في أعلى الشريط الجانبي */}
+          <div style={{ padding: '0 20px 20px 20px', borderBottom: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ background: '#d97706', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontWeight: '900', fontSize: '15px' }}>قب</div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '900', color: '#fff' }}>قمة البارون</h3>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>Smart Food-ERP</span>
             </div>
           </div>
-        )}
 
-        {activeTab === 'pos' && (
-          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '25px' }}>
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: theme.textDark }}>{lang === 'ar' ? '⚡ نقطة البيع السريعة' : '⚡ Quick POS'}</h2>
-                <span style={{ fontSize: '12px', background: isDark ? '#1f2937' : '#f1f5f9', padding: '6px 14px', borderRadius: '8px', fontWeight: 'bold' }}>
-                  {inventory.length} {lang === 'ar' ? 'منتج متاح' : 'Items'}
-                </span>
-              </div>
-
-              {inventory.length === 0 ? (
-                <p style={{ textAlign: 'center', color: theme.textMuted, padding: '40px' }}>{lang === 'ar' ? 'لا توجد منتجات مسجلة.' : 'No products available.'}</p>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '15px', maxHeight: '550px', overflowY: 'auto', paddingRight: '5px' }}>
-                  {inventory.map(prod => {
-                    const isOut = prod.stock <= 0;
-                    const cartItem = cartItems.find(it => it.productId === prod.id);
-                    const currentQtyInCart = cartItem ? cartItem.quantity : 0;
-
-                    const updateProdQty = (newQty) => {
-                      if (newQty < 0 || newQty > prod.stock) return;
-                      if (newQty === 0) {
-                        setCartItems(cartItems.filter(it => it.productId !== prod.id));
-                      } else if (cartItem) {
-                        setCartItems(cartItems.map(it => it.productId === prod.id ? { ...it, quantity: newQty, subtotal: Number((newQty * it.price).toFixed(2)) } : it));
-                      } else {
-                        setCartItems([...cartItems, { productId: prod.id, name: prod.name, quantity: newQty, price: prod.price, subtotal: Number((newQty * prod.price).toFixed(2)) }]);
-                      }
-                    };
-
-                    return (
-                      <div 
-                        key={prod.id} 
-                        style={{ 
-                          background: isDark ? '#1f2937' : '#f8fafc', 
-                          border: `2px solid ${currentQtyInCart > 0 ? theme.primary : theme.border}`, 
-                          borderRadius: '12px', 
-                          padding: '14px', 
-                          opacity: isOut ? 0.5 : 1,
-                          display: 'flex', 
-                          flexDirection: 'column', 
-                          justifyContent: 'space-between',
-                          gap: '10px'
-                        }}
-                      >
-                        <div>
-                          <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', fontWeight: '800', color: theme.textDark }}>{prod.name}</h4>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <strong style={{ color: theme.primary, fontSize: '13px' }}>{prod.price} {t.currency}</strong>
-                            <span style={{ fontSize: '10px', color: theme.textMuted }}>متبقي: {prod.stock}</span>
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: theme.cardBg, borderRadius: '8px', padding: '3px', border: `1px solid ${theme.border}` }}>
-                          <button 
-                            type="button"
-                            disabled={isOut || currentQtyInCart <= 0}
-                            onClick={() => updateProdQty(currentQtyInCart - 1)}
-                            style={{ background: '#ef4444', color: '#fff', border: 'none', width: '28px', height: '28px', borderRadius: '6px', fontWeight: 'bold', cursor: currentQtyInCart > 0 ? 'pointer' : 'not-allowed', fontSize: '14px' }}
-                          >
-                            -
-                          </button>
-                          
-                          <input 
-                            type="number"
-                            min="0"
-                            max={prod.stock}
-                            value={currentQtyInCart}
-                            onChange={(e) => updateProdQty(Number(e.target.value))}
-                            style={{ width: '35px', textAlign: 'center', border: 'none', background: 'transparent', fontWeight: 'bold', fontSize: '13px', color: theme.textDark }}
-                          />
-
-                          <button 
-                            type="button"
-                            disabled={isOut || currentQtyInCart >= prod.stock}
-                            onClick={() => updateProdQty(currentQtyInCart + 1)}
-                            style={{ background: theme.primary, color: '#fff', border: 'none', width: '28px', height: '28px', borderRadius: '6px', fontWeight: 'bold', cursor: currentQtyInCart < prod.stock ? 'pointer' : 'not-allowed', fontSize: '14px' }}
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div style={{ background: '#020617', borderRadius: '16px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b', paddingBottom: '14px', marginBottom: '18px' }}>
-                  <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '800' }}>🛒 سلة المبيعات</h3>
-                  <span style={{ background: '#0d9488', color: '#5eead4', fontSize: '11px', fontWeight: 'bold', padding: '4px 10px', borderRadius: '6px' }}>{cartItems.length}</span>
-                </div>
-
-                <div style={{ marginBottom: '18px' }}>
-                  <label style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginBottom: '6px', fontWeight: '600' }}>{t.selectCust}</label>
-                  <select value={selectedCustomerId} onChange={e => setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#0f172a', color: '#fff', border: '1px solid #334155', boxSizing: 'border-box', outline: 'none' }}>
-                    <option value="">{t.defaultCust}</option>
-                    {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-
-                <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-                  {cartItems.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: '#64748b', fontSize: '13px', padding: '20px' }}>{t.cartEmpty}</p>
-                  ) : (
-                    cartItems.map((item, idx) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '12px', borderRadius: '10px', border: '1px solid #1e293b', fontSize: '13px' }}>
-                        <div>
-                          <strong style={{ display: 'block', marginBottom: '2px' }}>{item.name}</strong>
-                          <span style={{ color: '#94a3b8', fontSize: '11px' }}>{item.quantity} × {item.price}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>{item.subtotal}</span>
-                          <button onClick={() => handleRemoveItemFromCart(idx)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer' }}>✖</button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <div style={{ borderTop: '1px dashed #1e293b', paddingTop: '16px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#94a3b8' }}>
-                    <span>{t.subtotal}</span>
-                    <strong style={{ color: '#fff' }}>{cartSubtotal.toFixed(2)}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#94a3b8' }}>
-                    <span>{t.vatAmount}</span>
-                    <strong style={{ color: '#5eead4' }}>{cartTax.toFixed(2)}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px' }}>
-                    <span style={{ fontSize: '15px', fontWeight: 'bold' }}>{t.totalDue}</span>
-                    <span style={{ fontSize: '22px', fontWeight: '950', color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span>
-                  </div>
-                </div>
-
+          {/* روابط القائمة الجانبية */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '15px 10px' }}>
+            {availableTabs.map(tab => {
+              const isActive = activeTab === tab.id;
+              return (
                 <button 
-                  onClick={handleSaveInvoice} 
-                  disabled={isSubmittingSale || cartItems.length === 0} 
+                  key={tab.id} 
+                  onClick={() => setActiveTab(tab.id)} 
                   style={{ 
-                    width: '100%', 
-                    background: cartItems.length > 0 ? theme.primary : '#334155', 
-                    color: '#fff', 
-                    padding: '15px', 
-                    borderRadius: '10px', 
+                    background: isActive ? '#d97706' : 'transparent', 
                     border: 'none', 
-                    fontWeight: 'bold', 
-                    cursor: cartItems.length > 0 ? 'pointer' : 'not-allowed',
-                    fontSize: '15px',
-                    boxShadow: cartItems.length > 0 ? '0 4px 15px rgba(13, 148, 136, 0.4)' : 'none'
+                    color: '#fff', 
+                    cursor: 'pointer', 
+                    padding: '12px 16px', 
+                    borderRadius: '10px',
+                    fontWeight: isActive ? 'bold' : 'normal',
+                    fontSize: '13.5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    textAlign: 'right',
+                    width: '100%',
+                    transition: '0.2s'
                   }}
                 >
-                  {isSubmittingSale ? '...' : '💳 إتمام الدفع الفوري'}
+                  <span style={{ fontSize: '16px' }}>{tab.icon}</span>
+                  <span>{tab.label}</span>
                 </button>
-              </div>
-            </div>
+              );
+            })}
           </div>
-        )}
+        </div>
 
-        {activeTab === 'sales' && user.role !== 'cashier' && (
-          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1.25fr 0.75fr', gap: '25px' }}>
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: '800' }}>{t.issueInvoice}</h2>
-              <select value={selectedCustomerId} onChange={e=>setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, marginBottom: '15px', boxSizing: 'border-box', outline: 'none' }}>
-                <option value="">{t.defaultCust}</option>
-                {customers.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
-                <select value={selectedProductId} onChange={e=>setSelectedProductId(e.target.value)} style={{ flex: '2 1 180px', padding: '12px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }}>
-                  <option value="">{t.chooseProd}</option>
-                  {inventory.map(p=><option key={p.id} value={p.id}>{p.name} ({p.stock})</option>)}
-                </select>
-                <input type="number" min="1" value={itemQty} onChange={e=>setItemQty(e.target.value)} style={{ width: '75px', padding: '12px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, textAlign: 'center', outline: 'none' }} />
-                <button type="button" onClick={handleAddItemToCart} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '12px 18px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>{t.addItemBtn}</button>
+        <div style={{ padding: '0 20px' }}>
+          <div style={{ background: '#141824', padding: '12px', borderRadius: '10px', border: '1px solid #263147', textAlign: 'center' }}>
+            <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>مساحة العمل النشطة</span>
+            <strong style={{ fontSize: '12.5px', color: '#d97706' }}>{businessName}</strong>
+          </div>
+        </div>
+      </aside>
+
+      {/* المحتوى الرئيسي للنظام */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        
+        {/* شريط علوي نظيف وخفيف */}
+        <header style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <span style={{ fontSize: '15px', fontWeight: '800', color: theme.textDark }}>
+              {availableTabs.find(t => t.id === activeTab)?.icon} {availableTabs.find(t => t.id === activeTab)?.label}
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: theme.bgMain, padding: '6px 14px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#d97706', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '12px' }}>{user.name[0]}</div>
+              <span style={{ fontSize: '13px', fontWeight: 'bold' }}>{user.name}</span>
+            </div>
+            <button onClick={handleLogout} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>خروج</button>
+          </div>
+        </header>
+
+        <main style={{ padding: '30px', flex: 1, boxSizing: 'border-box' }}>
+          {activeTab === 'dashboard' && user.role !== 'cashier' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+                <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>لوحة التحكم</h2>
+                <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>مرحباً بك في نظام قمة البارون المطور.</p>
               </div>
-              <div style={{ overflowX: 'auto', borderRadius: '10px', border: `1px solid ${theme.border}` }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '350px' }}>
-                  <thead><tr style={{ background: isDark ? '#1f2937' : '#f8fafc' }}><th style={{ padding: '12px' }}>Item</th><th style={{ padding: '12px' }}>Qty</th><th style={{ padding: '12px' }}>Total</th><th></th></tr></thead>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.invValue}</p><h2 style={{ color: '#d97706', margin: '8px 0 0 0', fontSize: '22px' }}>{inventoryVal.toLocaleString()} {t.currency}</h2></div>
+                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي المبيعات</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{totalSalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
+                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي المخزون</p><h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '22px' }}>{inventory.length} منتج</h2></div>
+                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>الفواتير المصدرة</p><h2 style={{ color: '#a855f7', margin: '8px 0 0 0', fontSize: '22px' }}>{invoices.length} فاتورة</h2></div>
+              </div>
+
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '16px' }}>أحدث الفواتير المسجلة</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '10px' }}>رقم الفاتورة</th>
+                      <th style={{ padding: '10px' }}>العميل</th>
+                      <th style={{ padding: '10px' }}>المبلغ الإجمالي</th>
+                      <th style={{ padding: '10px' }}>التاريخ</th>
+                    </tr>
+                  </thead>
                   <tbody>
-                    {cartItems.map((it, idx)=>(
-                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td style={{ padding: '12px' }}>{it.name}</td><td style={{ padding: '12px' }}>{it.quantity}</td><td style={{ padding: '12px' }}>{it.subtotal}</td>
-                        <td style={{ padding: '12px' }}><button onClick={()=>handleRemoveItemFromCart(idx)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer' }}>✖</button></td>
+                    {invoices.slice(0, 5).map(inv => (
+                      <tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>#{inv.invoiceNo}</td>
+                        <td style={{ padding: '10px' }}>{inv.customer?.name || 'عميل نقدي'}</td>
+                        <td style={{ padding: '10px', color: '#10b981', fontWeight: 'bold' }}>{inv.totalAmount} {t.currency}</td>
+                        <td style={{ padding: '10px' }}>{new Date(inv.createdAt).toLocaleDateString()}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <button onClick={handleSaveInvoice} disabled={!cartItems.length || isSubmittingSale} style={{ width: '100%', background: cartItems.length ? theme.primary : '#334155', color: '#fff', padding: '15px', borderRadius: '10px', border: 'none', fontWeight: 'bold', marginTop: '20px', cursor: 'pointer', fontSize: '15px' }}>{t.confirmSaleBtn}</button>
             </div>
-            <div style={{ background: '#020617', borderRadius: '16px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
-              <div>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '800' }}>{t.summaryTitle}</h3>
-                <p style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0', color: '#94a3b8' }}><span>{t.subtotal}</span> <strong style={{ color: '#fff' }}>{cartSubtotal.toFixed(2)}</strong></p>
-                <p style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0', color: '#94a3b8' }}><span>{t.vatAmount}</span> <strong style={{ color: '#5eead4' }}>{cartTax.toFixed(2)}</strong></p>
-                <hr style={{ borderColor: '#1e293b', margin: '15px 0' }} />
-                <h2 style={{ display: 'flex', justifyContent: 'space-between', margin: 0, fontSize: '18px' }}><span>{t.totalDue}</span> <span style={{ color: '#38bdf8', fontWeight: '950' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span></h2>
+          )}
+
+          {activeTab === 'pos' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '20px' }}>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '20px' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>🛒 نقطة البيع السريعة</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px', maxHeight: '500px', overflowY: 'auto' }}>
+                  {inventory.map(prod => {
+                    const cartItem = cartItems.find(it => it.productId === prod.id);
+                    const qty = cartItem ? cartItem.quantity : 0;
+                    const updateQty = (newQ) => {
+                      if (newQ < 0 || newQ > prod.stock) return;
+                      if (newQ === 0) setCartItems(cartItems.filter(i => i.productId !== prod.id));
+                      else if (cartItem) setCartItems(cartItems.map(i => i.productId === prod.id ? { ...i, quantity: newQ, subtotal: newQ * prod.price } : i));
+                      else setCartItems([...cartItems, { productId: prod.id, name: prod.name, quantity: newQ, price: prod.price, subtotal: newQ * prod.price }]);
+                    };
+                    return (
+                      <div key={prod.id} style={{ background: theme.bgMain, border: `1px solid ${qty > 0 ? '#d97706' : theme.border}`, borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '8px' }}>
+                        <div>
+                          <h4 style={{ margin: '0 0 4px 0', fontSize: '13px' }}>{prod.name}</h4>
+                          <span style={{ color: '#d97706', fontWeight: 'bold', fontSize: '12px' }}>{prod.price} {t.currency}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme.cardBg, borderRadius: '6px', padding: '2px', border: `1px solid ${theme.border}` }}>
+                          <button onClick={() => updateQty(qty - 1)} style={{ background: '#ef4444', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer' }}>-</button>
+                          <span style={{ fontWeight: 'bold', fontSize: '13px' }}>{qty}</span>
+                          <button onClick={() => updateQty(qty + 1)} style={{ background: '#d97706', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer' }}>+</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <p style={{ fontSize: '12px', color: '#94a3b8', lineHeight: '1.5', margin: 0 }}>{t.vatNote}</p>
-            </div>
-          </div>
-        )}
 
-        {activeTab === 'purchases' && user.role !== 'cashier' && (
-          <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '30px', maxWidth: '600px', margin: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-            <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: '800' }}>{t.issuePurchase}</h2>
-            <select value={selectedSupplierId} onChange={e=>setSelectedSupplierId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }}>
-              <option value="">{t.defaultSupp}</option>
-              {suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-            <select value={selectedPurchaseProdId} onChange={e=>setSelectedPurchaseProdId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }}>
-              <option value="">{t.chooseProd}</option>
-              {inventory.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-            <input type="number" placeholder={t.purchaseQty} value={purchaseQty} onChange={e=>setPurchaseQty(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-            <input type="number" placeholder={t.purchaseCost} value={purchaseCost} onChange={e=>setPurchaseCost(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', marginBottom: '20px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-            <button onClick={handleSavePurchase} style={{ width: '100%', background: theme.accentAmber, color: '#fff', padding: '15px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', boxShadow: '0 4px 15px rgba(245, 158, 11, 0.3)' }}>{t.confirmPurchaseBtn}</button>
-          </div>
-        )}
-
-        {activeTab === 'customers' && user.role !== 'cashier' && (
-          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '25px' }}>
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <h3 style={{ margin: '0 0 18px 0', fontSize: '18px', fontWeight: '800' }}>{t.addNewCust}</h3>
-              <form onSubmit={handleAddOrUpdateCustomer} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <input type="text" placeholder={t.custName} value={custName} onChange={e=>setCustName(e.target.value)} required style={{ padding: '12px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                <input type="text" placeholder={t.custNationalId} value={custNationalId} onChange={e=>setCustNationalId(e.target.value)} style={{ padding: '12px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                <input type="text" placeholder={t.custPhone} value={custPhone} onChange={e=>setCustPhone(e.target.value)} style={{ padding: '12px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '13px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>{t.saveCust}</button>
-              </form>
-            </div>
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}><h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800' }}>{t.custDirectory}</h3><button onClick={handleExportCustomers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>{t.exportExcelBtn}</button></div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '350px' }}>
-                <thead><tr style={{ background: isDark ? '#1f2937' : '#f8fafc' }}><th style={{ padding: '12px' }}>Name</th><th style={{ padding: '12px' }}>Phone</th><th></th></tr></thead>
-                <tbody>{customers.map(c=><tr key={c.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '12px' }}>{c.name}</td><td style={{ padding: '12px' }}>{c.phone||'-'}</td><td style={{ padding: '12px' }}><button onClick={()=>handleDeleteCustomer(c.id)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer' }}>🗑️</button></td></tr>)}</tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'suppliers' && user.role !== 'cashier' && (
-          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '25px' }}>
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <h3 style={{ margin: '0 0 18px 0', fontSize: '18px', fontWeight: '800' }}>{t.addNewSupp}</h3>
-              <form onSubmit={handleAddOrUpdateSupplier} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <input type="text" placeholder={t.suppName} value={suppName} onChange={e=>setSuppName(e.target.value)} required style={{ padding: '12px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                <input type="text" placeholder={t.suppTaxNumber} value={suppTaxNumber} onChange={e=>setSuppTaxNumber(e.target.value)} style={{ padding: '12px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                <input type="text" placeholder={t.suppPhone} value={suppPhone} onChange={e=>setSuppPhone(e.target.value)} style={{ padding: '12px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '13px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>{t.saveSupp}</button>
-              </form>
-            </div>
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}><h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800' }}>{t.suppDirectory}</h3><button onClick={handleExportSuppliers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>{t.exportExcelBtn}</button></div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '350px' }}>
-                <thead><tr style={{ background: isDark ? '#1f2937' : '#f8fafc' }}><th style={{ padding: '12px' }}>Name</th><th style={{ padding: '12px' }}>Tax No</th><th></th></tr></thead>
-                <tbody>{suppliers.map(s=><tr key={s.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '12px' }}>{s.name}</td><td style={{ padding: '12px' }}>{s.taxNumber||'-'}</td><td style={{ padding: '12px' }}><button onClick={()=>handleDeleteSupplier(s.id)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer' }}>🗑️</button></td></tr>)}</tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'inventory' && (
-          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '25px' }}>
-            {user.role !== 'cashier' && (
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-                <h3 style={{ margin: '0 0 18px 0', fontSize: '18px', fontWeight: '800' }}>➕ إضافة منتج جديد</h3>
-                <form onSubmit={handleAddProduct} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  <input type="text" placeholder={t.prodName} value={newProdName} onChange={e=>setNewProdName(e.target.value)} required style={{ padding: '12px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                  <input type="number" placeholder={t.prodPrice} value={newProdPrice} onChange={e=>setNewProdPrice(e.target.value)} required style={{ padding: '12px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                  <input type="number" placeholder={t.prodStock} value={newProdStock} onChange={e=>setNewProdStock(e.target.value)} style={{ padding: '12px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                  <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '13px', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>{t.saveProd}</button>
-                </form>
-              </div>
-            )}
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}><h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800' }}>{t.stockRepo}</h3><button onClick={handleExportInventory} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>{t.exportInventoryBtn}</button></div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '400px' }}>
-                <thead><tr style={{ background: isDark ? '#1f2937' : '#f8fafc' }}><th style={{ padding: '12px' }}>Name</th><th style={{ padding: '12px' }}>Price</th><th style={{ padding: '12px' }}>Stock</th></tr></thead>
-                <tbody>{inventory.map(i=><tr key={i.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '12px' }}>{i.name}</td><td style={{ padding: '12px' }}>{i.price}</td><td style={{ padding: '12px', color: '#0d9488', fontWeight: 'bold' }}>{i.stock}</td></tr>)}</tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'reports' && user.role !== 'cashier' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}><h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800' }}>{t.invRepo}</h2><button onClick={handleExportSales} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>{t.exportSalesBtn}</button></div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '500px' }}>
-                <thead><tr style={{ background: isDark ? '#1f2937' : '#f8fafc' }}><th style={{ padding: '12px' }}>No</th><th style={{ padding: '12px' }}>Client</th><th style={{ padding: '12px' }}>Total</th><th></th></tr></thead>
-                <tbody>{invoices.map(inv=><tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '12px' }}>#{inv.invoiceNo}</td><td style={{ padding: '12px' }}>{inv.customer?.name||'Cash'}</td><td style={{ padding: '12px' }}>{inv.totalAmount}</td><td style={{ padding: '12px' }}><button onClick={()=>setPrintingInvoice(inv)} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>View</button></td></tr>)}</tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'settings' && (
-          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '800' }}>{t.prefTitle}</h3>
-              <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                <button onClick={()=>setLang('ar')} style={{ flex: 1, padding: '12px', borderRadius: '10px', background: lang==='ar'?theme.primary:'transparent', color: lang==='ar'?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🇸🇦 العربية</button>
-                <button onClick={()=>setLang('en')} style={{ flex: 1, padding: '12px', borderRadius: '10px', background: lang==='en'?theme.primary:'transparent', color: lang==='en'?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🇺🇸 English</button>
-              </div>
-              <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                <button onClick={()=>setIsDark(false)} style={{ flex: 1, padding: '12px', borderRadius: '10px', background: !isDark?theme.primary:'transparent', color: !isDark?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>☀️ {t.lightMode}</button>
-                <button onClick={()=>setIsDark(true)} style={{ flex: 1, padding: '12px', borderRadius: '10px', background: isDark?theme.primary:'transparent', color: isDark?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🌙 {t.darkMode}</button>
-              </div>
-            </div>
-
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '800' }}>{t.securityTitle}</h3>
-              <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
-                <input type="password" placeholder={t.oldPass} value={currentPass} onChange={e=>setCurrentPass(e.target.value)} required style={{ padding: '12px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                <input type="password" placeholder={t.newPass} value={newPass} onChange={e=>setNewPass(e.target.value)} required style={{ padding: '12px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '12px', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>{t.updatePassBtn}</button>
-              </form>
-            </div>
-
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 4px 20px rgba(0,0,0,0.02)' }}>
-              <div>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '800' }}>{t.sessionTitle}</h3>
-                <button onClick={handleLogout} style={{ width: '100%', background: '#fee2e2', color: '#dc2626', border: 'none', padding: '14px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px', fontSize: '15px' }}>🚪 {t.logoutBtn}</button>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-
-      {printingInvoice && (
-        <div className="invoice-modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px', boxSizing: 'border-box' }}>
-          <div className="invoice-modal-card" style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box' }}>
-            <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '18px', marginBottom: '20px', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '900' }}>{t.taxInvoiceTitle}</h2>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={() => window.print()} style={{ background: '#0f766e', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>📥 حفظ PDF / طباعة</button>
-                <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: '8px', cursor: 'pointer' }}>{t.closeModal}</button>
-              </div>
-            </div>
-
-            <div id="zatca-printable-invoice">
-              <p><strong>{t.invNo}</strong> #{printingInvoice.invoiceNo}</p>
-              <p><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'Cash'}</p>
-              <table style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0', fontSize: '13px' }}>
-                <thead><tr style={{ background: '#0f172a', color: '#fff' }}><th style={{ padding: '10px' }}>Item</th><th style={{ padding: '10px' }}>Qty</th><th style={{ padding: '10px' }}>Price</th><th style={{ padding: '10px' }}>Total</th></tr></thead>
-                <tbody>
-                  {printingInvoice.items?.map((it, idx)=>(
-                    <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}><td style={{ padding: '10px' }}>{it.product?.name}</td><td style={{ padding: '10px' }}>{it.quantity}</td><td style={{ padding: '10px' }}>{it.unitPrice}</td><td style={{ padding: '10px' }}>{it.subtotal}</td></tr>
-                  ))}
-                </tbody>
-              </table>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                <img src={generateZatcaQR(printingInvoice, businessName)} alt="QR" style={{ width: '110px', height: '110px' }} />
-                <div style={{ textAlign: 'right' }}>
-                  <p>{t.subtotal} {printingInvoice.subtotal} {t.currency}</p>
-                  <p>{t.vatAmount} {printingInvoice.taxAmount} {t.currency}</p>
-                  <h3>{t.totalDue} {printingInvoice.totalAmount} {t.currency}</h3>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>محتويات السلة</h3>
+                  <div style={{ maxHeight: '250px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {cartItems.map((item, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', background: theme.bgMain, padding: '8px', borderRadius: '8px', fontSize: '12px' }}>
+                        <span>{item.name} ({item.quantity})</span>
+                        <strong style={{ color: '#38bdf8' }}>{item.subtotal} {t.currency}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ borderTop: `1px dashed ${theme.border}`, paddingTop: '10px', margin: '15px 0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold' }}>
+                      <span>الإجمالي المستحق:</span>
+                      <span style={{ color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span>
+                    </div>
+                  </div>
+                  <button onClick={handleSaveInvoice} disabled={!cartItems.length || isSubmittingSale} style={{ width: '100%', background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                    إتمام الدفع وإصدار الفاتورة 💳
+                  </button>
                 </div>
               </div>
             </div>
+          )}
 
+          {activeTab === 'sales' && user.role !== 'cashier' && (
+            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
+                <h2 style={{ margin: 0, fontSize: '18px' }}>سجل الفواتير والمبيعات المعتمدة</h2>
+                <button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير إلى Excel 📥</button>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                    <th style={{ padding: '12px' }}>رقم الفاتورة</th>
+                    <th style={{ padding: '12px' }}>العميل</th>
+                    <th style={{ padding: '12px' }}>المبلغ الإجمالي</th>
+                    <th style={{ padding: '12px' }}>الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map(inv => (
+                    <tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                      <td style={{ padding: '12px', fontWeight: 'bold' }}>#{inv.invoiceNo}</td>
+                      <td style={{ padding: '12px' }}>{inv.customer?.name || 'عميل نقدي'}</td>
+                      <td style={{ padding: '12px', color: '#10b981', fontWeight: 'bold' }}>{inv.totalAmount} {t.currency}</td>
+                      <td style={{ padding: '12px' }}><button onClick={() => setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>معاينة وطباعة 👁️</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === 'purchases' && user.role !== 'cashier' && (
+            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '600px', margin: 'auto' }}>
+              <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>{t.issuePurchase}</h2>
+              <select value={selectedSupplierId} onChange={e=>setSelectedSupplierId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }}>
+                <option value="">{t.defaultSupp}</option>
+                {suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <select value={selectedPurchaseProdId} onChange={e=>setSelectedPurchaseProdId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }}>
+                <option value="">{t.chooseProd}</option>
+                {inventory.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <input type="number" placeholder={t.purchaseQty} value={purchaseQty} onChange={e=>setPurchaseQty(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+              <input type="number" placeholder={t.purchaseCost} value={purchaseCost} onChange={e=>setPurchaseCost(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', marginBottom: '20px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+              <button onClick={handleSavePurchase} style={{ width: '100%', background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.confirmPurchaseBtn}</button>
+            </div>
+          )}
+
+          {activeTab === 'customers' && user.role !== 'cashier' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{t.addNewCust}</h3>
+                <form onSubmit={handleAddOrUpdateCustomer} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <input type="text" placeholder={t.custName} value={custName} onChange={e=>setCustName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <input type="text" placeholder={t.custNationalId} value={custNationalId} onChange={e=>setCustNationalId(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <input type="text" placeholder={t.custPhone} value={custPhone} onChange={e=>setCustPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveCust}</button>
+                </form>
+              </div>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}><h3 style={{ margin: 0, fontSize: '17px' }}>{t.custDirectory}</h3><button onClick={handleExportCustomers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير Excel</button></div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Phone</th><th></th></tr></thead>
+                  <tbody>{customers.map(c=><tr key={c.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{c.name}</td><td style={{ padding: '10px' }}>{c.phone||'-'}</td><td><button onClick={()=>handleDeleteCustomer(c.id)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>🗑️</button></td></tr>)}</tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'suppliers' && user.role !== 'cashier' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{t.addNewSupp}</h3>
+                <form onSubmit={handleAddOrUpdateSupplier} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <input type="text" placeholder={t.suppName} value={suppName} onChange={e=>setSuppName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <input type="text" placeholder={t.suppTaxNumber} value={suppTaxNumber} onChange={e=>setSuppTaxNumber(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <input type="text" placeholder={t.suppPhone} value={suppPhone} onChange={e=>setSuppPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveSupp}</button>
+                </form>
+              </div>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}><h3 style={{ margin: 0, fontSize: '17px' }}>{t.suppDirectory}</h3><button onClick={handleExportSuppliers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير Excel</button></div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Tax No</th><th></th></tr></thead>
+                  <tbody>{suppliers.map(s=><tr key={s.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{s.name}</td><td style={{ padding: '10px' }}>{s.taxNumber||'-'}</td><td><button onClick={()=>handleDeleteSupplier(s.id)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>🗑️</button></td></tr>)}</tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'inventory' && (
+            <div style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '20px' }}>
+              {user.role !== 'cashier' && (
+                <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+                  <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>➕ إضافة منتج</h3>
+                  <form onSubmit={handleAddProduct} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <input type="text" placeholder={t.prodName} value={newProdName} onChange={e=>setNewProdName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                    <input type="number" placeholder={t.prodPrice} value={newProdPrice} onChange={e=>setNewProdPrice(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                    <input type="number" placeholder={t.prodStock} value={newProdStock} onChange={e=>setNewProdStock(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                    <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveProd}</button>
+                  </form>
+                </div>
+              )}
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}><h3 style={{ margin: 0, fontSize: '17px' }}>{t.stockRepo}</h3><button onClick={handleExportInventory} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير Excel</button></div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Price</th><th style={{ padding: '10px' }}>Stock</th></tr></thead>
+                  <tbody>{inventory.map(i=><tr key={i.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{i.name}</td><td style={{ padding: '10px' }}>{i.price}</td><td style={{ padding: '10px', color: '#10b981', fontWeight: 'bold' }}>{i.stock}</td></tr>)}</tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'production' && user.role !== 'cashier' && (
+            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '30px', textAlign: 'center' }}>
+              <h2>🏭 إدارة الإنتاج وأوامر التصنيع (BOM)</h2>
+              <p style={{ color: theme.textMuted }}>النظام جاهز لربط وصفات التصنيع ومتابعة خطوط الإنتاج بدقة عالية.</p>
+              <button style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px' }}>أمر إنتاج +</button>
+            </div>
+          )}
+
+          {activeTab === 'hr' && user.role !== 'cashier' && (
+            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '30px', textAlign: 'center' }}>
+              <h2>👔 إدارة الموارد البشرية والرواتب</h2>
+              <p style={{ color: theme.textMuted }}>إدارة الموظفين، الرواتب، الوثائق، وتنبيهات الإقامات والعقود الصحية.</p>
+              <button style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px' }}>إضافة موظف +</button>
+            </div>
+          )}
+
+          {activeTab === 'ai' && user.role !== 'cashier' && (
+            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '30px', textAlign: 'center' }}>
+              <h2>🤖 المساعد الذكي والتحليلات الآلية</h2>
+              <p style={{ color: theme.textMuted }}>مساعدك الذكي لتحليل مبيعات المنشأة وتقديم توصيات لرفع كفاءة الأرباح.</p>
+            </div>
+          )}
+
+          {activeTab === 'reports' && user.role !== 'cashier' && (
+            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}><h2 style={{ margin: 0, fontSize: '18px' }}>{t.invRepo}</h2><button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير المبيعات</button></div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>No</th><th style={{ padding: '10px' }}>Client</th><th style={{ padding: '10px' }}>Total</th><th></th></tr></thead>
+                <tbody>{invoices.map(inv=><tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>#{inv.invoiceNo}</td><td style={{ padding: '10px' }}>{inv.customer?.name||'Cash'}</td><td style={{ padding: '10px' }}>{inv.totalAmount}</td><td><button onClick={()=>setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>View</button></td></tr>)}</tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{t.prefTitle}</h3>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+                  <button onClick={()=>setLang('ar')} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: lang==='ar'?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🇸🇦 العربية</button>
+                  <button onClick={()=>setLang('en')} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: lang==='en'?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🇺🇸 English</button>
+                </div>
+              </div>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{t.securityTitle}</h3>
+                <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input type="password" placeholder={t.oldPass} value={currentPass} onChange={e=>setCurrentPass(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <input type="password" placeholder={t.newPass} value={newPass} onChange={e=>setNewPass(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '10px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.updatePassBtn}</button>
+                </form>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+
+      {printingInvoice && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
+          <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
+              <h2>{t.taxInvoiceTitle}</h2>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={() => window.print()} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>📥 حفظ PDF</button>
+                <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.closeModal}</button>
+              </div>
+            </div>
+            <p><strong>{t.invNo}</strong> #{printingInvoice.invoiceNo}</p>
+            <p><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'Cash'}</p>
+            <table style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0', fontSize: '13px' }}>
+              <thead><tr style={{ background: '#0f172a', color: '#fff' }}><th style={{ padding: '8px' }}>Item</th><th style={{ padding: '8px' }}>Qty</th><th style={{ padding: '8px' }}>Price</th><th style={{ padding: '8px' }}>Total</th></tr></thead>
+              <tbody>
+                {printingInvoice.items?.map((it, idx)=>(
+                  <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}><td style={{ padding: '8px' }}>{it.product?.name}</td><td style={{ padding: '8px' }}>{it.quantity}</td><td style={{ padding: '8px' }}>{it.unitPrice}</td><td style={{ padding: '8px' }}>{it.subtotal}</td></tr>
+                ))}
+              </tbody>
+            </table>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <img src={generateZatcaQR(printingInvoice, businessName)} alt="QR" style={{ width: '100px', height: '100px' }} />
+              <div style={{ textAlign: 'right' }}>
+                <p>{t.subtotal} {printingInvoice.subtotal} {t.currency}</p>
+                <p>{t.vatAmount} {printingInvoice.taxAmount} {t.currency}</p>
+                <h3>{t.totalDue} {printingInvoice.totalAmount} {t.currency}</h3>
+              </div>
+            </div>
           </div>
         </div>
       )}
