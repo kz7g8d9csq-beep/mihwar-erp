@@ -85,7 +85,7 @@ const dict = {
   ar: {
     brand: 'محور ERP',
     tagline: 'إدارة متكاملة برؤية مستقبلية.',
-    taglineSub: 'نظام سحابي متطور لربط كافة أقسام منشأتك.',
+    taglineSub: 'نظام سحابي متطور لربط كافة أقسام منشأتك التجارية والصناعية.',
     workspace: 'مساحة العمل:',
     dashboard: '📊 لوحة التحكم والتحليلات',
     pos: '🛒 نقطة البيع (POS)',
@@ -103,6 +103,17 @@ const dict = {
     roleCashier: 'كاشير (Cashier)',
     adminSecretLabel: '🔑 كلمة المرور الإدارية الخاصة بمدير النظام:',
     adminSecretPlaceholder: 'أدخل كلمة سر الإدارة المعتمدة',
+
+    landingTitle: 'نظام محور ERP السحابي المعتمد',
+    landingDesc: 'الحل الأمثل والذكي لإدارة المبيعات، المخزون الحي المتصل بـ TiDB، الفوترة الإلكترونية المتوافقة مع زكاة وضريبة السعودية (ZATCA)، ونقاط البيع السريعة.',
+    enterAppBtn: 'دخول النظام الآن 🚀',
+    featuresTitle: '✨ لماذا يختار رواد الأعمال نظام محور ERP؟',
+    feature1Title: '⚡ نقطة بيع (POS) سريعة باللمس',
+    feature1Desc: 'إدارة المبيعات وسلة الشراء بأزرار تفاعلية وعدادات كميات فورية.',
+    feature2Title: '🧾 فوترة إلكترونية معتمدة (ZATCA)',
+    feature2Desc: 'توليد رموز الاستجابة السريعة QR وتصدير فواتير A4 رسمية بدقة.',
+    feature3Title: '🔒 صلاحيات أمان مشددة (RBAC)',
+    feature3Desc: 'فصل تام بين صلاحيات الإدارة العليا وصلاحيات الكاشير لحماية المنشأة.',
 
     forgotPassLink: 'نسيت كلمة المرور؟',
     forgotPassTitle: 'إعادة تعيين كلمة المرور',
@@ -238,7 +249,7 @@ const dict = {
   en: {
     brand: 'Mihwar ERP',
     tagline: 'Enterprise Management Reimagined.',
-    taglineSub: 'Next-generation cloud ERP connecting every department.',
+    taglineSub: 'Next-generation cloud ERP connecting every commercial department.',
     workspace: 'Workspace:',
     dashboard: '📊 Dashboard & Analytics',
     pos: '🛒 POS Touch',
@@ -256,6 +267,17 @@ const dict = {
     roleCashier: 'Cashier (POS Only)',
     adminSecretLabel: '🔑 Master Admin Secret Key:',
     adminSecretPlaceholder: 'Enter master admin secret password',
+
+    landingTitle: 'Mihwar ERP Cloud Enterprise Suite',
+    landingDesc: 'The ultimate smart solution for managing sales, live TiDB inventory, ZATCA-compliant electronic tax invoicing, and lightning-fast POS.',
+    enterAppBtn: 'Enter Application 🚀',
+    featuresTitle: '✨ Why Businesses Choose Mihwar ERP?',
+    feature1Title: '⚡ Quick Touch POS',
+    feature1Desc: 'Manage sales and carts effortlessly with large touch-friendly product grids.',
+    feature2Title: '🧾 ZATCA Compliant Invoicing',
+    feature2Desc: 'Generate official QR codes and export pristine A4 tax invoices instantly.',
+    feature3Title: '🔒 Strict RBAC Security',
+    feature3Desc: 'Complete separation between management dashboards and cashier terminals.',
 
     forgotPassLink: 'Forgot password?',
     forgotPassTitle: 'Reset Password',
@@ -427,6 +449,7 @@ function App() {
     return null;
   });
 
+  const [showLanding, setShowLanding] = useState(true); // حالة لعرض صفحة الترحيب قبل تسجيل الدخول
   const [authView, setAuthView] = useState('login');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
@@ -743,8 +766,67 @@ function App() {
   };
 
   const handleLogout = () => {
-    setUser(null); localStorage.clear(); delete API.defaults.headers.common['Authorization']; setAuthView('login');
+    setUser(null); localStorage.clear(); delete API.defaults.headers.common['Authorization']; setShowLanding(true); setAuthView('login');
   };
+
+  // إذا لم يسجل المستخدم دخول ولم يتجاوز الصفحة الترحيبية
+  if (!user && showLanding) {
+    return (
+      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <header style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '16px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '28px' }}>⚡</span>
+            <span style={{ fontWeight: '900', color: theme.primary, fontSize: '22px' }}>{t.brand}</span>
+          </div>
+          <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+            <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} style={{ padding: '6px 14px', borderRadius: '6px', border: `1px solid ${theme.border}`, background: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>
+              {lang === 'ar' ? 'English' : 'عربي'}
+            </button>
+            <button onClick={() => setShowLanding(false)} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+              {t.enterAppBtn}
+            </button>
+          </div>
+        </header>
+
+        <main style={{ padding: '60px 20px', maxWidth: '1100px', margin: 'auto', textAlign: 'center' }}>
+          <span style={{ background: isDark ? '#334155' : '#e2e8f0', color: theme.primary, padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold' }}>
+            {lang === 'ar' ? '✨ النسخة السحابية المتقدمة 2026' : '✨ Advanced Cloud Edition 2026'}
+          </span>
+          <h1 style={{ fontSize: '42px', fontWeight: '900', margin: '20px 0 15px 0', color: theme.textDark }}>{t.landingTitle}</h1>
+          <p style={{ fontSize: '17px', color: theme.textMuted, maxWidth: '750px', margin: '0 auto 40px auto', lineHeight: '1.6' }}>{t.landingDesc}</p>
+          
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '60px', flexWrap: 'wrap' }}>
+            <button onClick={() => { setShowLanding(false); setAuthView('login'); }} style={{ background: theme.primary, color: '#fff', padding: '14px 30px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 14px rgba(15, 118, 110, 0.4)' }}>
+              {lang === 'ar' ? 'تسجيل الدخول إلى النظام 🔑' : 'Sign In 🔑'}
+            </button>
+            <button onClick={() => { setShowLanding(false); setAuthView('register'); }} style={{ background: 'transparent', color: theme.primary, border: `2px solid ${theme.primary}`, padding: '14px 30px', borderRadius: '10px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
+              {lang === 'ar' ? 'إنشاء مساحة عمل جديدة 🏢' : 'Create Workspace 🏢'}
+            </button>
+          </div>
+
+          <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '30px' }}>{t.featuresTitle}</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '25px', textAlign: lang === 'ar' ? 'right' : 'left' }}>
+            <div style={{ background: theme.cardBg, padding: '25px', borderRadius: '16px', border: `1px solid ${theme.border}` }}>
+              <h3 style={{ color: theme.primary, margin: '0 0 10px 0', fontSize: '18px' }}>{t.feature1Title}</h3>
+              <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px', lineHeight: '1.5' }}>{t.feature1Desc}</p>
+            </div>
+            <div style={{ background: theme.cardBg, padding: '25px', borderRadius: '16px', border: `1px solid ${theme.border}` }}>
+              <h3 style={{ color: theme.primary, margin: '0 0 10px 0', fontSize: '18px' }}>{t.feature2Title}</h3>
+              <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px', lineHeight: '1.5' }}>{t.feature2Desc}</p>
+            </div>
+            <div style={{ background: theme.cardBg, padding: '25px', borderRadius: '16px', border: `1px solid ${theme.border}` }}>
+              <h3 style={{ color: theme.primary, margin: '0 0 10px 0', fontSize: '18px' }}>{t.feature3Title}</h3>
+              <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px', lineHeight: '1.5' }}>{t.feature3Desc}</p>
+            </div>
+          </div>
+        </main>
+
+        <footer style={{ background: theme.cardBg, borderTop: `1px solid ${theme.border}`, padding: '20px', textAlign: 'center', fontSize: '13px', color: theme.textMuted }}>
+          {lang === 'ar' ? '© 2026 نظام محور ERP • جميع الحقوق محفوظة' : '© 2026 Mihwar ERP • All Rights Reserved'}
+        </footer>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -769,9 +851,14 @@ function App() {
                   <span style={{ fontSize: '26px' }}>⚡</span>
                   <span style={{ fontSize: '22px', fontWeight: '900', color: theme.primary }}>{t.brand}</span>
                 </div>
-                <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} style={{ padding: '6px 12px', borderRadius: '6px', border: `1px solid ${theme.border}`, background: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>
-                  {lang === 'ar' ? 'English' : 'عربي'}
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => setShowLanding(true)} style={{ padding: '6px 12px', borderRadius: '6px', border: `1px solid ${theme.border}`, background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>
+                    {lang === 'ar' ? 'الرئيسية' : 'Home'}
+                  </button>
+                  <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} style={{ padding: '6px 12px', borderRadius: '6px', border: `1px solid ${theme.border}`, background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>
+                    {lang === 'ar' ? 'English' : 'عربي'}
+                  </button>
+                </div>
               </div>
               <h1 style={{ color: theme.textDark, fontSize: '24px', fontWeight: '800' }}>
                 {authView === 'login' ? (lang === 'ar' ? 'تسجيل الدخول' : 'Sign In') : authView === 'register' ? (lang === 'ar' ? 'إنشاء مساحة عمل' : 'Create Workspace') : t.forgotPassTitle}
