@@ -4,7 +4,7 @@ import API from './services/api';
 const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
   const isAr = lang === 'ar';
   const cleanTitle = sheetTitle.replace(/[/\\?*[\]]/g, '');
-  const brandName = isAr ? 'قمة البارون' : 'Baron ERP';
+  const brandName = isAr ? 'نظام محور' : 'Mihwar ERP';
   const metaText = isAr
     ? `تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')} | وثيقة معتمدة ومصدرة آلياً من النظام`
     : `Export Date: ${new Date().toLocaleDateString('en-US')} | Official System Generated Report`;
@@ -83,7 +83,7 @@ const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
 
 const dict = {
   ar: {
-    brand: 'قمة البارون',
+    brand: 'نظام محور',
     tagline: 'إدارة متكاملة برؤية مستقبلية.',
     taglineSub: 'نظام سحابي متطور لربط كافة أقسام منشأتك التجارية والصناعية.',
     workspace: 'مساحة العمل:',
@@ -98,7 +98,6 @@ const dict = {
     settings: 'الإعدادات',
     production: 'الإنتاج',
     hr: 'الموارد البشرية',
-    ai: 'الذكاء الاصطناعي',
     welcome: 'مرحباً بك،',
     currency: 'ر.س',
     roleLabel: 'اختر نوع الدخول:',
@@ -107,10 +106,10 @@ const dict = {
     adminSecretLabel: '🔑 كلمة المرور الإدارية الخاصة بمدير النظام:',
     adminSecretPlaceholder: 'أدخل كلمة سر الإدارة المعتمدة',
 
-    landingTitle: 'منظومة قمة البارون السحابية',
+    landingTitle: 'منظومة نظام محور السحابية',
     landingDesc: 'الحل الأمثل والذكي لإدارة المبيعات، المخزون المتصل بـ TiDB، الفوترة الإلكترونية المعتمدة من ZATCA، ونقاط البيع السريعة.',
     enterAppBtn: 'ابدأ العمل الآن 🚀',
-    featuresTitle: '✨ لماذا يختار رواد الأعمال نظام قمة البارون؟',
+    featuresTitle: '✨ لماذا يختار رواد الأعمال نظام محور؟',
     feature1Title: '⚡ نقطة بيع (POS) سريعة باللمس',
     feature1Desc: 'إدارة المبيعات وسلة الشراء بأزرار تفاعلية وعدادات كميات فورية.',
     feature2Title: '🧾 فوترة إلكترونية معتمدة (ZATCA)',
@@ -220,7 +219,7 @@ const dict = {
     totalCol: 'المجموع الخاضع للضريبة',
     zatcaQRTitle: 'رمز الاستجابة السريعة (ZATCA QR)',
     zatcaQRSub: 'امسح الرمز للتحقق من بيانات الفاتورة الضريبية',
-    invoiceFooterNote: 'شكراً لتعاملكم معنا • صدرت إلكترونياً عبر نظام قمة البارون',
+    invoiceFooterNote: 'شكراً لتعاملكم معنا • صدرت إلكترونياً عبر نظام محور',
 
     prodName: 'اسم المنتج',
     prodPrice: 'سعر البيع الافتراضي (ر.س)',
@@ -235,7 +234,7 @@ const dict = {
     prefDesc: 'تخصيص لغة النظام ونمط الشاشة لتناسب استخدامك',
     langLabel: 'لغة النظام:',
     themeLabel: 'نمط العرض:',
-    darkMode: 'الوضع الليلي 🌙',
+    darkMode: 'الوضع الداكن 🌙',
     lightMode: 'الوضع النهاري ☀️',
     securityTitle: '🔒 الحماية وتغيير كلمة المرور',
     securityDesc: 'تغيير كلمة المرور بضوابط أمان مشددة',
@@ -250,7 +249,7 @@ const dict = {
     deleteAccBtn: 'تعطيل الحساب نهائياً'
   },
   en: {
-    brand: 'Baron ERP',
+    brand: 'Mihwar ERP',
     tagline: 'Enterprise Management Reimagined.',
     taglineSub: 'Next-generation cloud ERP connecting every department.',
     workspace: 'Workspace:',
@@ -265,7 +264,6 @@ const dict = {
     settings: 'Settings',
     production: 'Production',
     hr: 'HR',
-    ai: 'AI Assistant',
     welcome: 'Welcome,',
     currency: 'SAR',
     roleLabel: 'Select Login Role:',
@@ -376,7 +374,7 @@ const dict = {
     totalCol: 'Taxable Subtotal',
     zatcaQRTitle: 'ZATCA Official QR Code',
     zatcaQRSub: 'Scan to verify electronic tax invoice details',
-    invoiceFooterNote: 'Thank you for your business • Issued electronically via Baron ERP',
+    invoiceFooterNote: 'Thank you for your business • Issued electronically via Mihwar ERP',
 
     prodName: 'Product Name',
     prodPrice: 'Default Sale Price (SAR)',
@@ -414,7 +412,7 @@ const generateZatcaQR = (invoice, companyName, defaultVatNo = '300123456700003')
       const utf8Bytes = new TextEncoder().encode(str);
       return [tag, utf8Bytes.length, ...utf8Bytes];
     };
-    const seller = companyName || 'قمة البارون';
+    const seller = companyName || 'نظام محور';
     const vatNo = defaultVatNo;
     const timeStr = invoice?.createdAt ? new Date(invoice.createdAt).toISOString() : new Date().toISOString();
     const total = Number(invoice?.totalAmount || 0).toFixed(2);
@@ -425,13 +423,13 @@ const generateZatcaQR = (invoice, companyName, defaultVatNo = '300123456700003')
     for (let i = 0; i < tlvBytes.length; i++) binary += String.fromCharCode(tlvBytes[i]);
     return `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(btoa(binary))}`;
   } catch {
-    return 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=BaronERP';
+    return 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=MihwarERP';
   }
 };
 
 function App() {
   const [lang, setLang] = useState('ar');
-  const [isDark, setIsDark] = useState(true); // الثيم الافتراضي داكن مخصص كما في الصور
+  const [isDark, setIsDark] = useState(true);
 
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('mihwar_user');
@@ -456,7 +454,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
 
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [businessName, setBusinessName] = useState('قمة البارون');
+  const [businessName, setBusinessName] = useState('نظام محور');
 
   const [inventory, setInventory] = useState([]);
   const [newProdName, setNewProdName] = useState('');
@@ -501,13 +499,12 @@ function App() {
 
   const t = dict[lang];
 
-  // ألوان مخصصة ومطابقة تماماً لصور "قمة البارون" (ثيم داكن احترافي مع زر ذهبي/برتقالي بارز)
   const theme = {
-    primary: '#d97706', // برتقالي ذهبي بارز
+    primary: '#d97706',
     primaryHover: '#b45309',
     bgMain: isDark ? '#141824' : '#f8fafc',
     cardBg: isDark ? '#1b2230' : '#ffffff',
-    sidebarBg: '#11151f', // شريط جانبي داكن
+    sidebarBg: '#11151f',
     textDark: isDark ? '#f8fafc' : '#0f172a',
     textMuted: isDark ? '#94a3b8' : '#64748b',
     border: isDark ? '#263147' : '#e2e8f0',
@@ -518,7 +515,7 @@ function App() {
 
   useEffect(() => {
     if (user) {
-      setBusinessName(user.businessName || 'قمة البارون');
+      setBusinessName(user.businessName || 'نظام محور');
       fetchAllData();
       if (user.role === 'cashier' && activeTab !== 'pos') {
         setActiveTab('pos');
@@ -758,14 +755,14 @@ function App() {
     setUser(null); localStorage.clear(); delete API.defaults.headers.common['Authorization']; setShowLanding(true); setAuthView('login');
   };
 
-  // 1. الصفحة الترحيبية (Landing Page) بتصميم "قمة البارون"
+  // 1. الصفحة الترحيبية (Landing Page)
   if (!user && showLanding) {
     return (
       <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', minHeight: '100vh', color: '#f8fafc', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <header style={{ background: '#1b2230', borderBottom: '1px solid #263147', padding: '18px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ background: '#d97706', color: '#fff', padding: '6px 14px', borderRadius: '8px', fontWeight: '900', fontSize: '14px' }}>قب</div>
-            <span style={{ fontWeight: '900', color: '#f8fafc', fontSize: '18px' }}>قمة البارون</span>
+            <div style={{ background: '#d97706', color: '#fff', padding: '6px 14px', borderRadius: '8px', fontWeight: '900', fontSize: '14px' }}>مح</div>
+            <span style={{ fontWeight: '900', color: '#f8fafc', fontSize: '18px' }}>نظام محور</span>
           </div>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #263147', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', color: '#f8fafc' }}>
@@ -792,13 +789,13 @@ function App() {
         </main>
 
         <footer style={{ background: '#1b2230', borderTop: '1px solid #263147', padding: '20px', textAlign: 'center', fontSize: '13px', color: '#94a3b8' }}>
-          © 2026 قمة البارون • Smart Food-ERP
+          © 2026 نظام محور • Cloud ERP Suite
         </footer>
       </div>
     );
   }
 
-  // 2. شاشة تسجيل الدخول بتصميم "قمة البارون"
+  // 2. شاشة تسجيل الدخول
   if (!user) {
     return (
       <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', color: '#f8fafc' }}>
@@ -807,8 +804,8 @@ function App() {
             <div style={{ width: '100%', maxWidth: '420px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ background: '#d97706', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontWeight: '900', fontSize: '14px' }}>قب</div>
-                  <span style={{ fontSize: '20px', fontWeight: '900', color: '#f8fafc' }}>قمة البارون</span>
+                  <div style={{ background: '#d97706', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontWeight: '900', fontSize: '14px' }}>مح</div>
+                  <span style={{ fontSize: '20px', fontWeight: '900', color: '#f8fafc' }}>نظام محور</span>
                 </div>
                 <button onClick={() => setShowLanding(true)} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #263147', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', color: '#f8fafc' }}>
                   الرئيسية
@@ -867,7 +864,7 @@ function App() {
           </div>
 
           <div style={{ flex: '1 1 50%', background: '#141824', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '80px', boxSizing: 'border-box' }}>
-            <h1 style={{ fontSize: '40px', margin: '0 0 20px 0', fontWeight: '900' }}>قمة البارون • Smart Food-ERP</h1>
+            <h1 style={{ fontSize: '40px', margin: '0 0 20px 0', fontWeight: '900' }}>نظام محور • Cloud ERP</h1>
             <p style={{ fontSize: '16px', opacity: 0.7, lineHeight: '1.6' }}>إدارة متكاملة لجميع عمليات المبيعات، الفواتير، المخزون، والإنتاج بدقة واحترافية عالية.</p>
           </div>
         </div>
@@ -875,7 +872,7 @@ function App() {
     );
   }
 
-  // 3. داخل النظام بتصميم القائمة الجانبية (Sidebar) والألوان المطابقة لصورك
+  // 3. داخل النظام بالقائمة الجانبية (Sidebar)
   const allTabs = [
     { id: 'dashboard', label: t.dashboard, adminOnly: true, icon: '📊' },
     { id: 'pos', label: t.pos, adminOnly: false, icon: '🛒' },
@@ -887,7 +884,6 @@ function App() {
     { id: 'production', label: t.production, adminOnly: true, icon: '⚙️' },
     { id: 'hr', label: t.hr, adminOnly: true, icon: '👔' },
     { id: 'reports', label: t.reports, adminOnly: true, icon: '📈' },
-    { id: 'ai', label: t.ai, adminOnly: true, icon: '🤖' },
     { id: 'settings', label: t.settings, adminOnly: false, icon: '⚙️' }
   ];
 
@@ -924,19 +920,17 @@ function App() {
         }
       `}</style>
 
-      {/* الشريط الجانبي (Sidebar) على اليمين تماماً مثل صور "قمة البارون" */}
+      {/* الشريط الجانبي (Sidebar) على اليمين */}
       <aside className="sidebar-nav" style={{ width: '260px', background: theme.sidebarBg, borderLeft: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '20px 0', boxSizing: 'border-box', minHeight: '100vh', position: 'sticky', top: 0, zIndex: 100 }}>
         <div>
-          {/* شعار الشركة في أعلى الشريط الجانبي */}
           <div style={{ padding: '0 20px 20px 20px', borderBottom: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ background: '#d97706', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontWeight: '900', fontSize: '15px' }}>قب</div>
+            <div style={{ background: '#d97706', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontWeight: '900', fontSize: '15px' }}>مح</div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '900', color: '#fff' }}>قمة البارون</h3>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>Smart Food-ERP</span>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '900', color: '#fff' }}>نظام محور</h3>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>Cloud ERP</span>
             </div>
           </div>
 
-          {/* روابط القائمة الجانبية */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '15px 10px' }}>
             {availableTabs.map(tab => {
               const isActive = activeTab === tab.id;
@@ -977,10 +971,7 @@ function App() {
         </div>
       </aside>
 
-      {/* المحتوى الرئيسي للنظام */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        
-        {/* شريط علوي نظيف وخفيف */}
         <header style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <span style={{ fontSize: '15px', fontWeight: '800', color: theme.textDark }}>
@@ -1001,7 +992,7 @@ function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
                 <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>لوحة التحكم</h2>
-                <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>مرحباً بك في نظام قمة البارون المطور.</p>
+                <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>مرحباً بك في نظام محور المطور.</p>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
@@ -1009,30 +1000,6 @@ function App() {
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي المبيعات</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{totalSalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي المخزون</p><h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '22px' }}>{inventory.length} منتج</h2></div>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>الفواتير المصدرة</p><h2 style={{ color: '#a855f7', margin: '8px 0 0 0', fontSize: '22px' }}>{invoices.length} فاتورة</h2></div>
-              </div>
-
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '16px' }}>أحدث الفواتير المسجلة</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead>
-                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '10px' }}>رقم الفاتورة</th>
-                      <th style={{ padding: '10px' }}>العميل</th>
-                      <th style={{ padding: '10px' }}>المبلغ الإجمالي</th>
-                      <th style={{ padding: '10px' }}>التاريخ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoices.slice(0, 5).map(inv => (
-                      <tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td style={{ padding: '10px', fontWeight: 'bold' }}>#{inv.invoiceNo}</td>
-                        <td style={{ padding: '10px' }}>{inv.customer?.name || 'عميل نقدي'}</td>
-                        <td style={{ padding: '10px', color: '#10b981', fontWeight: 'bold' }}>{inv.totalAmount} {t.currency}</td>
-                        <td style={{ padding: '10px' }}>{new Date(inv.createdAt).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             </div>
           )}
@@ -1068,12 +1035,12 @@ function App() {
                 </div>
               </div>
 
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div style={{ background: '#020617', borderRadius: '16px', color: '#fff', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
                   <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>محتويات السلة</h3>
                   <div style={{ maxHeight: '250px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {cartItems.map((item, idx) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', background: theme.bgMain, padding: '8px', borderRadius: '8px', fontSize: '12px' }}>
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', background: '#0f172a', padding: '8px', borderRadius: '8px', fontSize: '12px' }}>
                         <span>{item.name} ({item.quantity})</span>
                         <strong style={{ color: '#38bdf8' }}>{item.subtotal} {t.currency}</strong>
                       </div>
@@ -1081,7 +1048,7 @@ function App() {
                   </div>
                 </div>
                 <div>
-                  <div style={{ borderTop: `1px dashed ${theme.border}`, paddingTop: '10px', margin: '15px 0' }}>
+                  <div style={{ borderTop: '1px dashed #334155', paddingTop: '10px', margin: '15px 0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold' }}>
                       <span>الإجمالي المستحق:</span>
                       <span style={{ color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span>
@@ -1222,13 +1189,6 @@ function App() {
             </div>
           )}
 
-          {activeTab === 'ai' && user.role !== 'cashier' && (
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '30px', textAlign: 'center' }}>
-              <h2>🤖 المساعد الذكي والتحليلات الآلية</h2>
-              <p style={{ color: theme.textMuted }}>مساعدك الذكي لتحليل مبيعات المنشأة وتقديم توصيات لرفع كفاءة الأرباح.</p>
-            </div>
-          )}
-
           {activeTab === 'reports' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}><h2 style={{ margin: 0, fontSize: '18px' }}>{t.invRepo}</h2><button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير المبيعات</button></div>
@@ -1247,7 +1207,12 @@ function App() {
                   <button onClick={()=>setLang('ar')} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: lang==='ar'?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🇸🇦 العربية</button>
                   <button onClick={()=>setLang('en')} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: lang==='en'?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🇺🇸 English</button>
                 </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={()=>setIsDark(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: !isDark?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>☀️ النهاري</button>
+                  <button onClick={()=>setIsDark(true)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: isDark?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🌙 الداكن</button>
+                </div>
               </div>
+
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
                 <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{t.securityTitle}</h3>
                 <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
