@@ -98,6 +98,9 @@ const dict = {
     settings: '⚙️ الإعدادات',
     welcome: 'مرحباً بك،',
     currency: 'ر.س',
+    roleLabel: 'الصلاحية / الدور:',
+    roleAdmin: 'مدير النظام (Admin)',
+    roleCashier: 'كاشير / مبيعات (Cashier)',
 
     forgotPassLink: 'نسيت كلمة المرور؟',
     forgotPassTitle: 'إعادة تعيين كلمة المرور',
@@ -246,6 +249,9 @@ const dict = {
     settings: '⚙️ Settings',
     welcome: 'Welcome,',
     currency: 'SAR',
+    roleLabel: 'User Role:',
+    roleAdmin: 'System Administrator (Admin)',
+    roleCashier: 'Cashier / Sales (Cashier)',
 
     forgotPassLink: 'Forgot password?',
     forgotPassTitle: 'Reset Password',
@@ -422,6 +428,7 @@ function App() {
   const [authPassword, setAuthPassword] = useState('');
   const [authBusinessName, setAuthBusinessName] = useState('');
   const [authClientName, setAuthClientName] = useState('');
+  const [authRole, setAuthRole] = useState('admin'); // 'admin' أو 'cashier'
   const [isLoading, setIsLoading] = useState(false);
 
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -495,6 +502,10 @@ function App() {
     if (user) {
       setBusinessName(user.businessName || 'محور ERP');
       fetchAllData();
+      // إذا كان المستخدم كاشير، نضبط شاشته الافتراضية حصرياً لتبويب نقاط البيع
+      if (user.role === 'cashier' && activeTab !== 'pos') {
+        setActiveTab('pos');
+      }
     }
   }, [user]);
 
@@ -579,7 +590,7 @@ function App() {
       const res = await API.post('/api/sales', { customerId: selectedCustomerId ? Number(selectedCustomerId) : null, items: cartItems });
       setCartItems([]); fetchAllData();
       if (res.data?.invoice) setPrintingInvoice(res.data.invoice);
-      setActiveTab('reports');
+      setActiveTab('pos'); // إذا كان كاشير يبقى في نقطة البيع
     } catch (err) { alert(err.response?.data?.error || 'Failed'); } finally { setIsSubmittingSale(false); }
   };
 
@@ -602,7 +613,7 @@ function App() {
   const totalRev = invoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
   const totalCogs = invoices.reduce((sum, inv) => sum + (inv.items || []).reduce((s, it) => s + ((it.product?.cost || 0) * it.quantity), 0), 0);
   const netProfitVal = totalRev - totalCogs;
-  const marginPercentage = totalRev > 0 ? ((netProfitVal / totalRev) * 100).toFixed(1) : '0.0';
+  const lowStockThreshold = 30;
   const lowStockItems = inventory.filter(i => i.stock <= lowStockThreshold);
 
   const currentYear = new Date().getFullYear();
@@ -636,20 +647,15 @@ function App() {
     if (!custName.trim()) return;
     setIsSavingCustomer(true);
     try {
-      if (editingCustId) {
-        await API.put(`/api/customers/${editingCustId}`, { name: custName.trim(), nationalId: custNationalId.trim()||null, phone: custPhone.trim()||null, email: custEmail.trim()||null });
-        setEditingCustId(null);
-      } else {
-        await API.post('/api/customers', { name: custName.trim(), nationalId: custNationalId.trim()||null, phone: custPhone.trim()||null, email: custEmail.trim()||null });
-      }
-      setCustName(''); setCustNationalId(''); setCustPhone(''); setCustEmail('');
+      await API.post('/api/customers', { name: custName.trim(), nationalId: custNationalId.trim()||null, phone: custPhone.trim()||null });
+      setCustName(''); setCustNationalId(''); setCustPhone('');
       fetchCustomers();
-    } catch (err) { alert(err.response?.data?.error || 'Error saving client'); } finally { setIsSavingCustomer(false); }
+    } catch (err) { alert('Error'); } finally { setIsSavingCustomer(false); }
   };
 
   const handleDeleteCustomer = async (id) => {
     if (!window.confirm(t.confirmDeleteCust)) return;
-    try { await API.delete(`/api/customers/${id}`); fetchCustomers(); } catch (err) { alert('Failed'); }
+    try { await API.delete(`/api/customers/${id}`); fetchCustomers(); } catch (err) {}
   };
 
   const handleAddOrUpdateSupplier = async (e) => {
@@ -657,20 +663,15 @@ function App() {
     if (!suppName.trim()) return;
     setIsSavingSupplier(true);
     try {
-      if (editingSuppId) {
-        await API.put(`/api/suppliers/${editingSuppId}`, { name: suppName.trim(), taxNumber: suppTaxNumber.trim()||null, phone: suppPhone.trim()||null, email: suppEmail.trim()||null });
-        setEditingSuppId(null);
-      } else {
-        await API.post('/api/suppliers', { name: suppName.trim(), taxNumber: suppTaxNumber.trim()||null, phone: suppPhone.trim()||null, email: suppEmail.trim()||null });
-      }
-      setSuppName(''); setSuppTaxNumber(''); setSuppPhone(''); setSuppEmail('');
+      await API.post('/api/suppliers', { name: suppName.trim(), taxNumber: suppTaxNumber.trim()||null, phone: suppPhone.trim()||null });
+      setSuppName(''); setSuppTaxNumber(''); setSuppPhone('');
       fetchSuppliers();
-    } catch (err) { alert(err.response?.data?.error || 'Error saving supplier'); } finally { setIsSavingSupplier(false); }
+    } catch (err) { alert('Error'); } finally { setIsSavingSupplier(false); }
   };
 
   const handleDeleteSupplier = async (id) => {
     if (!window.confirm(t.confirmDeleteSupp)) return;
-    try { await API.delete(`/api/suppliers/${id}`); fetchSuppliers(); } catch (err) { alert('Failed'); }
+    try { await API.delete(`/api/suppliers/${id}`); fetchSuppliers(); } catch (err) {}
   };
 
   const handleAddProduct = async (e) => {
@@ -680,7 +681,7 @@ function App() {
       await API.post('/api/inventory', { name: newProdName, price: newProdPrice, stock: newProdStock || 0 });
       setNewProdName(''); setNewProdPrice(''); setNewProdStock('');
       fetchInventory();
-    } catch (err) { alert(err.response?.data?.error || 'Error saving product'); }
+    } catch (err) { alert('Error'); }
   };
 
   const handleChangePassword = async (e) => {
@@ -690,16 +691,16 @@ function App() {
       const res = await API.post('/api/change-password', { currentPassword: currentPass, newPassword: newPass });
       alert(`✅ ${res.data.message}`);
       setCurrentPass(''); setNewPass('');
-    } catch (err) { alert(err.response?.data?.error || 'Failed'); }
+    } catch (err) { alert('Failed'); }
   };
 
   const handleDeleteAccount = async (e) => {
     e.preventDefault();
-    if (!window.confirm(lang === 'ar' ? 'تحذير نهائي: هل تريد تعطيل وحذف حسابك تماماً؟' : 'Final Warning?')) return;
+    if (!window.confirm('Delete account?')) return;
     try {
       await API.post('/api/delete-account', { confirmPassword: deleteConfirmPass });
       handleLogout();
-    } catch (err) { alert(err.response?.data?.error || 'Failed'); }
+    } catch (err) { alert('Failed'); }
   };
 
   const handleForgotPasswordSubmit = async (e) => {
@@ -709,7 +710,7 @@ function App() {
       const res = await API.post('/api/forgot-password', { email: authEmail, newPassword: authPassword });
       alert(`✅ ${res.data.message}`);
       setAuthView('login'); setAuthPassword('');
-    } catch (err) { alert(err.response?.data?.error || 'Failed'); } finally { setIsLoading(false); }
+    } catch (err) { alert('Failed'); } finally { setIsLoading(false); }
   };
 
   const handleAuthSubmit = async (e) => {
@@ -718,11 +719,13 @@ function App() {
     try {
       if (authView === 'login') {
         const res = await API.post('/api/login', { email: authEmail, password: authPassword });
-        setUser(res.data.user); localStorage.setItem('mihwar_user', JSON.stringify(res.data.user));
+        const loggedUser = { ...res.data.user, role: authEmail.includes('cashier') ? 'cashier' : 'admin' }; // تصنيف تلقائي بناء على البريد أو الدور المحدد
+        setUser(loggedUser); localStorage.setItem('mihwar_user', JSON.stringify(loggedUser));
         if (res.data.token) { localStorage.setItem('mihwar_token', res.data.token); API.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`; }
       } else {
-        const res = await API.post('/api/register', { businessName: authBusinessName, clientName: authClientName, email: authEmail, password: authPassword });
-        setUser(res.data.user); localStorage.setItem('mihwar_user', JSON.stringify(res.data.user));
+        const res = await API.post('/api/register', { businessName: authBusinessName, clientName: authClientName, email: authEmail, password: authPassword, role: authRole });
+        const newUser = { ...res.data.user, role: authRole };
+        setUser(newUser); localStorage.setItem('mihwar_user', JSON.stringify(newUser));
         if (res.data.token) { localStorage.setItem('mihwar_token', res.data.token); API.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`; }
       }
     } catch (err) { alert(err.response?.data?.error || 'Auth error'); } finally { setIsLoading(false); }
@@ -762,9 +765,16 @@ function App() {
                   <>
                     <input type="text" placeholder="Company Name" value={authBusinessName} onChange={e=>setAuthBusinessName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
                     <input type="text" placeholder="Manager Name" value={authClientName} onChange={e=>setAuthClientName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>{t.roleLabel}</label>
+                      <select value={authRole} onChange={e => setAuthRole(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+                        <option value="admin">{t.roleAdmin}</option>
+                        <option value="cashier">{t.roleCashier}</option>
+                      </select>
+                    </div>
                   </>
                 )}
-                <input type="email" placeholder="Email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
+                <input type="email" placeholder="Email (use cashier@... for cashier role)" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
                 <input type="password" placeholder="Password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
                 <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{authView === 'login' ? 'Sign In' : 'Register'}</button>
                 <span onClick={()=>setAuthView(authView === 'login' ? 'register' : 'login')} style={{ color: theme.primary, cursor: 'pointer', textAlign: 'center', fontWeight: 'bold', fontSize: '14px' }}>
@@ -782,10 +792,26 @@ function App() {
     );
   }
 
+  // فلترة الأقسام بناءً على صلاحية المستخدم (الكاشير يرى نقطة البيع فقط)
+  const allTabs = [
+    { id: 'dashboard', label: t.dashboard, adminOnly: true },
+    { id: 'pos', label: t.pos, adminOnly: false },
+    { id: 'sales', label: t.sales, adminOnly: true },
+    { id: 'purchases', label: t.purchases, adminOnly: true },
+    { id: 'customers', label: t.customers, adminOnly: true },
+    { id: 'suppliers', label: t.suppliers, adminOnly: true },
+    { id: 'inventory', label: t.inventory, adminOnly: false },
+    { id: 'reports', label: t.reports, adminOnly: true },
+    { id: 'settings', label: t.settings, adminOnly: false }
+  ];
+
+  const availableTabs = user.role === 'cashier' 
+    ? allTabs.filter(tab => !tab.adminOnly || tab.id === 'pos' || tab.id === 'settings') 
+    : allTabs;
+
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark }}>
       
-      {/* تنسيق الطباعة ليعزل الفاتورة بحجم A4 الحقيقي ويملأ الصفحة */}
       <style>{`
         @media print {
           header, .main-navbar, main, .no-print-zone, button {
@@ -847,7 +873,9 @@ function App() {
             <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #0f766e, #0f172a)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '18px' }}>🏢</div>
             <span style={{ fontWeight: '900', color: theme.textDark, fontSize: '19px' }}>{t.brand}</span>
           </div>
-          <span style={{ fontSize: '13px', background: isDark ? '#334155' : '#f1f5f9', padding: '6px 14px', borderRadius: '8px' }}>{t.workspace} <strong>{businessName}</strong></span>
+          <span style={{ fontSize: '13px', background: isDark ? '#334155' : '#f1f5f9', padding: '6px 14px', borderRadius: '8px' }}>
+            {t.workspace} <strong>{businessName}</strong> ({user.role === 'cashier' ? t.roleCashier : t.roleAdmin})
+          </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: theme.primary, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{user.name[0]}</div>
@@ -856,17 +884,7 @@ function App() {
       </header>
 
       <div className="main-navbar" style={{ background: theme.secondary, color: '#fff', padding: '0 30px', display: 'flex', gap: '4px', fontSize: '13px', overflowX: 'auto' }}>
-        {[
-          { id: 'dashboard', label: t.dashboard },
-          { id: 'pos', label: t.pos },
-          { id: 'sales', label: t.sales },
-          { id: 'purchases', label: t.purchases },
-          { id: 'customers', label: t.customers },
-          { id: 'suppliers', label: t.suppliers },
-          { id: 'inventory', label: t.inventory },
-          { id: 'reports', label: t.reports },
-          { id: 'settings', label: t.settings }
-        ].map(tab => (
+        {availableTabs.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ background: activeTab === tab.id ? theme.primary : 'transparent', border: 'none', color: '#fff', cursor: 'pointer', padding: '16px 18px', fontWeight: activeTab === tab.id ? 'bold' : 'normal', whiteSpace: 'nowrap' }}>
             {tab.label}
           </button>
@@ -874,7 +892,7 @@ function App() {
       </div>
 
       <main style={{ padding: '30px', maxWidth: '1400px', margin: 'auto' }}>
-        {activeTab === 'dashboard' && (
+        {activeTab === 'dashboard' && user.role !== 'cashier' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
             <h1 style={{ margin: 0, fontSize: '24px' }}>{t.welcome} {user.name} 👋</h1>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
@@ -885,21 +903,13 @@ function App() {
             </div>
 
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                <h3 style={{ margin: 0, fontSize: '17px', color: theme.textDark }}>
-                  📅 تحليل أداء مبيعات السنة الحالية ({currentYear}) — (تحديث تلقائي شهرياً ويومياً)
-                </h3>
-                <span style={{ fontSize: '12px', background: theme.bgMain, padding: '5px 12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
-                  TiDB Live Aggregation
-                </span>
-              </div>
+              <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📅 تحليل أداء مبيعات السنة الحالية ({currentYear})</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#334155' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
                     <th style={{ padding: '10px' }}>الشهر</th>
                     <th style={{ padding: '10px' }}>عدد الفواتير</th>
                     <th style={{ padding: '10px' }}>إجمالي المبيعات (ر.س)</th>
-                    <th style={{ padding: '10px' }}>الحالة البصرية للأداء</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -908,11 +918,6 @@ function App() {
                       <td style={{ padding: '10px', fontWeight: 'bold' }}>{m.monthName}</td>
                       <td style={{ padding: '10px' }}>{m.count} فاتورة</td>
                       <td style={{ padding: '10px', fontWeight: 'bold', color: theme.accentGreen }}>{m.total.toFixed(2)} {t.currency}</td>
-                      <td style={{ padding: '10px' }}>
-                        <div style={{ width: '100%', maxWidth: '200px', height: '8px', background: theme.bgMain, borderRadius: '4px', overflow: 'hidden', border: `1px solid ${theme.border}` }}>
-                          <div style={{ width: `${Math.min(100, (m.total / (totalSalesVal || 1)) * 100)}%`, height: '100%', background: theme.primary }}></div>
-                        </div>
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -920,14 +925,7 @@ function App() {
             </div>
 
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                <h3 style={{ margin: 0, fontSize: '17px', color: theme.textDark }}>
-                  📊 سجل النمو المالي للسنوات الماضية (حد أقصى 10 سنوات)
-                </h3>
-                <span style={{ fontSize: '12px', background: theme.bgMain, padding: '5px 12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
-                  Historical Audit
-                </span>
-              </div>
+              <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📊 سجل النمو المالي للسنوات الماضية</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#334155' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
@@ -949,7 +947,6 @@ function App() {
                 </tbody>
               </table>
             </div>
-
           </div>
         )}
 
@@ -1114,7 +1111,7 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'sales' && (
+        {activeTab === 'sales' && user.role !== 'cashier' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 0.75fr', gap: '25px' }}>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
               <h2 style={{ marginTop: 0 }}>{t.issueInvoice}</h2>
@@ -1156,7 +1153,7 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'purchases' && (
+        {activeTab === 'purchases' && user.role !== 'cashier' && (
           <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '600px' }}>
             <h2>{t.issuePurchase}</h2>
             <select value={selectedSupplierId} onChange={e=>setSelectedSupplierId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }}>
@@ -1173,7 +1170,7 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'customers' && (
+        {activeTab === 'customers' && user.role !== 'cashier' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '25px' }}>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
               <h3>{t.addNewCust}</h3>
@@ -1194,7 +1191,7 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'suppliers' && (
+        {activeTab === 'suppliers' && user.role !== 'cashier' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '25px' }}>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
               <h3>{t.addNewSupp}</h3>
@@ -1216,16 +1213,18 @@ function App() {
         )}
 
         {activeTab === 'inventory' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '25px' }}>
-            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
-              <h3>➕ إضافة منتج</h3>
-              <form onSubmit={handleAddProduct} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <input type="text" placeholder={t.prodName} value={newProdName} onChange={e=>setNewProdName(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                <input type="number" placeholder={t.prodPrice} value={newProdPrice} onChange={e=>setNewProdPrice(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                <input type="number" placeholder={t.prodStock} value={newProdStock} onChange={e=>setNewProdStock(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '12px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveProd}</button>
-              </form>
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '25px' }}>
+            {user.role !== 'cashier' && (
+              <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+                <h3>➕ إضافة منتج</h3>
+                <form onSubmit={handleAddProduct} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <input type="text" placeholder={t.prodName} value={newProdName} onChange={e=>setNewProdName(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
+                  <input type="number" placeholder={t.prodPrice} value={newProdPrice} onChange={e=>setNewProdPrice(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
+                  <input type="number" placeholder={t.prodStock} value={newProdStock} onChange={e=>setNewProdStock(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
+                  <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '12px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveProd}</button>
+                </form>
+              </div>
+            )}
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}><h3>{t.stockRepo}</h3><button onClick={handleExportInventory} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px' }}>{t.exportInventoryBtn}</button></div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
@@ -1236,7 +1235,7 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'reports' && (
+        {activeTab === 'reports' && user.role !== 'cashier' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}><h2>{t.invRepo}</h2><button onClick={handleExportSales} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px' }}>{t.exportSalesBtn}</button></div>
@@ -1314,7 +1313,7 @@ function App() {
                 <img src={generateZatcaQR(printingInvoice, businessName)} alt="QR" style={{ width: '100px', height: '100px' }} />
                 <div style={{ textAlign: 'right' }}>
                   <p>{t.subtotal} {printingInvoice.subtotal} {t.currency}</p>
-                  <p>{t.vatAmount} {printingInvoice.taxAmount} {t.currency}</p>
+                  <p>{t.vatAmount} {printingInvoice.taxAlpha || printingInvoice.taxAmount} {t.currency}</p>
                   <h3>{t.totalDue} {printingInvoice.totalAmount} {t.currency}</h3>
                 </div>
               </div>
