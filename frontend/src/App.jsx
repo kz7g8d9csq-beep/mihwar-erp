@@ -605,11 +605,8 @@ function App() {
   const marginPercentage = totalRev > 0 ? ((netProfitVal / totalRev) * 100).toFixed(1) : '0.0';
   const lowStockItems = inventory.filter(i => i.stock <= lowStockThreshold);
 
-  // حساب بيانات الجدول الأول (السنة الحالية تلقائياً - تقسيم شهري ويومي)
   const currentYear = new Date().getFullYear();
   const currentYearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === currentYear);
-  
-  // تجميع المبيعات شهرياً للسنة الحالية
   const monthlyData = Array.from({ length: 12 }, (_, i) => {
     const monthInvs = currentYearInvoices.filter(inv => new Date(inv.createdAt).getMonth() === i);
     const total = monthInvs.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
@@ -617,7 +614,6 @@ function App() {
     return { monthName: new Date(currentYear, i, 1).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US', { month: 'long' }), total, count };
   });
 
-  // حساب بيانات الجدول الثاني (السنوات الماضية - حتى 10 سنوات كحد أقصى)
   const pastYearsData = Array.from({ length: 10 }, (_, i) => {
     const targetYear = currentYear - i;
     const yearInvs = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
@@ -902,12 +898,12 @@ function App() {
           </div>
         )}
 
-        {/* 🛒 واجهة نقطة البيع السريعة (POS Touch Mode) */}
+        {/* 🛒 واجهة نقطة البيع السريعة (POS Touch Mode) مع أزرار التحكم بالكمية (+ و -) */}
         {activeTab === 'pos' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '25px' }}>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, fontSize: '18px', color: theme.textDark }}>{lang === 'ar' ? '⚡ نقطة البيع السريعة (اختر المنتجات)' : '⚡ Quick POS Touch Products'}</h2>
+                <h2 style={{ margin: 0, fontSize: '18px', color: theme.textDark }}>{lang === 'ar' ? '⚡ نقطة البيع السريعة (تحكم سريع بالكميات)' : '⚡ Quick POS Touch Products'}</h2>
                 <span style={{ fontSize: '12px', background: theme.bgMain, padding: '6px 12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
                   {inventory.length} {lang === 'ar' ? 'منتج متاح' : 'Products'}
                 </span>
@@ -916,57 +912,74 @@ function App() {
               {inventory.length === 0 ? (
                 <p style={{ textAlign: 'center', color: theme.textMuted, padding: '40px' }}>{lang === 'ar' ? 'لا توجد منتجات مسجلة في المستودع.' : 'No products available.'}</p>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '15px', maxHeight: '550px', overflowY: 'auto', paddingRight: '5px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px', maxHeight: '550px', overflowY: 'auto', paddingRight: '5px' }}>
                   {inventory.map(prod => {
                     const isOut = prod.stock <= 0;
+                    const cartItem = cartItems.find(it => it.productId === prod.id);
+                    const currentQtyInCart = cartItem ? cartItem.quantity : 0;
+
+                    // دوال التعديل السريع للكمية من بطاقة المنتج مباشرة
+                    const updateProdQty = (newQty) => {
+                      if (newQty < 0 || newQty > prod.stock) return;
+                      if (newQty === 0) {
+                        setCartItems(cartItems.filter(it => it.productId !== prod.id));
+                      } else if (cartItem) {
+                        setCartItems(cartItems.map(it => it.productId === prod.id ? { ...it, quantity: newQty, subtotal: Number((newQty * it.price).toFixed(2)) } : it));
+                      } else {
+                        setCartItems([...cartItems, { productId: prod.id, name: prod.name, quantity: newQty, price: prod.price, subtotal: Number((newQty * prod.price).toFixed(2)) }]);
+                      }
+                    };
+
                     return (
                       <div 
                         key={prod.id} 
-                        onClick={() => {
-                          if (!isOut) {
-                            setSelectedProductId(prod.id);
-                            setItemPrice(prod.price);
-                            setItemQty(1);
-                          }
-                        }}
                         style={{ 
                           background: isOut ? theme.bgMain : theme.cardBg, 
-                          border: `2px solid ${selectedProductId === Number(prod.id) ? theme.primary : theme.border}`, 
+                          border: `2px solid ${currentQtyInCart > 0 ? theme.primary : theme.border}`, 
                           borderRadius: '12px', 
                           padding: '16px', 
-                          cursor: isOut ? 'not-allowed' : 'pointer', 
                           opacity: isOut ? 0.5 : 1,
                           display: 'flex', 
                           flexDirection: 'column', 
                           justifyContent: 'space-between',
-                          gap: '10px'
+                          gap: '12px'
                         }}
                       >
                         <div>
-                          <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: theme.textDark }}>{prod.name}</h4>
-                          <span style={{ fontSize: '12px', color: theme.textMuted }}>{t.availableStock}: <strong>{prod.stock}</strong></span>
+                          <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', color: theme.textDark }}>{prod.name}</h4>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <strong style={{ color: theme.primary, fontSize: '14px' }}>{prod.price} {t.currency}</strong>
+                            <span style={{ fontSize: '11px', color: theme.textMuted }}>متبقي: {prod.stock}</span>
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${theme.border}`, paddingTop: '10px' }}>
-                          <strong style={{ color: theme.primary, fontSize: '15px' }}>{prod.price} {t.currency}</strong>
+
+                        {/* عداد التحكم السريع (+ / - / خانة إدخال رقمية) */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: theme.bgMain, borderRadius: '8px', padding: '4px', border: `1px solid ${theme.border}` }}>
                           <button 
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (!isOut) {
-                                const existing = cartItems.find(it => it.productId === prod.id);
-                                const reqQ = (existing ? existing.quantity : 0) + 1;
-                                if (reqQ <= prod.stock) {
-                                  if (existing) {
-                                    setCartItems(cartItems.map(it => it.productId === prod.id ? { ...it, quantity: reqQ, subtotal: Number((reqQ * it.price).toFixed(2)) } : it));
-                                  } else {
-                                    setCartItems([...cartItems, { productId: prod.id, name: prod.name, quantity: 1, price: prod.price, subtotal: Number(prod.price) }]);
-                                  }
-                                }
-                              }
-                            }}
-                            style={{ background: theme.primary, color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
+                            disabled={isOut || currentQtyInCart <= 0}
+                            onClick={() => updateProdQty(currentQtyInCart - 1)}
+                            style={{ background: '#ef4444', color: '#fff', border: 'none', width: '30px', height: '30px', borderRadius: '6px', fontWeight: 'bold', cursor: currentQtyInCart > 0 ? 'pointer' : 'not-allowed', fontSize: '14px' }}
                           >
-                            ➕ إضافة
+                            -
+                          </button>
+                          
+                          <input 
+                            type="number"
+                            min="0"
+                            max={prod.stock}
+                            value={currentQtyInCart}
+                            onChange={(e) => updateProdQty(Number(e.target.value))}
+                            style={{ width: '45px', textAlign: 'center', border: 'none', background: 'transparent', fontWeight: 'bold', fontSize: '14px', color: theme.textDark }}
+                          />
+
+                          <button 
+                            type="button"
+                            disabled={isOut || currentQtyInCart >= prod.stock}
+                            onClick={() => updateProdQty(currentQtyInCart + 1)}
+                            style={{ background: theme.primary, color: '#fff', border: 'none', width: '30px', height: '30px', borderRadius: '6px', fontWeight: 'bold', cursor: currentQtyInCart < prod.stock ? 'pointer' : 'not-allowed', fontSize: '14px' }}
+                          >
+                            +
                           </button>
                         </div>
                       </div>
@@ -1158,7 +1171,7 @@ function App() {
                 <input type="text" placeholder={t.prodName} value={newProdName} onChange={e=>setNewProdName(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
                 <input type="number" placeholder={t.prodPrice} value={newProdPrice} onChange={e=>setNewProdPrice(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
                 <input type="number" placeholder={t.prodStock} value={newProdStock} onChange={e=>setNewProdStock(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveProd}</button>
+                <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '12px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveProd}</button>
               </form>
             </div>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
