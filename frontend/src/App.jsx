@@ -784,6 +784,63 @@ function App() {
 
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark }}>
+      
+      {/* تنسيق الطباعة ليعزل الفاتورة بحجم A4 الحقيقي ويملأ الصفحة */}
+      <style>{`
+        @media print {
+          header, .main-navbar, main, .no-print-zone, button {
+            display: none !important;
+          }
+          @page {
+            size: A4 portrait;
+            margin: 0mm;
+          }
+          body, html {
+            background: #ffffff !important;
+            color: #000000 !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .invoice-modal-backdrop {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: #ffffff !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 99999 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .invoice-modal-card {
+            box-shadow: none !important;
+            border: none !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            border-radius: 0 !important;
+            padding: 15mm !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+          }
+          #zatca-printable-invoice {
+            display: block !important;
+            width: 100% !important;
+            height: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+        }
+      `}</style>
+
       <header style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 35px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -798,7 +855,7 @@ function App() {
         </div>
       </header>
 
-      <div style={{ background: theme.secondary, color: '#fff', padding: '0 30px', display: 'flex', gap: '4px', fontSize: '13px', overflowX: 'auto' }}>
+      <div className="main-navbar" style={{ background: theme.secondary, color: '#fff', padding: '0 30px', display: 'flex', gap: '4px', fontSize: '13px', overflowX: 'auto' }}>
         {[
           { id: 'dashboard', label: t.dashboard },
           { id: 'pos', label: t.pos },
@@ -1232,33 +1289,37 @@ function App() {
       </main>
 
       {printingInvoice && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-          <div style={{ background: '#fff', color: '#0f172a', padding: '35px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
+        <div className="invoice-modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+          <div className="invoice-modal-card" style={{ background: '#fff', color: '#0f172a', padding: '35px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
               <h2>{t.taxInvoiceTitle}</h2>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button onClick={() => window.print()} style={{ background: '#0f766e', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>📥 حفظ PDF / طباعة</button>
                 <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px' }}>{t.closeModal}</button>
               </div>
             </div>
-            <p><strong>{t.invNo}</strong> #{printingInvoice.invoiceNo}</p>
-            <p><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'Cash'}</p>
-            <table style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0', fontSize: '13px' }}>
-              <thead><tr style={{ background: '#0f172a', color: '#fff' }}><th style={{ padding: '8px' }}>Item</th><th style={{ padding: '8px' }}>Qty</th><th style={{ padding: '8px' }}>Price</th><th style={{ padding: '8px' }}>Total</th></tr></thead>
-              <tbody>
-                {printingInvoice.items?.map((it, idx)=>(
-                  <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}><td style={{ padding: '8px' }}>{it.product?.name}</td><td style={{ padding: '8px' }}>{it.quantity}</td><td style={{ padding: '8px' }}>{it.unitPrice}</td><td style={{ padding: '8px' }}>{it.subtotal}</td></tr>
-                ))}
-              </tbody>
-            </table>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <img src={generateZatcaQR(printingInvoice, businessName)} alt="QR" style={{ width: '100px', height: '100px' }} />
-              <div style={{ textAlign: 'right' }}>
-                <p>{t.subtotal} {printingInvoice.subtotal} {t.currency}</p>
-                <p>{t.vatAmount} {printingInvoice.taxAmount} {t.currency}</p>
-                <h3>{t.totalDue} {printingInvoice.totalAmount} {t.currency}</h3>
+
+            <div id="zatca-printable-invoice">
+              <p><strong>{t.invNo}</strong> #{printingInvoice.invoiceNo}</p>
+              <p><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'Cash'}</p>
+              <table style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0', fontSize: '13px' }}>
+                <thead><tr style={{ background: '#0f172a', color: '#fff' }}><th style={{ padding: '8px' }}>Item</th><th style={{ padding: '8px' }}>Qty</th><th style={{ padding: '8px' }}>Price</th><th style={{ padding: '8px' }}>Total</th></tr></thead>
+                <tbody>
+                  {printingInvoice.items?.map((it, idx)=>(
+                    <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}><td style={{ padding: '8px' }}>{it.product?.name}</td><td style={{ padding: '8px' }}>{it.quantity}</td><td style={{ padding: '8px' }}>{it.unitPrice}</td><td style={{ padding: '8px' }}>{it.subtotal}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <img src={generateZatcaQR(printingInvoice, businessName)} alt="QR" style={{ width: '100px', height: '100px' }} />
+                <div style={{ textAlign: 'right' }}>
+                  <p>{t.subtotal} {printingInvoice.subtotal} {t.currency}</p>
+                  <p>{t.vatAmount} {printingInvoice.taxAmount} {t.currency}</p>
+                  <h3>{t.totalDue} {printingInvoice.totalAmount} {t.currency}</h3>
+                </div>
               </div>
             </div>
+
           </div>
         </div>
       )}
