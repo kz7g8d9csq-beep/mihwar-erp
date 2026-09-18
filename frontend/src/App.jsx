@@ -1010,11 +1010,10 @@ function App() {
 
         <main style={{ padding: '30px', flex: 1, boxSizing: 'border-box' }}>
           
-          {/* لوحة التحكم الغنية بالرسوم البيانية وإحصائيات المبيعات وإعداد حد المخزون */}
+          {/* لوحة التحكم الشاملة والغنية بالرسوم البيانية وتنبيهات المخزون القابلة للتخصيص */}
           {activeTab === 'dashboard' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               
-              {/* شريط الترحيب والتحكم بحد المخزون المنخفض */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <div>
                   <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.welcome} {user.name} 👋</h2>
@@ -1051,7 +1050,6 @@ function App() {
                 </div>
               </div>
 
-              {/* بطاقات الإحصائيات الأربع الكبرى */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.invValue}</p><h2 style={{ color: '#d97706', margin: '8px 0 0 0', fontSize: '22px' }}>{inventoryVal.toLocaleString()} {t.currency}</h2></div>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.salesTotal}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{totalSalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
@@ -1059,23 +1057,40 @@ function App() {
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.netProfit}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
               </div>
 
-              {/* تنبيهات المخزون المنخفض */}
-              <div style={{ background: lowStockItems.length > 0 ? '#7f1d1d22' : theme.cardBg, borderRadius: '16px', border: `1px solid ${lowStockItems.length > 0 ? '#7f1d1d' : theme.border}`, padding: '20px' }}>
-                <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#fca5a5' : theme.textDark }}>
-                  {lowStockItems.length > 0 ? `⚠️ تنبيه: يوجد ${lowStockItems.length} صنف وصل للحد الأدنى للمخزون (${lowStockThreshold} قطع أو أقل)` : t.lowStockClean}
-                </h3>
-                {lowStockItems.length > 0 && (
-                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
-                    {lowStockItems.map(item => (
-                      <span key={item.id} style={{ background: '#7f1d1d', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>
-                        {item.name} (المتبقي: {item.stock})
-                      </span>
-                    ))}
-                  </div>
-                )}
+              {/* قسم التنبيهات مع إمكانية تعديل الحد الأدنى المباشرة بناءً على طلبك الأخير */}
+              <div style={{ background: lowStockItems.length > 0 ? '#7f1d1d22' : theme.cardBg, borderRadius: '16px', border: `1px solid ${lowStockItems.length > 0 ? '#7f1d1d' : theme.border}`, padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#fca5a5' : theme.textDark }}>
+                    {lowStockItems.length > 0 ? `⚠️ تنبيه: يوجد ${lowStockItems.length} صنف وصل للحد الأدنى للمخزون (${lowStockThreshold} قطع أو أقل)` : t.lowStockClean}
+                  </h3>
+                  {lowStockItems.length > 0 && (
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
+                      {lowStockItems.map(item => (
+                        <span key={item.id} style={{ background: '#7f1d1d', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>
+                          {item.name} (المتبقي: {item.stock})
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* زر وتعديل الحد الأدنى في مكان التنبيه بناءً على طلبك */}
+                <div style={{ background: theme.bgMain, padding: '12px 18px', borderRadius: '10px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 'bold' }}>تحديد الحد الأدنى للمخزون:</span>
+                  <input 
+                    type="number" 
+                    value={lowStockThreshold} 
+                    onChange={e => {
+                      const val = Number(e.target.value);
+                      setLowStockThreshold(val);
+                      localStorage.setItem('mihwar_low_stock_threshold', val);
+                    }} 
+                    style={{ width: '65px', padding: '6px', borderRadius: '6px', border: '1px solid #d97706', background: theme.cardBg, color: theme.textDark, textAlign: 'center', fontWeight: 'bold', fontSize: '14px', outline: 'none' }} 
+                  />
+                  <span style={{ fontSize: '12px', color: theme.textMuted }}>قطعة</span>
+                </div>
               </div>
 
-              {/* مخطط تحليل مبيعات الشهر والسنة الحالية */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>📅 تحليل أداء مبيعات السنة الحالية ({currentYear})</h3>
@@ -1107,7 +1122,6 @@ function App() {
                 </table>
               </div>
 
-              {/* جدول سجل النمو المالي للسنوات الماضية */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📊 سجل النمو المالي للسنوات الماضية (حتى 10 سنوات)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
