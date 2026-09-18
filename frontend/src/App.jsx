@@ -636,7 +636,6 @@ function App() {
   const totalCogs = invoices.reduce((sum, inv) => sum + (inv.items || []).reduce((s, it) => s + ((it.product?.cost || 0) * it.quantity), 0), 0);
   const netProfitVal = totalRev - totalCogs;
   
-  // تصفية الأصناف التي وصلت للحد الأدنى للمخزون
   const lowStockItems = inventory.filter(i => i.stock <= lowStockThreshold);
 
   const currentYear = new Date().getFullYear();
@@ -1011,18 +1010,17 @@ function App() {
 
         <main style={{ padding: '30px', flex: 1, boxSizing: 'border-box' }}>
           
-          {/* لوحة التحكم الشاملة والغنية بالرسوم البيانية والإحصائيات وتنبيهات المخزون القابلة للتخصيص */}
+          {/* لوحة التحكم الغنية بالرسوم البيانية وإحصائيات المبيعات وإعداد حد المخزون */}
           {activeTab === 'dashboard' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               
-              {/* بطاقة الترحيب */}
+              {/* شريط الترحيب والتحكم بحد المخزون المنخفض */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <div>
                   <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.welcome} {user.name} 👋</h2>
                   <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>مرحباً بك في لوحة التحكم المركزية لنظام محور.</p>
                 </div>
                 
-                {/* زر وتعديل حد تنبيه المخزون المنخفض حسب رغبة المستخدم */}
                 <div style={{ background: theme.bgMain, padding: '10px 15px', borderRadius: '10px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontSize: '12px', fontWeight: 'bold' }}>حد تنبيه المخزون:</span>
                   {isEditingThreshold ? (
@@ -1053,7 +1051,7 @@ function App() {
                 </div>
               </div>
 
-              {/* بطاقات الإحصائيات الأربع الرئيسية */}
+              {/* بطاقات الإحصائيات الأربع الكبرى */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.invValue}</p><h2 style={{ color: '#d97706', margin: '8px 0 0 0', fontSize: '22px' }}>{inventoryVal.toLocaleString()} {t.currency}</h2></div>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.salesTotal}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{totalSalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
@@ -1061,7 +1059,7 @@ function App() {
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.netProfit}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
               </div>
 
-              {/* قسم التنبيهات المادية للمخزون الذي وصل للحد الأدنى */}
+              {/* تنبيهات المخزون المنخفض */}
               <div style={{ background: lowStockItems.length > 0 ? '#7f1d1d22' : theme.cardBg, borderRadius: '16px', border: `1px solid ${lowStockItems.length > 0 ? '#7f1d1d' : theme.border}`, padding: '20px' }}>
                 <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#fca5a5' : theme.textDark }}>
                   {lowStockItems.length > 0 ? `⚠️ تنبيه: يوجد ${lowStockItems.length} صنف وصل للحد الأدنى للمخزون (${lowStockThreshold} قطع أو أقل)` : t.lowStockClean}
@@ -1077,7 +1075,7 @@ function App() {
                 )}
               </div>
 
-              {/* جدول تحليل أداء المبيعات الشهري للسنة الحالية */}
+              {/* مخطط تحليل مبيعات الشهر والسنة الحالية */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>📅 تحليل أداء مبيعات السنة الحالية ({currentYear})</h3>
@@ -1109,7 +1107,7 @@ function App() {
                 </table>
               </div>
 
-              {/* سجل النمو المالي للسنوات الماضية (حتى 10 سنوات) */}
+              {/* جدول سجل النمو المالي للسنوات الماضية */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📊 سجل النمو المالي للسنوات الماضية (حتى 10 سنوات)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
@@ -1397,14 +1395,14 @@ function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  (printingInvoice.items || []).map((it, idx)=>(
+                  {(printingInvoice.items || []).map((it, idx)=>(
                     <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}>
                       <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || 'صنف'}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice}</td>
                       <td style={{ padding: '10px', textAlign: 'left' }}>{it.subtotal}</td>
                     </tr>
-                  ))
+                  ))}
                 </tbody>
               </table>
 
