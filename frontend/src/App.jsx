@@ -827,7 +827,6 @@ function App() {
               <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.netProfit}</p><h2 style={{ color: theme.accentGreen, margin: '8px 0 0 0', fontSize: '24px' }}>{netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
             </div>
 
-            {/* 📊 الجدول الأول: تحليل السنة الحالية (تلقائي حسب الشهر) */}
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <h3 style={{ margin: 0, fontSize: '17px', color: theme.textDark }}>
@@ -863,7 +862,6 @@ function App() {
               </table>
             </div>
 
-            {/* 📈 الجدول الثاني: مقارنة السنوات الماضية (حتى 10 سنوات كحد أقصى) */}
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <h3 style={{ margin: 0, fontSize: '17px', color: theme.textDark }}>
@@ -898,7 +896,6 @@ function App() {
           </div>
         )}
 
-        {/* 🛒 واجهة نقطة البيع السريعة (POS Touch Mode) مع أزرار التحكم بالكمية (+ و -) */}
         {activeTab === 'pos' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '25px' }}>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -918,7 +915,6 @@ function App() {
                     const cartItem = cartItems.find(it => it.productId === prod.id);
                     const currentQtyInCart = cartItem ? cartItem.quantity : 0;
 
-                    // دوال التعديل السريع للكمية من بطاقة المنتج مباشرة
                     const updateProdQty = (newQty) => {
                       if (newQty < 0 || newQty > prod.stock) return;
                       if (newQty === 0) {
@@ -953,7 +949,6 @@ function App() {
                           </div>
                         </div>
 
-                        {/* عداد التحكم السريع (+ / - / خانة إدخال رقمية) */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: theme.bgMain, borderRadius: '8px', padding: '4px', border: `1px solid ${theme.border}` }}>
                           <button 
                             type="button"
@@ -1241,7 +1236,10 @@ function App() {
           <div style={{ background: '#fff', color: '#0f172a', padding: '35px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
               <h2>{t.taxInvoiceTitle}</h2>
-              <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px' }}>{t.closeModal}</button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={() => window.print()} style={{ background: '#0f766e', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>📥 حفظ PDF / طباعة</button>
+                <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px' }}>{t.closeModal}</button>
+              </div>
             </div>
             <p><strong>{t.invNo}</strong> #{printingInvoice.invoiceNo}</p>
             <p><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'Cash'}</p>
