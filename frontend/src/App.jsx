@@ -595,7 +595,7 @@ function App() {
       const res = await API.post('/api/sales', { customerId: selectedCustomerId ? Number(selectedCustomerId) : null, items: cartItems });
       setCartItems([]); fetchAllData();
       if (res.data?.invoice) setPrintingInvoice(res.data.invoice);
-      setActiveTab('pos');
+      setActiveTab('sales');
     } catch (err) { alert(err.response?.data?.error || 'Failed'); } finally { setIsSubmittingSale(false); }
   };
 
@@ -912,7 +912,6 @@ function App() {
           }
         }
 
-        /* قواعد التجاوب التام لواجهة الهاتف المحمول (Mobile Responsiveness) */
         @media (max-width: 900px) {
           .responsive-grid {
             grid-template-columns: 1fr !important;
@@ -1173,6 +1172,109 @@ function App() {
           </div>
         )}
 
+        {activeTab === 'sales' && user.role !== 'cashier' && (
+          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1.25fr 0.75fr', gap: '25px' }}>
+            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+              <h2 style={{ marginTop: 0 }}>{t.issueInvoice}</h2>
+              <select value={selectedCustomerId} onChange={e=>setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, marginBottom: '15px', boxSizing: 'border-box' }}>
+                <option value="">{t.defaultCust}</option>
+                {customers.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                <select value={selectedProductId} onChange={e=>setSelectedProductId(e.target.value)} style={{ flex: '2 1 180px', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }}>
+                  <option value="">{t.chooseProd}</option>
+                  {inventory.map(p=><option key={p.id} value={p.id}>{p.name} ({p.stock})</option>)}
+                </select>
+                <input type="number" min="1" value={itemQty} onChange={e=>setItemQty(e.target.value)} style={{ width: '70px', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
+                <button type="button" onClick={handleAddItemToCart} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.addItemBtn}</button>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '350px' }}>
+                  <thead><tr style={{ background: isDark?'#334155':'#f8fafc' }}><th style={{ padding: '8px' }}>Item</th><th style={{ padding: '8px' }}>Qty</th><th style={{ padding: '8px' }}>Total</th><th></th></tr></thead>
+                  <tbody>
+                    {cartItems.map((it, idx)=>(
+                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '8px' }}>{it.name}</td><td style={{ padding: '8px' }}>{it.quantity}</td><td style={{ padding: '8px' }}>{it.subtotal}</td>
+                        <td><button onClick={()=>handleRemoveItemFromCart(idx)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>✖</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <button onClick={handleSaveInvoice} disabled={!cartItems.length || isSubmittingSale} style={{ width: '100%', background: cartItems.length ? theme.primary : '#94a3b8', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', marginTop: '20px', cursor: 'pointer' }}>{t.confirmSaleBtn}</button>
+            </div>
+            <div style={{ background: '#020617', borderRadius: '14px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <h3>{t.summaryTitle}</h3>
+                <p>{t.subtotal} {cartSubtotal.toFixed(2)}</p>
+                <p>{t.vatAmount} {cartTax.toFixed(2)}</p>
+                <hr style={{ borderColor: '#334155' }} />
+                <h2>{t.totalDue} {cartGrandTotal.toFixed(2)} {t.currency}</h2>
+              </div>
+              <p style={{ fontSize: '12px', color: '#94a3b8' }}>{t.vatNote}</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'purchases' && user.role !== 'cashier' && (
+          <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '600px', margin: 'auto' }}>
+            <h2>{t.issuePurchase}</h2>
+            <select value={selectedSupplierId} onChange={e=>setSelectedSupplierId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+              <option value="">{t.defaultSupp}</option>
+              {suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+            <select value={selectedPurchaseProdId} onChange={e=>setSelectedPurchaseProdId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }}>
+              <option value="">{t.chooseProd}</option>
+              {inventory.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            <input type="number" placeholder={t.purchaseQty} value={purchaseQty} onChange={e=>setPurchaseQty(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+            <input type="number" placeholder={t.purchaseCost} value={purchaseCost} onChange={e=>setPurchaseCost(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+            <button onClick={handleSavePurchase} style={{ width: '100%', background: theme.accentAmber, color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.confirmPurchaseBtn}</button>
+          </div>
+        )}
+
+        {activeTab === 'customers' && user.role !== 'cashier' && (
+          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '25px' }}>
+            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+              <h3>{t.addNewCust}</h3>
+              <form onSubmit={handleAddOrUpdateCustomer} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <input type="text" placeholder={t.custName} value={custName} onChange={e=>setCustName(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+                <input type="text" placeholder={t.custNationalId} value={custNationalId} onChange={e=>setCustNationalId(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+                <input type="text" placeholder={t.custPhone} value={custPhone} onChange={e=>setCustPhone(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+                <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveCust}</button>
+              </form>
+            </div>
+            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}><h3>{t.custDirectory}</h3><button onClick={handleExportCustomers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.exportExcelBtn}</button></div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '350px' }}>
+                <thead><tr style={{ background: isDark?'#334155':'#f8fafc' }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Phone</th><th></th></tr></thead>
+                <tbody>{customers.map(c=><tr key={c.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{c.name}</td><td style={{ padding: '10px' }}>{c.phone||'-'}</td><td><button onClick={()=>handleDeleteCustomer(c.id)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>🗑️</button></td></tr>)}</tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'suppliers' && user.role !== 'cashier' && (
+          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '25px' }}>
+            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+              <h3>{t.addNewSupp}</h3>
+              <form onSubmit={handleAddOrUpdateSupplier} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <input type="text" placeholder={t.suppName} value={suppName} onChange={e=>setSuppName(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+                <input type="text" placeholder={t.suppTaxNumber} value={suppTaxNumber} onChange={e=>setSuppTaxNumber(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+                <input type="text" placeholder={t.suppPhone} value={suppPhone} onChange={e=>setSuppPhone(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+                <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveSupp}</button>
+              </form>
+            </div>
+            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}><h3>{t.suppDirectory}</h3><button onClick={handleExportSuppliers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.exportExcelBtn}</button></div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '350px' }}>
+                <thead><tr style={{ background: isDark?'#334155':'#f8fafc' }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Tax No</th><th></th></tr></thead>
+                <tbody>{suppliers.map(s=><tr key={s.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{s.name}</td><td style={{ padding: '10px' }}>{s.taxNumber||'-'}</td><td><button onClick={()=>handleDeleteSupplier(s.id)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>🗑️</button></td></tr>)}</tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'inventory' && (
           <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '25px' }}>
             {user.role !== 'cashier' && (
@@ -1191,6 +1293,18 @@ function App() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '400px' }}>
                 <thead><tr style={{ background: isDark?'#334155':'#f8fafc' }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Price</th><th style={{ padding: '10px' }}>Stock</th></tr></thead>
                 <tbody>{inventory.map(i=><tr key={i.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{i.name}</td><td style={{ padding: '10px' }}>{i.price}</td><td style={{ padding: '10px', color: '#0d9488', fontWeight: 'bold' }}>{i.stock}</td></tr>)}</tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'reports' && user.role !== 'cashier' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}><h2>{t.invRepo}</h2><button onClick={handleExportSales} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer' }}>{t.exportSalesBtn}</button></div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '500px' }}>
+                <thead><tr style={{ background: isDark?'#334155':'#f8fafc' }}><th style={{ padding: '10px' }}>No</th><th style={{ padding: '10px' }}>Client</th><th style={{ padding: '10px' }}>Total</th><th></th></tr></thead>
+                <tbody>{invoices.map(inv=><tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>#{inv.invoiceNo}</td><td style={{ padding: '10px' }}>{inv.customer?.name||'Cash'}</td><td style={{ padding: '10px' }}>{inv.totalAmount}</td><td><button onClick={()=>setPrintingInvoice(inv)} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>View</button></td></tr>)}</tbody>
               </table>
             </div>
           </div>
