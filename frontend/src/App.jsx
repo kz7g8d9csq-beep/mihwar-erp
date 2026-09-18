@@ -88,6 +88,7 @@ const dict = {
     taglineSub: 'نظام سحابي متطور لربط كافة أقسام منشأتك.',
     workspace: 'مساحة العمل:',
     dashboard: '📊 لوحة التحكم والتحليلات',
+    pos: '🛒 نقطة البيع (POS)',
     sales: '🛍️ المبيعات والفوترة',
     purchases: '📥 المشتريات والتوريد',
     customers: '👥 العملاء',
@@ -235,6 +236,7 @@ const dict = {
     taglineSub: 'Next-generation cloud ERP connecting every department.',
     workspace: 'Workspace:',
     dashboard: '📊 Dashboard & Analytics',
+    pos: '🛒 POS Touch',
     sales: '🛍️ Sales & POS',
     purchases: '📥 Purchasing & Inbound',
     customers: '👥 Clients',
@@ -627,7 +629,7 @@ function App() {
     }, 0);
     const count = yearInvs.length;
     return { year: targetYear, totalSales, totalProfit, count };
-  }).filter(y => y.count > 0 || y.year === currentYear); // عرض السنوات التي بها حركات أو السنة الحالية
+  }).filter(y => y.count > 0 || y.year === currentYear);
 
   const purchaseSubtotal = (Number(purchaseCost) || 0) * (Number(purchaseQty) || 0);
   const purchaseTax = purchaseSubtotal * 0.15;
@@ -803,6 +805,7 @@ function App() {
       <div style={{ background: theme.secondary, color: '#fff', padding: '0 30px', display: 'flex', gap: '4px', fontSize: '13px', overflowX: 'auto' }}>
         {[
           { id: 'dashboard', label: t.dashboard },
+          { id: 'pos', label: t.pos },
           { id: 'sales', label: t.sales },
           { id: 'purchases', label: t.purchases },
           { id: 'customers', label: t.customers },
@@ -896,6 +899,153 @@ function App() {
               </table>
             </div>
 
+          </div>
+        )}
+
+        {/* 🛒 واجهة نقطة البيع السريعة (POS Touch Mode) */}
+        {activeTab === 'pos' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '25px' }}>
+            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h2 style={{ margin: 0, fontSize: '18px', color: theme.textDark }}>{lang === 'ar' ? '⚡ نقطة البيع السريعة (اختر المنتجات)' : '⚡ Quick POS Touch Products'}</h2>
+                <span style={{ fontSize: '12px', background: theme.bgMain, padding: '6px 12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
+                  {inventory.length} {lang === 'ar' ? 'منتج متاح' : 'Products'}
+                </span>
+              </div>
+
+              {inventory.length === 0 ? (
+                <p style={{ textAlign: 'center', color: theme.textMuted, padding: '40px' }}>{lang === 'ar' ? 'لا توجد منتجات مسجلة في المستودع.' : 'No products available.'}</p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '15px', maxHeight: '550px', overflowY: 'auto', paddingRight: '5px' }}>
+                  {inventory.map(prod => {
+                    const isOut = prod.stock <= 0;
+                    return (
+                      <div 
+                        key={prod.id} 
+                        onClick={() => {
+                          if (!isOut) {
+                            setSelectedProductId(prod.id);
+                            setItemPrice(prod.price);
+                            setItemQty(1);
+                          }
+                        }}
+                        style={{ 
+                          background: isOut ? theme.bgMain : theme.cardBg, 
+                          border: `2px solid ${selectedProductId === Number(prod.id) ? theme.primary : theme.border}`, 
+                          borderRadius: '12px', 
+                          padding: '16px', 
+                          cursor: isOut ? 'not-allowed' : 'pointer', 
+                          opacity: isOut ? 0.5 : 1,
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          justifyContent: 'space-between',
+                          gap: '10px'
+                        }}
+                      >
+                        <div>
+                          <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: theme.textDark }}>{prod.name}</h4>
+                          <span style={{ fontSize: '12px', color: theme.textMuted }}>{t.availableStock}: <strong>{prod.stock}</strong></span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${theme.border}`, paddingTop: '10px' }}>
+                          <strong style={{ color: theme.primary, fontSize: '15px' }}>{prod.price} {t.currency}</strong>
+                          <button 
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!isOut) {
+                                const existing = cartItems.find(it => it.productId === prod.id);
+                                const reqQ = (existing ? existing.quantity : 0) + 1;
+                                if (reqQ <= prod.stock) {
+                                  if (existing) {
+                                    setCartItems(cartItems.map(it => it.productId === prod.id ? { ...it, quantity: reqQ, subtotal: Number((reqQ * it.price).toFixed(2)) } : it));
+                                  } else {
+                                    setCartItems([...cartItems, { productId: prod.id, name: prod.name, quantity: 1, price: prod.price, subtotal: Number(prod.price) }]);
+                                  }
+                                }
+                              }
+                            }}
+                            style={{ background: theme.primary, color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
+                          >
+                            ➕ إضافة
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div style={{ background: '#020617', borderRadius: '14px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 10px 25px rgba(0,0,0,0.3)' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '12px', marginBottom: '15px' }}>
+                  <h3 style={{ margin: 0, fontSize: '16px' }}>🛒 سلة المبيعات السريعة</h3>
+                  <span style={{ background: '#0f766e', color: '#5eead4', fontSize: '11px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '6px' }}>{cartItems.length} أصناف</span>
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginBottom: '5px' }}>{t.selectCust}</label>
+                  <select value={selectedCustomerId} onChange={e => setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#0f172a', color: '#fff', border: '1px solid #334155' }}>
+                    <option value="">{t.defaultCust}</option>
+                    {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+
+                <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+                  {cartItems.length === 0 ? (
+                    <p style={{ textAlign: 'center', color: '#64748b', fontSize: '13px', padding: '20px' }}>{t.cartEmpty}</p>
+                  ) : (
+                    cartItems.map((item, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '10px', borderRadius: '8px', border: '1px solid #334155', fontSize: '13px' }}>
+                        <div>
+                          <strong>{item.name}</strong>
+                          <div style={{ color: '#94a3b8', fontSize: '11px' }}>{item.quantity} × {item.price} {t.currency}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>{item.subtotal} {t.currency}</span>
+                          <button onClick={() => handleRemoveItemFromCart(idx)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>✖</button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ borderTop: '1px dashed #334155', paddingTop: '15px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#94a3b8' }}>
+                    <span>{t.subtotal}</span>
+                    <strong style={{ color: '#fff' }}>{cartSubtotal.toFixed(2)} {t.currency}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#94a3b8' }}>
+                    <span>{t.vatAmount}</span>
+                    <strong style={{ color: '#5eead4' }}>{cartTax.toFixed(2)} {t.currency}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px' }}>
+                    <span style={{ fontSize: '15px', fontWeight: 'bold' }}>{t.totalDue}</span>
+                    <span style={{ fontSize: '22px', fontWeight: '800', color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleSaveInvoice} 
+                  disabled={isSubmittingSale || cartItems.length === 0} 
+                  style={{ 
+                    width: '100%', 
+                    background: cartItems.length > 0 ? theme.primary : '#334155', 
+                    color: '#fff', 
+                    padding: '14px', 
+                    borderRadius: '8px', 
+                    border: 'none', 
+                    fontWeight: 'bold', 
+                    cursor: cartItems.length > 0 ? 'pointer' : 'not-allowed',
+                    fontSize: '15px' 
+                  }}
+                >
+                  {isSubmittingSale ? '...' : '💳 إتمام الدفع وإصدار الفاتورة الفورية'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
