@@ -98,9 +98,11 @@ const dict = {
     settings: '⚙️ الإعدادات',
     welcome: 'مرحباً بك،',
     currency: 'ر.س',
-    roleLabel: 'اختر دور المستخدم في النظام:',
-    roleAdmin: 'مدير النظام (Admin - صلاحيات كاملة)',
-    roleCashier: 'كاشير (Cashier - نقاط البيع فقط)',
+    roleLabel: 'اختر نوع الدخول:',
+    roleAdmin: 'مدير النظام (Admin)',
+    roleCashier: 'كاشير (Cashier)',
+    adminSecretLabel: '🔑 كلمة السر الإدارية السرية لمدير النظام:',
+    adminSecretPlaceholder: 'أدخل كلمة سر المدير الحصرية',
 
     forgotPassLink: 'نسيت كلمة المرور؟',
     forgotPassTitle: 'إعادة تعيين كلمة المرور',
@@ -249,9 +251,11 @@ const dict = {
     settings: '⚙️ Settings',
     welcome: 'Welcome,',
     currency: 'SAR',
-    roleLabel: 'Select User Role:',
-    roleAdmin: 'System Administrator (Full Access)',
+    roleLabel: 'Select Login Role:',
+    roleAdmin: 'System Administrator (Admin)',
     roleCashier: 'Cashier (POS Only)',
+    adminSecretLabel: '🔑 Master Admin Secret Key:',
+    adminSecretPlaceholder: 'Enter master admin secret password',
 
     forgotPassLink: 'Forgot password?',
     forgotPassTitle: 'Reset Password',
@@ -428,7 +432,8 @@ function App() {
   const [authPassword, setAuthPassword] = useState('');
   const [authBusinessName, setAuthBusinessName] = useState('');
   const [authClientName, setAuthClientName] = useState('');
-  const [loginRole, setLoginRole] = useState('admin'); // اختيار الدور مباشرة عند تسجيل الدخول
+  const [loginRole, setLoginRole] = useState('admin'); // الدور المختار عند الدخول
+  const [adminSecretKey, setAdminSecretKey] = useState(''); // كلمة السر السرية الخاصة بمدير النظام
   const [authRole, setAuthRole] = useState('admin');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -625,14 +630,14 @@ function App() {
 
   const pastYearsData = Array.from({ length: 10 }, (_, i) => {
     const targetYear = currentYear - i;
-    const yearInvs = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
-    const totalSales = yearInvs.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-    const totalProfit = yearInvs.reduce((sum, inv) => {
+    const yearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
+    const totalSales = yearInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const totalProfit = yearInvoices.reduce((sum, inv) => {
       const rev = Number(inv.subtotal || 0);
       const cogs = (inv.items || []).reduce((s, it) => s + ((it.product?.cost || 0) * it.quantity), 0);
       return sum + (rev - cogs);
     }, 0);
-    const count = yearInvs.length;
+    const count = yearInvoices.length;
     return { year: targetYear, totalSales, totalProfit, count };
   }).filter(y => y.count > 0 || y.year === currentYear);
 
@@ -713,17 +718,25 @@ function App() {
 
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
+
+    // التحقق الأمني: إذا كان الدور مديراً، يجب إدخال كلمة السر الإدارية السرية الصحيحة (مثلاً: admin123)
+    if (loginRole === 'admin') {
+      if (adminSecretKey !== 'admin123') {
+        alert(lang === 'ar' ? '❌ خطأ: كلمة السر الإدارية السرية لمدير النظام غير صحيحة!' : '❌ Incorrect Master Admin Secret Password!');
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
       if (authView === 'login') {
         const res = await API.post('/api/login', { email: authEmail, password: authPassword });
-        // نربط الدور الذي اختاره المستخدم مباشرة عند تسجيل الدخول
         const loggedUser = { ...res.data.user, role: loginRole };
         setUser(loggedUser); localStorage.setItem('mihwar_user', JSON.stringify(loggedUser));
         if (res.data.token) { localStorage.setItem('mihwar_token', res.data.token); API.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`; }
       } else {
-        const res = await API.post('/api/register', { businessName: authBusinessName, clientName: authClientName, email: authEmail, password: authPassword, role: authRole });
-        const newUser = { ...res.data.user, role: authRole };
+        const res = await API.post('/api/register', { businessName: authBusinessName, clientName: authClientName, email: authEmail, password: authPassword, role: loginRole });
+        const newUser = { ...res.data.user, role: loginRole };
         setUser(newUser); localStorage.setItem('mihwar_user', JSON.stringify(newUser));
         if (res.data.token) { localStorage.setItem('mihwar_token', res.data.token); API.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`; }
       }
@@ -760,37 +773,46 @@ function App() {
               </form>
             ) : (
               <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+                
+                {/* أزرار اختيار نوع الدخول (مدير / كاشير) */}
+                <div style={{ background: isDark ? '#334155' : '#f1f5f9', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '6px', color: theme.primary }}>{t.roleLabel}</label>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button type="button" onClick={() => setLoginRole('admin')} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `2px solid ${loginRole === 'admin' ? theme.primary : theme.border}`, background: loginRole === 'admin' ? theme.primary : 'transparent', color: loginRole === 'admin' ? '#fff' : theme.textDark, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                      🛡️ مدير النظام
+                    </button>
+                    <button type="button" onClick={() => setLoginRole('cashier')} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `2px solid ${loginRole === 'cashier' ? theme.primary : theme.border}`, background: loginRole === 'cashier' ? theme.primary : 'transparent', color: loginRole === 'cashier' ? '#fff' : theme.textDark, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                      🛒 كاشير فقط
+                    </button>
+                  </div>
+                </div>
+
                 {authView === 'register' && (
                   <>
                     <input type="text" placeholder="Company Name" value={authBusinessName} onChange={e=>setAuthBusinessName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
                     <input type="text" placeholder="Manager Name" value={authClientName} onChange={e=>setAuthClientName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>{t.roleLabel}</label>
-                      <select value={authRole} onChange={e => setAuthRole(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
-                        <option value="admin">{t.roleAdmin}</option>
-                        <option value="cashier">{t.roleCashier}</option>
-                      </select>
-                    </div>
                   </>
-                )}
-
-                {/* قائمة اختيار الدور المباشرة عند تسجيل الدخول لتوفير السهولة التامة */}
-                {authView === 'login' && (
-                  <div style={{ background: isDark ? '#334155' : '#f1f5f9', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
-                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '6px', color: theme.primary }}>{t.roleLabel}</label>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button type="button" onClick={() => setLoginRole('admin')} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `2px solid ${loginRole === 'admin' ? theme.primary : theme.border}`, background: loginRole === 'admin' ? theme.primary : 'transparent', color: loginRole === 'admin' ? '#fff' : theme.textDark, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
-                        🛡️ مدير النظام
-                      </button>
-                      <button type="button" onClick={() => setLoginRole('cashier')} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `2px solid ${loginRole === 'cashier' ? theme.primary : theme.border}`, background: loginRole === 'cashier' ? theme.primary : 'transparent', color: loginRole === 'cashier' ? '#fff' : theme.textDark, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
-                        🛒 كاشير فقط
-                      </button>
-                    </div>
-                  </div>
                 )}
 
                 <input type="email" placeholder="Email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
                 <input type="password" placeholder="Password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+
+                {/* خانة كلمة السر الإدارية السرية الخاصة بمدير النظام (تظهر حصرياً عند اختيار مدير النظام) */}
+                {loginRole === 'admin' && (
+                  <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', padding: '12px', borderRadius: '8px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '5px', color: '#b91c1c' }}>{t.adminSecretLabel}</label>
+                    <input 
+                      type="password" 
+                      placeholder={t.adminSecretPlaceholder} 
+                      value={adminSecretKey} 
+                      onChange={e => setAdminSecretKey(e.target.value)} 
+                      required 
+                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #f87171', background: '#fff', color: '#0f172a', boxSizing: 'border-box' }} 
+                    />
+                    <span style={{ fontSize: '10px', color: '#64748b', display: 'block', marginTop: '4px' }}>💡 كلمة السر الإدارية الافتراضية للاختبار: <strong>admin123</strong></span>
+                  </div>
+                )}
+
                 <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{authView === 'login' ? 'Sign In' : 'Register'}</button>
                 <span onClick={()=>setAuthView(authView === 'login' ? 'register' : 'login')} style={{ color: theme.primary, cursor: 'pointer', textAlign: 'center', fontWeight: 'bold', fontSize: '14px' }}>
                   {authView === 'login' ? 'Create an account' : 'Already registered?'}
