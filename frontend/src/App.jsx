@@ -98,9 +98,9 @@ const dict = {
     settings: '⚙️ الإعدادات',
     welcome: 'مرحباً بك،',
     currency: 'ر.س',
-    roleLabel: 'الصلاحية / الدور:',
-    roleAdmin: 'مدير النظام (Admin)',
-    roleCashier: 'كاشير / مبيعات (Cashier)',
+    roleLabel: 'اختر دور المستخدم في النظام:',
+    roleAdmin: 'مدير النظام (Admin - صلاحيات كاملة)',
+    roleCashier: 'كاشير (Cashier - نقاط البيع فقط)',
 
     forgotPassLink: 'نسيت كلمة المرور؟',
     forgotPassTitle: 'إعادة تعيين كلمة المرور',
@@ -249,9 +249,9 @@ const dict = {
     settings: '⚙️ Settings',
     welcome: 'Welcome,',
     currency: 'SAR',
-    roleLabel: 'User Role:',
-    roleAdmin: 'System Administrator (Admin)',
-    roleCashier: 'Cashier / Sales (Cashier)',
+    roleLabel: 'Select User Role:',
+    roleAdmin: 'System Administrator (Full Access)',
+    roleCashier: 'Cashier (POS Only)',
 
     forgotPassLink: 'Forgot password?',
     forgotPassTitle: 'Reset Password',
@@ -428,7 +428,8 @@ function App() {
   const [authPassword, setAuthPassword] = useState('');
   const [authBusinessName, setAuthBusinessName] = useState('');
   const [authClientName, setAuthClientName] = useState('');
-  const [authRole, setAuthRole] = useState('admin'); // 'admin' أو 'cashier'
+  const [loginRole, setLoginRole] = useState('admin'); // اختيار الدور مباشرة عند تسجيل الدخول
+  const [authRole, setAuthRole] = useState('admin');
   const [isLoading, setIsLoading] = useState(false);
 
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -502,7 +503,6 @@ function App() {
     if (user) {
       setBusinessName(user.businessName || 'محور ERP');
       fetchAllData();
-      // إذا كان المستخدم كاشير، نضبط شاشته الافتراضية حصرياً لتبويب نقاط البيع
       if (user.role === 'cashier' && activeTab !== 'pos') {
         setActiveTab('pos');
       }
@@ -590,7 +590,7 @@ function App() {
       const res = await API.post('/api/sales', { customerId: selectedCustomerId ? Number(selectedCustomerId) : null, items: cartItems });
       setCartItems([]); fetchAllData();
       if (res.data?.invoice) setPrintingInvoice(res.data.invoice);
-      setActiveTab('pos'); // إذا كان كاشير يبقى في نقطة البيع
+      setActiveTab('pos');
     } catch (err) { alert(err.response?.data?.error || 'Failed'); } finally { setIsSubmittingSale(false); }
   };
 
@@ -613,8 +613,6 @@ function App() {
   const totalRev = invoices.reduce((sum, inv) => sum + Number(inv.subtotal || 0), 0);
   const totalCogs = invoices.reduce((sum, inv) => sum + (inv.items || []).reduce((s, it) => s + ((it.product?.cost || 0) * it.quantity), 0), 0);
   const netProfitVal = totalRev - totalCogs;
-  const lowStockThreshold = 30;
-  const lowStockItems = inventory.filter(i => i.stock <= lowStockThreshold);
 
   const currentYear = new Date().getFullYear();
   const currentYearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === currentYear);
@@ -719,7 +717,8 @@ function App() {
     try {
       if (authView === 'login') {
         const res = await API.post('/api/login', { email: authEmail, password: authPassword });
-        const loggedUser = { ...res.data.user, role: authEmail.includes('cashier') ? 'cashier' : 'admin' }; // تصنيف تلقائي بناء على البريد أو الدور المحدد
+        // نربط الدور الذي اختاره المستخدم مباشرة عند تسجيل الدخول
+        const loggedUser = { ...res.data.user, role: loginRole };
         setUser(loggedUser); localStorage.setItem('mihwar_user', JSON.stringify(loggedUser));
         if (res.data.token) { localStorage.setItem('mihwar_token', res.data.token); API.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`; }
       } else {
@@ -774,7 +773,23 @@ function App() {
                     </div>
                   </>
                 )}
-                <input type="email" placeholder="Email (use cashier@... for cashier role)" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
+
+                {/* قائمة اختيار الدور المباشرة عند تسجيل الدخول لتوفير السهولة التامة */}
+                {authView === 'login' && (
+                  <div style={{ background: isDark ? '#334155' : '#f1f5f9', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '6px', color: theme.primary }}>{t.roleLabel}</label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button type="button" onClick={() => setLoginRole('admin')} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `2px solid ${loginRole === 'admin' ? theme.primary : theme.border}`, background: loginRole === 'admin' ? theme.primary : 'transparent', color: loginRole === 'admin' ? '#fff' : theme.textDark, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                        🛡️ مدير النظام
+                      </button>
+                      <button type="button" onClick={() => setLoginRole('cashier')} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `2px solid ${loginRole === 'cashier' ? theme.primary : theme.border}`, background: loginRole === 'cashier' ? theme.primary : 'transparent', color: loginRole === 'cashier' ? '#fff' : theme.textDark, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                        🛒 كاشير فقط
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <input type="email" placeholder="Email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
                 <input type="password" placeholder="Password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
                 <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{authView === 'login' ? 'Sign In' : 'Register'}</button>
                 <span onClick={()=>setAuthView(authView === 'login' ? 'register' : 'login')} style={{ color: theme.primary, cursor: 'pointer', textAlign: 'center', fontWeight: 'bold', fontSize: '14px' }}>
@@ -792,7 +807,6 @@ function App() {
     );
   }
 
-  // فلترة الأقسام بناءً على صلاحية المستخدم (الكاشير يرى نقطة البيع فقط)
   const allTabs = [
     { id: 'dashboard', label: t.dashboard, adminOnly: true },
     { id: 'pos', label: t.pos, adminOnly: false },
@@ -1111,107 +1125,6 @@ function App() {
           </div>
         )}
 
-        {activeTab === 'sales' && user.role !== 'cashier' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 0.75fr', gap: '25px' }}>
-            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
-              <h2 style={{ marginTop: 0 }}>{t.issueInvoice}</h2>
-              <select value={selectedCustomerId} onChange={e=>setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', border: `1px solid ${theme.border}`, background: theme.bgMain, color: theme.textDark, marginBottom: '15px' }}>
-                <option value="">{t.defaultCust}</option>
-                {customers.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-                <select value={selectedProductId} onChange={e=>setSelectedProductId(e.target.value)} style={{ flex: 2, padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }}>
-                  <option value="">{t.chooseProd}</option>
-                  {inventory.map(p=><option key={p.id} value={p.id}>{p.name} ({p.stock})</option>)}
-                </select>
-                <input type="number" min="1" value={itemQty} onChange={e=>setItemQty(e.target.value)} style={{ width: '70px', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                <button type="button" onClick={handleAddItemToCart} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.addItemBtn}</button>
-              </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead><tr style={{ background: isDark?'#334155':'#f8fafc' }}><th style={{ padding: '8px' }}>Item</th><th style={{ padding: '8px' }}>Qty</th><th style={{ padding: '8px' }}>Total</th><th></th></tr></thead>
-                <tbody>
-                  {cartItems.map((it, idx)=>(
-                    <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                      <td style={{ padding: '8px' }}>{it.name}</td><td style={{ padding: '8px' }}>{it.quantity}</td><td style={{ padding: '8px' }}>{it.subtotal}</td>
-                      <td><button onClick={()=>handleRemoveItemFromCart(idx)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '4px 8px', borderRadius: '4px' }}>✖</button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <button onClick={handleSaveInvoice} disabled={!cartItems.length || isSubmittingSale} style={{ width: '100%', background: cartItems.length ? theme.primary : '#94a3b8', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', marginTop: '20px', cursor: 'pointer' }}>{t.confirmSaleBtn}</button>
-            </div>
-            <div style={{ background: '#020617', borderRadius: '14px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                <h3>{t.summaryTitle}</h3>
-                <p>{t.subtotal} {cartSubtotal.toFixed(2)}</p>
-                <p>{t.vatAmount} {cartTax.toFixed(2)}</p>
-                <hr style={{ borderColor: '#334155' }} />
-                <h2>{t.totalDue} {cartGrandTotal.toFixed(2)} {t.currency}</h2>
-              </div>
-              <p style={{ fontSize: '12px', color: '#94a3b8' }}>{t.vatNote}</p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'purchases' && user.role !== 'cashier' && (
-          <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '600px' }}>
-            <h2>{t.issuePurchase}</h2>
-            <select value={selectedSupplierId} onChange={e=>setSelectedSupplierId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }}>
-              <option value="">{t.defaultSupp}</option>
-              {suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-            <select value={selectedPurchaseProdId} onChange={e=>setSelectedPurchaseProdId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }}>
-              <option value="">{t.chooseProd}</option>
-              {inventory.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-            <input type="number" placeholder={t.purchaseQty} value={purchaseQty} onChange={e=>setPurchaseQty(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-            <input type="number" placeholder={t.purchaseCost} value={purchaseCost} onChange={e=>setPurchaseCost(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-            <button onClick={handleSavePurchase} style={{ width: '100%', background: theme.accentAmber, color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.confirmPurchaseBtn}</button>
-          </div>
-        )}
-
-        {activeTab === 'customers' && user.role !== 'cashier' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '25px' }}>
-            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
-              <h3>{t.addNewCust}</h3>
-              <form onSubmit={handleAddOrUpdateCustomer} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <input type="text" placeholder={t.custName} value={custName} onChange={e=>setCustName(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                <input type="text" placeholder={t.custNationalId} value={custNationalId} onChange={e=>setCustNationalId(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                <input type="text" placeholder={t.custPhone} value={custPhone} onChange={e=>setCustPhone(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveCust}</button>
-              </form>
-            </div>
-            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}><h3>{t.custDirectory}</h3><button onClick={handleExportCustomers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px' }}>{t.exportExcelBtn}</button></div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead><tr style={{ background: isDark?'#334155':'#f8fafc' }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Phone</th><th></th></tr></thead>
-                <tbody>{customers.map(c=><tr key={c.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{c.name}</td><td style={{ padding: '10px' }}>{c.phone||'-'}</td><td><button onClick={()=>handleDeleteCustomer(c.id)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px' }}>🗑️</button></td></tr>)}</tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'suppliers' && user.role !== 'cashier' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '25px' }}>
-            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
-              <h3>{t.addNewSupp}</h3>
-              <form onSubmit={handleAddOrUpdateSupplier} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <input type="text" placeholder={t.suppName} value={suppName} onChange={e=>setSuppName(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                <input type="text" placeholder={t.suppTaxNumber} value={suppTaxNumber} onChange={e=>setSuppTaxNumber(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                <input type="text" placeholder={t.suppPhone} value={suppPhone} onChange={e=>setSuppPhone(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveSupp}</button>
-              </form>
-            </div>
-            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}><h3>{t.suppDirectory}</h3><button onClick={handleExportSuppliers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px' }}>{t.exportExcelBtn}</button></div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead><tr style={{ background: isDark?'#334155':'#f8fafc' }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Tax No</th><th></th></tr></thead>
-                <tbody>{suppliers.map(s=><tr key={s.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{s.name}</td><td style={{ padding: '10px' }}>{s.taxNumber||'-'}</td><td><button onClick={()=>handleDeleteSupplier(s.id)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px' }}>🗑️</button></td></tr>)}</tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
         {activeTab === 'inventory' && (
           <div style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '25px' }}>
             {user.role !== 'cashier' && (
@@ -1230,18 +1143,6 @@ function App() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead><tr style={{ background: isDark?'#334155':'#f8fafc' }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Price</th><th style={{ padding: '10px' }}>Stock</th></tr></thead>
                 <tbody>{inventory.map(i=><tr key={i.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{i.name}</td><td style={{ padding: '10px' }}>{i.price}</td><td style={{ padding: '10px', color: '#0d9488', fontWeight: 'bold' }}>{i.stock}</td></tr>)}</tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'reports' && user.role !== 'cashier' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-            <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}><h2>{t.invRepo}</h2><button onClick={handleExportSales} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px' }}>{t.exportSalesBtn}</button></div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead><tr style={{ background: isDark?'#334155':'#f8fafc' }}><th style={{ padding: '10px' }}>No</th><th style={{ padding: '10px' }}>Client</th><th style={{ padding: '10px' }}>Total</th><th></th></tr></thead>
-                <tbody>{invoices.map(inv=><tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>#{inv.invoiceNo}</td><td style={{ padding: '10px' }}>{inv.customer?.name||'Cash'}</td><td style={{ padding: '10px' }}>{inv.totalAmount}</td><td><button onClick={()=>setPrintingInvoice(inv)} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px' }}>View</button></td></tr>)}</tbody>
               </table>
             </div>
           </div>
@@ -1275,13 +1176,6 @@ function App() {
                 <h3>{t.sessionTitle}</h3>
                 <button onClick={handleLogout} style={{ width: '100%', background: '#fee2e2', color: '#dc2626', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px' }}>🚪 {t.logoutBtn}</button>
               </div>
-              <div style={{ borderTop: `1px dashed ${theme.border}`, paddingTop: '15px', marginTop: '20px' }}>
-                <h4 style={{ color: '#dc2626', margin: '0 0 5px 0' }}>{t.dangerZoneTitle}</h4>
-                <form onSubmit={handleDeleteAccount} style={{ display: 'flex', gap: '10px' }}>
-                  <input type="password" placeholder={t.oldPass} value={deleteConfirmPass} onChange={e=>setDeleteConfirmPass(e.target.value)} required style={{ flex: 1, padding: '8px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                  <button type="submit" style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>{t.deleteAccBtn}</button>
-                </form>
-              </div>
             </div>
           </div>
         )}
@@ -1313,7 +1207,7 @@ function App() {
                 <img src={generateZatcaQR(printingInvoice, businessName)} alt="QR" style={{ width: '100px', height: '100px' }} />
                 <div style={{ textAlign: 'right' }}>
                   <p>{t.subtotal} {printingInvoice.subtotal} {t.currency}</p>
-                  <p>{t.vatAmount} {printingInvoice.taxAlpha || printingInvoice.taxAmount} {t.currency}</p>
+                  <p>{t.vatAmount} {printingInvoice.taxAmount} {t.currency}</p>
                   <h3>{t.totalDue} {printingInvoice.totalAmount} {t.currency}</h3>
                 </div>
               </div>
