@@ -433,7 +433,7 @@ function App() {
   const [authBusinessName, setAuthBusinessName] = useState('');
   const [authClientName, setAuthClientName] = useState('');
   const [loginRole, setLoginRole] = useState('admin');
-  const [adminSecretKey, setAdminSecretKey] = useState(''); // كلمة السر السرية الخاصة بمدير النظام
+  const [adminSecretKey, setAdminSecretKey] = useState('');
   const [authRole, setAuthRole] = useState('admin');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -719,7 +719,6 @@ function App() {
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
 
-    // التحقق الأمني لمدير النظام (كلمة السر السرية الثابتة للمدير)
     if (loginRole === 'admin') {
       if (adminSecretKey !== 'MihwarAdmin2026!') {
         alert(lang === 'ar' ? '❌ خطأ أمني: كلمة المرور الإدارية السرية غير صحيحة!' : '❌ Security Error: Incorrect Master Admin Secret Key!');
@@ -749,79 +748,92 @@ function App() {
 
   if (!user) {
     return (
-      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ display: 'flex', height: '100vh', fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain }}>
-        <div style={{ flex: '1 1 50%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '40px', background: theme.cardBg }}>
-          <div style={{ width: '100%', maxWidth: '420px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '26px' }}>⚡</span>
-                <span style={{ fontSize: '22px', fontWeight: '900', color: theme.primary }}>{t.brand}</span>
-              </div>
-              <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} style={{ padding: '6px 12px', borderRadius: '6px', border: `1px solid ${theme.border}`, background: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>
-                {lang === 'ar' ? 'English' : 'عربي'}
-              </button>
-            </div>
-            <h1 style={{ color: theme.textDark, fontSize: '24px', fontWeight: '800' }}>
-              {authView === 'login' ? (lang === 'ar' ? 'تسجيل الدخول' : 'Sign In') : authView === 'register' ? (lang === 'ar' ? 'إنشاء مساحة عمل' : 'Create Workspace') : t.forgotPassTitle}
-            </h1>
-            {authView === 'forgot' ? (
-              <form onSubmit={handleForgotPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
-                <input type="email" placeholder="Email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
-                <input type="password" placeholder="New Password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
-                <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.resetPassBtn}</button>
-                <span onClick={() => setAuthView('login')} style={{ color: theme.primary, cursor: 'pointer', textAlign: 'center', fontWeight: 'bold' }}>{t.backToLogin}</span>
-              </form>
-            ) : (
-              <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
-                
-                <div style={{ background: isDark ? '#334155' : '#f1f5f9', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '6px', color: theme.primary }}>{t.roleLabel}</label>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button type="button" onClick={() => setLoginRole('admin')} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `2px solid ${loginRole === 'admin' ? theme.primary : theme.border}`, background: loginRole === 'admin' ? theme.primary : 'transparent', color: loginRole === 'admin' ? '#fff' : theme.textDark, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
-                      🛡️ مدير النظام
-                    </button>
-                    <button type="button" onClick={() => setLoginRole('cashier')} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `2px solid ${loginRole === 'cashier' ? theme.primary : theme.border}`, background: loginRole === 'cashier' ? theme.primary : 'transparent', color: loginRole === 'cashier' ? '#fff' : theme.textDark, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
-                      🛒 كاشير فقط
-                    </button>
-                  </div>
+      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain }}>
+        <style>{`
+          @media (min-width: 768px) {
+            .auth-container { flex-direction: row !important; }
+            .auth-form-side { flex: 0.5 1 50% !important; padding: 40px !important; }
+            .auth-brand-side { flex: 0.5 1 50% !important; padding: 80px !important; display: flex !important; }
+          }
+          @media (max-width: 767px) {
+            .auth-container { flex-direction: column !important; }
+            .auth-form-side { width: 100% !important; padding: 25px !important; }
+            .auth-brand-side { display: none !important; }
+          }
+        `}</style>
+        <div className="auth-container" style={{ display: 'flex', flex: 1, width: '100%' }}>
+          <div className="auth-form-side" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: theme.cardBg, boxSizing: 'border-box' }}>
+            <div style={{ width: '100%', maxWidth: '420px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '26px' }}>⚡</span>
+                  <span style={{ fontSize: '22px', fontWeight: '900', color: theme.primary }}>{t.brand}</span>
                 </div>
-
-                {authView === 'register' && (
-                  <>
-                    <input type="text" placeholder="Company Name" value={authBusinessName} onChange={e=>setAuthBusinessName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
-                    <input type="text" placeholder="Manager Name" value={authClientName} onChange={e=>setAuthClientName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
-                  </>
-                )}
-
-                <input type="email" placeholder="Email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
-                <input type="password" placeholder="Password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
-
-                {/* خانة كلمة السر الإدارية الخاصة بمدير النظام */}
-                {loginRole === 'admin' && (
-                  <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', padding: '12px', borderRadius: '8px' }}>
-                    <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '5px', color: '#b91c1c' }}>{t.adminSecretLabel}</label>
-                    <input 
-                      type="password" 
-                      placeholder={t.adminSecretPlaceholder} 
-                      value={adminSecretKey} 
-                      onChange={e => setAdminSecretKey(e.target.value)} 
-                      required 
-                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #f87171', background: '#fff', color: '#0f172a', boxSizing: 'border-box' }} 
-                    />
+                <button onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')} style={{ padding: '6px 12px', borderRadius: '6px', border: `1px solid ${theme.border}`, background: 'transparent', cursor: 'pointer', fontWeight: 'bold' }}>
+                  {lang === 'ar' ? 'English' : 'عربي'}
+                </button>
+              </div>
+              <h1 style={{ color: theme.textDark, fontSize: '24px', fontWeight: '800' }}>
+                {authView === 'login' ? (lang === 'ar' ? 'تسجيل الدخول' : 'Sign In') : authView === 'register' ? (lang === 'ar' ? 'إنشاء مساحة عمل' : 'Create Workspace') : t.forgotPassTitle}
+              </h1>
+              {authView === 'forgot' ? (
+                <form onSubmit={handleForgotPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+                  <input type="email" placeholder="Email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
+                  <input type="password" placeholder="New Password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
+                  <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.resetPassBtn}</button>
+                  <span onClick={() => setAuthView('login')} style={{ color: theme.primary, cursor: 'pointer', textAlign: 'center', fontWeight: 'bold' }}>{t.backToLogin}</span>
+                </form>
+              ) : (
+                <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+                  
+                  <div style={{ background: isDark ? '#334155' : '#f1f5f9', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '6px', color: theme.primary }}>{t.roleLabel}</label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button type="button" onClick={() => setLoginRole('admin')} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `2px solid ${loginRole === 'admin' ? theme.primary : theme.border}`, background: loginRole === 'admin' ? theme.primary : 'transparent', color: loginRole === 'admin' ? '#fff' : theme.textDark, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                        🛡️ مدير النظام
+                      </button>
+                      <button type="button" onClick={() => setLoginRole('cashier')} style={{ flex: 1, padding: '8px', borderRadius: '6px', border: `2px solid ${loginRole === 'cashier' ? theme.primary : theme.border}`, background: loginRole === 'cashier' ? theme.primary : 'transparent', color: loginRole === 'cashier' ? '#fff' : theme.textDark, fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+                        🛒 كاشير فقط
+                      </button>
+                    </div>
                   </div>
-                )}
 
-                <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{authView === 'login' ? 'Sign In' : 'Register'}</button>
-                <span onClick={()=>setAuthView(authView === 'login' ? 'register' : 'login')} style={{ color: theme.primary, cursor: 'pointer', textAlign: 'center', fontWeight: 'bold', fontSize: '14px' }}>
-                  {authView === 'login' ? 'Create an account' : 'Already registered?'}
-                </span>
-              </form>
-            )}
+                  {authView === 'register' && (
+                    <>
+                      <input type="text" placeholder="Company Name" value={authBusinessName} onChange={e=>setAuthBusinessName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
+                      <input type="text" placeholder="Manager Name" value={authClientName} onChange={e=>setAuthClientName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
+                    </>
+                  )}
+
+                  <input type="email" placeholder="Email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
+                  <input type="password" placeholder="Password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+
+                  {loginRole === 'admin' && (
+                    <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', padding: '12px', borderRadius: '8px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '5px', color: '#b91c1c' }}>{t.adminSecretLabel}</label>
+                      <input 
+                        type="password" 
+                        placeholder={t.adminSecretPlaceholder} 
+                        value={adminSecretKey} 
+                        onChange={e => setAdminSecretKey(e.target.value)} 
+                        required 
+                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #f87171', background: '#fff', color: '#0f172a', boxSizing: 'border-box' }} 
+                      />
+                    </div>
+                  )}
+
+                  <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{authView === 'login' ? 'Sign In' : 'Register'}</button>
+                  <span onClick={()=>setAuthView(authView === 'login' ? 'register' : 'login')} style={{ color: theme.primary, cursor: 'pointer', textAlign: 'center', fontWeight: 'bold', fontSize: '14px' }}>
+                    {authView === 'login' ? 'Create an account' : 'Already registered?'}
+                  </span>
+                </form>
+              )}
+            </div>
           </div>
-        </div>
-        <div style={{ flex: '1 1 50%', background: theme.secondary, color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '80px' }}>
-          <h1 style={{ fontSize: '44px', margin: '0 0 20px 0', fontWeight: '800' }}>{t.tagline}</h1>
-          <p style={{ fontSize: '16px', opacity: 0.8 }}>{t.taglineSub}</p>
+          <div className="auth-brand-side" style={{ background: theme.secondary, color: '#fff', flexDirection: 'column', justifyContent: 'center', boxSizing: 'border-box' }}>
+            <h1 style={{ fontSize: '44px', margin: '0 0 20px 0', fontWeight: '800' }}>{t.tagline}</h1>
+            <p style={{ fontSize: '16px', opacity: 0.8 }}>{t.taglineSub}</p>
+          </div>
         </div>
       </div>
     );
@@ -899,10 +911,26 @@ function App() {
             margin: 0 !important;
           }
         }
+
+        /* قواعد التجاوب التام لواجهة الهاتف المحمول (Mobile Responsiveness) */
+        @media (max-width: 900px) {
+          .responsive-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .main-header-bar {
+            padding: 12px 15px !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+            align-items: flex-start !important;
+          }
+          main {
+            padding: 15px !important;
+          }
+        }
       `}</style>
 
-      <header style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 35px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+      <header className="main-header-bar" style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 35px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #0f766e, #0f172a)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '18px' }}>🏢</div>
             <span style={{ fontWeight: '900', color: theme.textDark, fontSize: '19px' }}>{t.brand}</span>
@@ -917,7 +945,7 @@ function App() {
         </div>
       </header>
 
-      <div className="main-navbar" style={{ background: theme.secondary, color: '#fff', padding: '0 30px', display: 'flex', gap: '4px', fontSize: '13px', overflowX: 'auto' }}>
+      <div className="main-navbar" style={{ background: theme.secondary, color: '#fff', padding: '0 20px', display: 'flex', gap: '4px', fontSize: '13px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         {availableTabs.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ background: activeTab === tab.id ? theme.primary : 'transparent', border: 'none', color: '#fff', cursor: 'pointer', padding: '16px 18px', fontWeight: activeTab === tab.id ? 'bold' : 'normal', whiteSpace: 'nowrap' }}>
             {tab.label}
@@ -938,7 +966,7 @@ function App() {
 
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📅 تحليل أداء مبيعات السنة الحالية ({currentYear})</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#334155' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
                     <th style={{ padding: '10px' }}>الشهر</th>
@@ -960,7 +988,7 @@ function App() {
 
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📊 سجل النمو المالي للسنوات الماضية</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#334155' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
                     <th style={{ padding: '10px' }}>السنة المالية</th>
@@ -985,19 +1013,19 @@ function App() {
         )}
 
         {activeTab === 'pos' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '25px' }}>
+          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '25px' }}>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, fontSize: '18px', color: theme.textDark }}>{lang === 'ar' ? '⚡ نقطة البيع السريعة (تحكم سريع بالكميات)' : '⚡ Quick POS Touch Products'}</h2>
+                <h2 style={{ margin: 0, fontSize: '18px', color: theme.textDark }}>{lang === 'ar' ? '⚡ نقطة البيع السريعة' : '⚡ Quick POS'}</h2>
                 <span style={{ fontSize: '12px', background: theme.bgMain, padding: '6px 12px', borderRadius: '6px', border: `1px solid ${theme.border}` }}>
-                  {inventory.length} {lang === 'ar' ? 'منتج متاح' : 'Products'}
+                  {inventory.length} {lang === 'ar' ? 'منتج' : 'Items'}
                 </span>
               </div>
 
               {inventory.length === 0 ? (
-                <p style={{ textAlign: 'center', color: theme.textMuted, padding: '40px' }}>{lang === 'ar' ? 'لا توجد منتجات مسجلة في المستودع.' : 'No products available.'}</p>
+                <p style={{ textAlign: 'center', color: theme.textMuted, padding: '40px' }}>{lang === 'ar' ? 'لا توجد منتجات مسجلة.' : 'No products available.'}</p>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px', maxHeight: '550px', overflowY: 'auto', paddingRight: '5px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '15px', maxHeight: '550px', overflowY: 'auto', paddingRight: '5px' }}>
                   {inventory.map(prod => {
                     const isOut = prod.stock <= 0;
                     const cartItem = cartItems.find(it => it.productId === prod.id);
@@ -1021,28 +1049,28 @@ function App() {
                           background: isOut ? theme.bgMain : theme.cardBg, 
                           border: `2px solid ${currentQtyInCart > 0 ? theme.primary : theme.border}`, 
                           borderRadius: '12px', 
-                          padding: '16px', 
+                          padding: '14px', 
                           opacity: isOut ? 0.5 : 1,
                           display: 'flex', 
                           flexDirection: 'column', 
                           justifyContent: 'space-between',
-                          gap: '12px'
+                          gap: '10px'
                         }}
                       >
                         <div>
-                          <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', color: theme.textDark }}>{prod.name}</h4>
+                          <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: theme.textDark }}>{prod.name}</h4>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <strong style={{ color: theme.primary, fontSize: '14px' }}>{prod.price} {t.currency}</strong>
-                            <span style={{ fontSize: '11px', color: theme.textMuted }}>متبقي: {prod.stock}</span>
+                            <strong style={{ color: theme.primary, fontSize: '13px' }}>{prod.price} {t.currency}</strong>
+                            <span style={{ fontSize: '10px', color: theme.textMuted }}>متبقي: {prod.stock}</span>
                           </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: theme.bgMain, borderRadius: '8px', padding: '4px', border: `1px solid ${theme.border}` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: theme.bgMain, borderRadius: '8px', padding: '3px', border: `1px solid ${theme.border}` }}>
                           <button 
                             type="button"
                             disabled={isOut || currentQtyInCart <= 0}
                             onClick={() => updateProdQty(currentQtyInCart - 1)}
-                            style={{ background: '#ef4444', color: '#fff', border: 'none', width: '30px', height: '30px', borderRadius: '6px', fontWeight: 'bold', cursor: currentQtyInCart > 0 ? 'pointer' : 'not-allowed', fontSize: '14px' }}
+                            style={{ background: '#ef4444', color: '#fff', border: 'none', width: '28px', height: '28px', borderRadius: '6px', fontWeight: 'bold', cursor: currentQtyInCart > 0 ? 'pointer' : 'not-allowed', fontSize: '14px' }}
                           >
                             -
                           </button>
@@ -1053,14 +1081,14 @@ function App() {
                             max={prod.stock}
                             value={currentQtyInCart}
                             onChange={(e) => updateProdQty(Number(e.target.value))}
-                            style={{ width: '45px', textAlign: 'center', border: 'none', background: 'transparent', fontWeight: 'bold', fontSize: '14px', color: theme.textDark }}
+                            style={{ width: '35px', textAlign: 'center', border: 'none', background: 'transparent', fontWeight: 'bold', fontSize: '13px', color: theme.textDark }}
                           />
 
                           <button 
                             type="button"
                             disabled={isOut || currentQtyInCart >= prod.stock}
                             onClick={() => updateProdQty(currentQtyInCart + 1)}
-                            style={{ background: theme.primary, color: '#fff', border: 'none', width: '30px', height: '30px', borderRadius: '6px', fontWeight: 'bold', cursor: currentQtyInCart < prod.stock ? 'pointer' : 'not-allowed', fontSize: '14px' }}
+                            style={{ background: theme.primary, color: '#fff', border: 'none', width: '28px', height: '28px', borderRadius: '6px', fontWeight: 'bold', cursor: currentQtyInCart < prod.stock ? 'pointer' : 'not-allowed', fontSize: '14px' }}
                           >
                             +
                           </button>
@@ -1075,19 +1103,19 @@ function App() {
             <div style={{ background: '#020617', borderRadius: '14px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 10px 25px rgba(0,0,0,0.3)' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #334155', paddingBottom: '12px', marginBottom: '15px' }}>
-                  <h3 style={{ margin: 0, fontSize: '16px' }}>🛒 سلة المبيعات السريعة</h3>
-                  <span style={{ background: '#0f766e', color: '#5eead4', fontSize: '11px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '6px' }}>{cartItems.length} أصناف</span>
+                  <h3 style={{ margin: 0, fontSize: '16px' }}>🛒 السلة</h3>
+                  <span style={{ background: '#0f766e', color: '#5eead4', fontSize: '11px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '6px' }}>{cartItems.length}</span>
                 </div>
 
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginBottom: '5px' }}>{t.selectCust}</label>
-                  <select value={selectedCustomerId} onChange={e => setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#0f172a', color: '#fff', border: '1px solid #334155' }}>
+                  <select value={selectedCustomerId} onChange={e => setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#0f172a', color: '#fff', border: '1px solid #334155', boxSizing: 'border-box' }}>
                     <option value="">{t.defaultCust}</option>
                     {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
 
-                <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+                <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                   {cartItems.length === 0 ? (
                     <p style={{ textAlign: 'center', color: '#64748b', fontSize: '13px', padding: '20px' }}>{t.cartEmpty}</p>
                   ) : (
@@ -1095,10 +1123,10 @@ function App() {
                       <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f172a', padding: '10px', borderRadius: '8px', border: '1px solid #334155', fontSize: '13px' }}>
                         <div>
                           <strong>{item.name}</strong>
-                          <div style={{ color: '#94a3b8', fontSize: '11px' }}>{item.quantity} × {item.price} {t.currency}</div>
+                          <div style={{ color: '#94a3b8', fontSize: '11px' }}>{item.quantity} × {item.price}</div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>{item.subtotal} {t.currency}</span>
+                          <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>{item.subtotal}</span>
                           <button onClick={() => handleRemoveItemFromCart(idx)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>✖</button>
                         </div>
                       </div>
@@ -1111,15 +1139,15 @@ function App() {
                 <div style={{ borderTop: '1px dashed #334155', paddingTop: '15px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#94a3b8' }}>
                     <span>{t.subtotal}</span>
-                    <strong style={{ color: '#fff' }}>{cartSubtotal.toFixed(2)} {t.currency}</strong>
+                    <strong style={{ color: '#fff' }}>{cartSubtotal.toFixed(2)}</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#94a3b8' }}>
                     <span>{t.vatAmount}</span>
-                    <strong style={{ color: '#5eead4' }}>{cartTax.toFixed(2)} {t.currency}</strong>
+                    <strong style={{ color: '#5eead4' }}>{cartTax.toFixed(2)}</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px' }}>
                     <span style={{ fontSize: '15px', fontWeight: 'bold' }}>{t.totalDue}</span>
-                    <span style={{ fontSize: '22px', fontWeight: '800', color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span>
+                    <span style={{ fontSize: '20px', fontWeight: '800', color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span>
                   </div>
                 </div>
 
@@ -1138,7 +1166,7 @@ function App() {
                     fontSize: '15px' 
                   }}
                 >
-                  {isSubmittingSale ? '...' : '💳 إتمام الدفع وإصدار الفاتورة الفورية'}
+                  {isSubmittingSale ? '...' : '💳 إتمام الدفع الفوري'}
                 </button>
               </div>
             </div>
@@ -1146,21 +1174,21 @@ function App() {
         )}
 
         {activeTab === 'inventory' && (
-          <div style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '25px' }}>
+          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '25px' }}>
             {user.role !== 'cashier' && (
               <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
                 <h3>➕ إضافة منتج</h3>
                 <form onSubmit={handleAddProduct} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <input type="text" placeholder={t.prodName} value={newProdName} onChange={e=>setNewProdName(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                  <input type="number" placeholder={t.prodPrice} value={newProdPrice} onChange={e=>setNewProdPrice(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                  <input type="number" placeholder={t.prodStock} value={newProdStock} onChange={e=>setNewProdStock(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
+                  <input type="text" placeholder={t.prodName} value={newProdName} onChange={e=>setNewProdName(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+                  <input type="number" placeholder={t.prodPrice} value={newProdPrice} onChange={e=>setNewProdPrice(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+                  <input type="number" placeholder={t.prodStock} value={newProdStock} onChange={e=>setNewProdStock(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
                   <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '12px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveProd}</button>
                 </form>
               </div>
             )}
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}><h3>{t.stockRepo}</h3><button onClick={handleExportInventory} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px' }}>{t.exportInventoryBtn}</button></div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}><h3>{t.stockRepo}</h3><button onClick={handleExportInventory} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.exportInventoryBtn}</button></div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '400px' }}>
                 <thead><tr style={{ background: isDark?'#334155':'#f8fafc' }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Price</th><th style={{ padding: '10px' }}>Stock</th></tr></thead>
                 <tbody>{inventory.map(i=><tr key={i.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{i.name}</td><td style={{ padding: '10px' }}>{i.price}</td><td style={{ padding: '10px', color: '#0d9488', fontWeight: 'bold' }}>{i.stock}</td></tr>)}</tbody>
               </table>
@@ -1169,24 +1197,24 @@ function App() {
         )}
 
         {activeTab === 'settings' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '25px' }}>
+          <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
               <h3>{t.prefTitle}</h3>
               <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                <button onClick={()=>setLang('ar')} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: lang==='ar'?theme.primary:'transparent', color: lang==='ar'?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold' }}>🇸🇦 العربية</button>
-                <button onClick={()=>setLang('en')} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: lang==='en'?theme.primary:'transparent', color: lang==='en'?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold' }}>🇺🇸 English</button>
+                <button onClick={()=>setLang('ar')} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: lang==='ar'?theme.primary:'transparent', color: lang==='ar'?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🇸🇦 العربية</button>
+                <button onClick={()=>setLang('en')} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: lang==='en'?theme.primary:'transparent', color: lang==='en'?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🇺🇸 English</button>
               </div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                <button onClick={()=>setIsDark(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: !isDark?theme.primary:'transparent', color: !isDark?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold' }}>☀️ {t.lightMode}</button>
-                <button onClick={()=>setIsDark(true)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: isDark?theme.primary:'transparent', color: isDark?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold' }}>🌙 {t.darkMode}</button>
+                <button onClick={()=>setIsDark(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: !isDark?theme.primary:'transparent', color: !isDark?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>☀️ {t.lightMode}</button>
+                <button onClick={()=>setIsDark(true)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: isDark?theme.primary:'transparent', color: isDark?'#fff':theme.textDark, border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🌙 {t.darkMode}</button>
               </div>
             </div>
 
             <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '25px' }}>
               <h3>{t.securityTitle}</h3>
               <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
-                <input type="password" placeholder={t.oldPass} value={currentPass} onChange={e=>setCurrentPass(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
-                <input type="password" placeholder={t.newPass} value={newPass} onChange={e=>setNewPass(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}` }} />
+                <input type="password" placeholder={t.oldPass} value={currentPass} onChange={e=>setCurrentPass(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
+                <input type="password" placeholder={t.newPass} value={newPass} onChange={e=>setNewPass(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
                 <button type="submit" style={{ background: theme.primary, color: '#fff', padding: '10px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.updatePassBtn}</button>
               </form>
             </div>
@@ -1202,13 +1230,13 @@ function App() {
       </main>
 
       {printingInvoice && (
-        <div className="invoice-modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-          <div className="invoice-modal-card" style={{ background: '#fff', color: '#0f172a', padding: '35px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
+        <div className="invoice-modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px', boxSizing: 'border-box' }}>
+          <div className="invoice-modal-card" style={{ background: '#fff', color: '#0f172a', padding: '25px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box' }}>
+            <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
               <h2>{t.taxInvoiceTitle}</h2>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button onClick={() => window.print()} style={{ background: '#0f766e', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>📥 حفظ PDF / طباعة</button>
-                <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px' }}>{t.closeModal}</button>
+                <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.closeModal}</button>
               </div>
             </div>
 
@@ -1223,7 +1251,7 @@ function App() {
                   ))}
                 </tbody>
               </table>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <img src={generateZatcaQR(printingInvoice, businessName)} alt="QR" style={{ width: '100px', height: '100px' }} />
                 <div style={{ textAlign: 'right' }}>
                   <p>{t.subtotal} {printingInvoice.subtotal} {t.currency}</p>
