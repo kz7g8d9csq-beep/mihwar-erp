@@ -101,8 +101,8 @@ const dict = {
     roleLabel: 'اختر نوع الدخول:',
     roleAdmin: 'مدير النظام (Admin)',
     roleCashier: 'كاشير (Cashier)',
-    adminSecretLabel: '🔑 كلمة السر الإدارية السرية لمدير النظام:',
-    adminSecretPlaceholder: 'أدخل كلمة سر المدير الحصرية',
+    adminSecretLabel: '🔑 كلمة المرور الإدارية الخاصة بمدير النظام:',
+    adminSecretPlaceholder: 'أدخل كلمة سر الإدارة المعتمدة',
 
     forgotPassLink: 'نسيت كلمة المرور؟',
     forgotPassTitle: 'إعادة تعيين كلمة المرور',
@@ -432,7 +432,7 @@ function App() {
   const [authPassword, setAuthPassword] = useState('');
   const [authBusinessName, setAuthBusinessName] = useState('');
   const [authClientName, setAuthClientName] = useState('');
-  const [loginRole, setLoginRole] = useState('admin'); // الدور المختار عند الدخول
+  const [loginRole, setLoginRole] = useState('admin');
   const [adminSecretKey, setAdminSecretKey] = useState(''); // كلمة السر السرية الخاصة بمدير النظام
   const [authRole, setAuthRole] = useState('admin');
   const [isLoading, setIsLoading] = useState(false);
@@ -630,14 +630,14 @@ function App() {
 
   const pastYearsData = Array.from({ length: 10 }, (_, i) => {
     const targetYear = currentYear - i;
-    const yearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
-    const totalSales = yearInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-    const totalProfit = yearInvoices.reduce((sum, inv) => {
+    const yearInvs = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
+    const totalSales = yearInvs.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const totalProfit = yearInvs.reduce((sum, inv) => {
       const rev = Number(inv.subtotal || 0);
       const cogs = (inv.items || []).reduce((s, it) => s + ((it.product?.cost || 0) * it.quantity), 0);
       return sum + (rev - cogs);
     }, 0);
-    const count = yearInvoices.length;
+    const count = yearInvs.length;
     return { year: targetYear, totalSales, totalProfit, count };
   }).filter(y => y.count > 0 || y.year === currentYear);
 
@@ -719,10 +719,10 @@ function App() {
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
 
-    // التحقق الأمني: إذا كان الدور مديراً، يجب إدخال كلمة السر الإدارية السرية الصحيحة (مثلاً: admin123)
+    // التحقق الأمني لمدير النظام (كلمة السر السرية الثابتة للمدير)
     if (loginRole === 'admin') {
-      if (adminSecretKey !== 'admin123') {
-        alert(lang === 'ar' ? '❌ خطأ: كلمة السر الإدارية السرية لمدير النظام غير صحيحة!' : '❌ Incorrect Master Admin Secret Password!');
+      if (adminSecretKey !== 'MihwarAdmin2026!') {
+        alert(lang === 'ar' ? '❌ خطأ أمني: كلمة المرور الإدارية السرية غير صحيحة!' : '❌ Security Error: Incorrect Master Admin Secret Key!');
         return;
       }
     }
@@ -774,7 +774,6 @@ function App() {
             ) : (
               <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
                 
-                {/* أزرار اختيار نوع الدخول (مدير / كاشير) */}
                 <div style={{ background: isDark ? '#334155' : '#f1f5f9', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '6px', color: theme.primary }}>{t.roleLabel}</label>
                   <div style={{ display: 'flex', gap: '10px' }}>
@@ -797,7 +796,7 @@ function App() {
                 <input type="email" placeholder="Email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }} />
                 <input type="password" placeholder="Password" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, boxSizing: 'border-box' }} />
 
-                {/* خانة كلمة السر الإدارية السرية الخاصة بمدير النظام (تظهر حصرياً عند اختيار مدير النظام) */}
+                {/* خانة كلمة السر الإدارية الخاصة بمدير النظام */}
                 {loginRole === 'admin' && (
                   <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', padding: '12px', borderRadius: '8px' }}>
                     <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '5px', color: '#b91c1c' }}>{t.adminSecretLabel}</label>
@@ -809,7 +808,6 @@ function App() {
                       required 
                       style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #f87171', background: '#fff', color: '#0f172a', boxSizing: 'border-box' }} 
                     />
-                    <span style={{ fontSize: '10px', color: '#64748b', display: 'block', marginTop: '4px' }}>💡 كلمة السر الإدارية الافتراضية للاختبار: <strong>admin123</strong></span>
                   </div>
                 )}
 
