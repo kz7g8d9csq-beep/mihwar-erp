@@ -891,7 +891,6 @@ function App() {
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark, display: 'flex' }}>
       
-      {/* تصليح قاطع لخصائص الطباعة لعزل الفاتورة بحجم A4 عمودي (طولي) نظيف تماماً وخالٍ من خلفيات المتصفح */}
       <style>{`
         @media print {
           body * {
@@ -1024,12 +1023,21 @@ function App() {
                   {inventory.map(prod => {
                     const cartItem = cartItems.find(it => it.productId === prod.id);
                     const qty = cartItem ? cartItem.quantity : 0;
+                    
+                    // دالة لتحديث الكمية (إما بالضغط على الأزرار أو بالكتابة اليدوية المباشرة في خانة الإدخال)
                     const updateQty = (newQ) => {
-                      if (newQ < 0 || newQ > prod.stock) return;
-                      if (newQ === 0) setCartItems(cartItems.filter(i => i.productId !== prod.id));
-                      else if (cartItem) setCartItems(cartItems.map(i => i.productId === prod.id ? { ...i, quantity: newQ, subtotal: newQ * prod.price } : i));
-                      else setCartItems([...cartItems, { productId: prod.id, name: prod.name, quantity: newQ, price: prod.price, subtotal: newQ * prod.price }]);
+                      if (isNaN(newQ) || newQ < 0) newQ = 0;
+                      if (newQ > prod.stock) newQ = prod.stock;
+                      
+                      if (newQ === 0) {
+                        setCartItems(cartItems.filter(i => i.productId !== prod.id));
+                      } else if (cartItem) {
+                        setCartItems(cartItems.map(i => i.productId === prod.id ? { ...i, quantity: newQ, subtotal: Number((newQ * prod.price).toFixed(2)) } : i));
+                      } else {
+                        setCartItems([...cartItems, { productId: prod.id, name: prod.name, quantity: newQ, price: prod.price, subtotal: Number((newQ * prod.price).toFixed(2)) }]);
+                      }
                     };
+
                     return (
                       <div key={prod.id} style={{ background: theme.bgMain, border: `1px solid ${qty > 0 ? '#d97706' : theme.border}`, borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '8px' }}>
                         <div>
@@ -1037,9 +1045,19 @@ function App() {
                           <span style={{ color: '#d97706', fontWeight: 'bold', fontSize: '12px' }}>{prod.price} {t.currency}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme.cardBg, borderRadius: '6px', padding: '2px', border: `1px solid ${theme.border}` }}>
-                          <button onClick={() => updateQty(qty - 1)} style={{ background: '#ef4444', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer' }}>-</button>
-                          <span style={{ fontWeight: 'bold', fontSize: '13px' }}>{qty}</span>
-                          <button onClick={() => updateQty(qty + 1)} style={{ background: '#d97706', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer' }}>+</button>
+                          <button type="button" onClick={() => updateQty(qty - 1)} style={{ background: '#ef4444', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>-</button>
+                          
+                          {/* خانة إدخال رقمية تقبل الكتابة اليدوية المباشرة لأي كمية */}
+                          <input 
+                            type="number" 
+                            min="0" 
+                            max={prod.stock} 
+                            value={qty} 
+                            onChange={(e) => updateQty(Number(e.target.value))} 
+                            style={{ width: '45px', textAlign: 'center', border: 'none', background: 'transparent', fontWeight: 'bold', fontSize: '13px', color: theme.textDark, outline: 'none' }} 
+                          />
+
+                          <button type="button" onClick={() => updateQty(qty + 1)} style={{ background: '#d97706', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>+</button>
                         </div>
                       </div>
                     );
@@ -1221,7 +1239,7 @@ function App() {
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button onClick={()=>setIsDark(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: !isDark?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>☀️ النهاري</button>
-                  <button onClick={()=>setIsDark(true)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: isDark?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🌙 الداكن</button>
+                  <button onClick={()=>setIsDark(core => core)} onClick={()=>setIsDark(true)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: isDark?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🌙 الداكن</button>
                 </div>
               </div>
 
@@ -1240,7 +1258,7 @@ function App() {
 
       {printingInvoice && (
         <div className="invoice-modal-backdrop" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
-          <div className="invoice-modal-card" style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="invoice-modal-card" style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box' }}>
             <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
               <h2>{t.taxInvoiceTitle}</h2>
               <div style={{ display: 'flex', gap: '10px' }}>
@@ -1248,53 +1266,55 @@ function App() {
                 <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.closeModal}</button>
               </div>
             </div>
-            
-            {/* عنصر الفاتورة المعزول تماماً للطباعة بنظام A4 العمودي الصحيح */}
-            <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '10px' }}>
+
+            {/* قالب الفاتورة المعزول خصيصاً للطباعة بحجم A4 طولي عمودي وبشكل نظيف */}
+            <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '15px', boxSizing: 'border-box' }}>
               <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, color: '#0f172a' }}>{businessName}</h2>
-                <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0' }}>{t.taxInvoiceTitle}</p>
+                <h2 style={{ margin: 0, color: '#0f172a', fontSize: '20px' }}>{businessName}</h2>
+                <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0' }}>{t.taxInvoiceTitle}</p>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '15px', borderBottom: '1px solid #cbd5e1', paddingBottom: '10px' }}>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '20px', borderBottom: '1px solid #cbd5e1', paddingBottom: '12px' }}>
                 <div>
-                  <p style={{ margin: '3px 0' }}><strong>{t.invNo}</strong> #{printingInvoice.invoiceNo}</p>
-                  <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي'}</p>
+                  <p style={{ margin: '4px 0' }}><strong>{t.invNo}</strong> #{printingInvoice.invoiceNo}</p>
+                  <p style={{ margin: '4px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي'}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ margin: '3px 0' }}><strong>{t.invoiceDate}</strong> {new Date(printingInvoice.createdAt).toLocaleString()}</p>
+                  <p style={{ margin: '4px 0' }}><strong>{t.invoiceDate}</strong> {new Date(printingInvoice.createdAt).toLocaleString()}</p>
                 </div>
               </div>
 
               <table style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#0f172a', color: '#fff' }}>
-                    <th style={{ padding: '8px', textAlign: 'right' }}>{t.itemDesc}</th>
-                    <th style={{ padding: '8px', textAlign: 'center' }}>{t.itemQuantity}</th>
-                    <th style={{ padding: '8px', textAlign: 'center' }}>{t.unitPriceCol}</th>
-                    <th style={{ padding: '8px', textAlign: 'left' }}>{t.totalCol}</th>
+                    <th style={{ padding: '10px', textAlign: 'right' }}>{t.itemDesc}</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>{t.itemQuantity}</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>{t.unitPriceCol}</th>
+                    <th style={{ padding: '10px', textAlign: 'left' }}>{t.totalCol}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {printingInvoice.items?.map((it, idx)=>(
                     <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}>
-                      <td style={{ padding: '8px', textAlign: 'right' }}>{it.product?.name || 'صنف'}</td>
-                      <td style={{ padding: '8px', textAlign: 'center' }}>{it.quantity}</td>
-                      <td style={{ padding: '8px', textAlign: 'center' }}>{it.unitPrice}</td>
-                      <td style={{ padding: '8px', textAlign: 'left' }}>{it.subtotal}</td>
+                      <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || 'صنف'}</td>
+                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity}</td>
+                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice}</td>
+                      <td style={{ padding: '10px', textAlign: 'left' }}>{it.subtotal}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', borderTop: '1px solid #cbd5e1', paddingTop: '15px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '25px', borderTop: '1px solid #cbd5e1', paddingTop: '15px' }}>
                 <img src={generateZatcaQR(printingInvoice, businessName)} alt="QR" style={{ width: '110px', height: '110px' }} />
                 <div style={{ textAlign: 'right', fontSize: '14px' }}>
-                  <p style={{ margin: '4px 0' }}>{t.subtotal} <strong>{printingInvoice.subtotal}</strong> {t.currency}</p>
-                  <p style={{ margin: '4px 0' }}>{t.vatAmount} <strong>{printingInvoice.taxAmount}</strong> {t.currency}</p>
-                  <h3 style={{ margin: '8px 0 0 0', color: '#0f172a' }}>{t.totalDue} <strong>{printingInvoice.totalAmount}</strong> {t.currency}</h3>
+                  <p style={{ margin: '5px 0' }}>{t.subtotal} <strong>{printingInvoice.subtotal}</strong> {t.currency}</p>
+                  <p style={{ margin: '5px 0' }}>{t.vatAmount} <strong>{printingInvoice.taxAmount}</strong> {t.currency}</p>
+                  <h3 style={{ margin: '10px 0 0 0', color: '#0f172a', fontSize: '16px' }}>{t.totalDue} <strong>{printingInvoice.totalAmount}</strong> {t.currency}</h3>
                 </div>
               </div>
-              <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>
+
+              <div style={{ textAlign: 'center', marginTop: '35px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '12px' }}>
                 {t.invoiceFooterNote}
               </div>
             </div>
