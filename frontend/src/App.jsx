@@ -141,20 +141,28 @@ const dict = {
     stockRepo: '📦 مستودع المنتجات',
     invRepo: 'سجل الفواتير والمبيعات المعتمدة',
     prefTitle: '🌐 تفضيلات اللغة والمظهر',
+    companyLogoTitle: '🏢 شعار المنشأة (الفاتورة)',
+    companyLogoDesc: 'اختر أو ارفع صورة شعار منشأتك لتظهر تلقائياً في الفواتير المطبوعة',
+    logoUrlLabel: 'رابط صورة الشعار (URL أو رفع ملف):',
+    saveLogoBtn: 'حفظ شعار المنشأة',
     securityTitle: '🔒 أمان الحساب وتغيير كلمة المرور',
     oldPass: 'كلمة المرور الحالية',
     newPass: 'كلمة المرور الجديدة',
     updatePassBtn: 'تحديث كلمة المرور',
     logoutBtn: 'تسجيل الخروج',
-    taxInvoiceTitle: 'فاتورة ضريبية مبسطة',
-    clientCol: 'العميل / المستلم',
-    itemDesc: 'بيان الصنف والخدمة',
+    taxInvoiceTitle: 'فاتورة ضريبية',
+    invoiceStatusPaid: 'مدفوعة',
+    invoiceDueDateText: 'فوري (بدون مدة استحقاق)',
+    clientCol: 'اسم العميل:',
+    clientPhone: 'رقم الجوال:',
+    clientEmail: 'البريد الإلكتروني:',
+    itemDesc: 'وصف المنتج / الخدمة',
     itemQuantity: 'الكمية',
-    unitPriceCol: 'سعر الوحدة',
-    totalCol: 'المجموع الخاضع للضريبة',
-    subtotal: 'المبلغ الخاضع للضريبة:',
+    unitPriceCol: 'السعر الفردي',
+    totalCol: 'المجموع',
+    subtotal: 'المبلغ الصافي:',
     vatAmount: 'ضريبة القيمة المضافة (15%):',
-    totalDue: 'الإجمالي المستحق:',
+    totalDue: 'الإجمالي النهائي:',
     invoiceFooterNote: 'شكراً لتعاملكم معنا • صدرت إلكترونياً عبر نظام محور'
   },
   en: {
@@ -216,20 +224,28 @@ const dict = {
     stockRepo: '📦 Warehouse Products',
     invRepo: 'Sales Invoices',
     prefTitle: '🌐 Language & Display',
+    companyLogoTitle: '🏢 Company Logo (Invoice)',
+    companyLogoDesc: 'Upload or set company logo URL to appear on printed invoices',
+    logoUrlLabel: 'Logo Image URL:',
+    saveLogoBtn: 'Save Company Logo',
     securityTitle: '🔒 Account Security',
     oldPass: 'Current Password',
     newPass: 'New Password',
     updatePassBtn: 'Update Password',
     logoutBtn: 'Sign Out',
-    taxInvoiceTitle: 'Simplified Tax Invoice',
-    clientCol: 'Client / Buyer',
-    itemDesc: 'Item & Service Description',
+    taxInvoiceTitle: 'Tax Invoice',
+    invoiceStatusPaid: 'Paid',
+    invoiceDueDateText: 'Immediate (No due term)',
+    clientCol: 'Client Name:',
+    clientPhone: 'Mobile No:',
+    clientEmail: 'Email Address:',
+    itemDesc: 'Product / Service Description',
     itemQuantity: 'Qty',
     unitPriceCol: 'Unit Price',
-    totalCol: 'Taxable Subtotal',
-    subtotal: 'Taxable Amount:',
+    totalCol: 'Total',
+    subtotal: 'Net Amount:',
     vatAmount: 'Value Added Tax (15%):',
-    totalDue: 'Total Amount Due:',
+    totalDue: 'Final Total:',
     invoiceFooterNote: 'Thank you for your business • Issued electronically via Mihwar ERP'
   }
 };
@@ -283,6 +299,12 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [businessName, setBusinessName] = useState('نظام محور');
 
+  // شعار المنشأة المخزن في الـ localStorage لتظهر في الفاتورة
+  const [companyLogo, setCompanyLogo] = useState(() => {
+    return localStorage.getItem('mihwar_company_logo') || '';
+  });
+  const [tempLogoInput, setTempLogoInput] = useState(companyLogo);
+
   const [inventory, setInventory] = useState([]);
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
@@ -311,7 +333,7 @@ function App() {
   const [purchaseQty, setPurchaseQty] = useState(10);
   const [purchaseCost, setPurchaseCost] = useState('');
 
-  // حالات الموارد البشرية والخصومات والتعديل
+  // حالات الموارد البشرية والخصومات
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
@@ -329,8 +351,6 @@ function App() {
 
   const [showAddEmpModal, setShowAddEmpModal] = useState(false);
   const [showDeductModal, setShowDeductModal] = useState(false);
-  
-  // حالة تعديل الموظف
   const [editingEmpId, setEditingEmpId] = useState(null);
 
   const [empName, setEmpName] = useState('');
@@ -348,7 +368,6 @@ function App() {
   const [empHealthEnd, setEmpHealthEnd] = useState('');
   const [empContractEnd, setEmpContractEnd] = useState('');
 
-  // حقول نموذج الخصم الذكي
   const [empSearchQuery, setEmpSearchQuery] = useState('');
   const [selectedEmpForDeduct, setSelectedEmpForDeduct] = useState('');
   const [deductAmount, setDeductAmount] = useState('');
@@ -408,7 +427,6 @@ function App() {
     if (!empName.trim()) return;
 
     if (editingEmpId) {
-      // تعديل موظف موجود
       const updated = employees.map(emp => {
         if (emp.id === editingEmpId) {
           return {
@@ -429,7 +447,6 @@ function App() {
       setEmployees(updated);
       localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
     } else {
-      // إضافة موظف جديد
       const newEmp = {
         id: Date.now(),
         name: empName.trim(),
@@ -452,7 +469,6 @@ function App() {
       localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
     }
 
-    // تصفير الحقول وإغلاق النافذة
     setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpDeductions(''); setEmpVacations(''); setEmpInsurance('');
     setEditingEmpId(null);
     setShowAddEmpModal(false);
@@ -504,6 +520,13 @@ function App() {
 
     setEmpSearchQuery(''); setSelectedEmpForDeduct(''); setDeductAmount(''); setDeductReason('');
     setShowDeductModal(false);
+  };
+
+  const handleSaveCompanyLogo = (e) => {
+    e.preventDefault();
+    setCompanyLogo(tempLogoInput);
+    localStorage.setItem('mihwar_company_logo', tempLogoInput);
+    alert('✅ تم حفظ شعار المنشأة بنجاح وسيظهر في الفواتير!');
   };
 
   const handleExportSales = () => {
@@ -746,7 +769,7 @@ function App() {
         @media print {
           body * { visibility: hidden !important; }
           #zatca-printable-invoice, #zatca-printable-invoice * { visibility: visible !important; }
-          #zatca-printable-invoice { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; padding: 15mm !important; background: #fff !important; color: #000 !important; }
+          #zatca-printable-invoice { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; padding: 15mm !important; background: #fff !important; color: #000 !important; box-sizing: border-box !important; }
           .no-print-zone { display: none !important; }
           @page { size: A4 portrait; margin: 0mm; }
         }
@@ -1109,7 +1132,7 @@ function App() {
             </div>
           )}
 
-          {/* 9. الموارد البشرية والرواتب (مع زر تعديل أمام كل موظف) */}
+          {/* 9. الموارد البشرية والرواتب */}
           {activeTab === 'hr' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -1361,7 +1384,7 @@ function App() {
             </div>
           )}
 
-          {/* 11. الإعدادات */}
+          {/* 11. الإعدادات (مع خيار إدخال أو رفع شعار المنشأة للفاتورة كما طلبتم) */}
           {activeTab === 'settings' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
@@ -1374,6 +1397,17 @@ function App() {
                   <button onClick={()=>setIsDark(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: !isDark?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>☀️ النهاري</button>
                   <button onClick={()=>setIsDark(true)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: isDark?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🌙 الداكن</button>
                 </div>
+              </div>
+
+              {/* قسم شعار المنشأة */}
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
+                <h3 style={{ margin: '0 0 5px 0', fontSize: '17px' }}>{t.companyLogoTitle}</h3>
+                <p style={{ fontSize: '12px', color: theme.textMuted, margin: '0 0 12px 0' }}>{t.companyLogoDesc}</p>
+                <form onSubmit={handleSaveCompanyLogo} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input type="text" placeholder="https://example.com/logo.png" value={tempLogoInput} onChange={e=>setTempLogoInput(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  {tempLogoInput && <img src={tempLogoInput} alt="Logo Preview" style={{ width: '60px', height: '60px', objectFit: 'contain', background: '#fff', borderRadius: '6px', padding: '4px' }} />}
+                  <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '10px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveLogoBtn}</button>
+                </form>
               </div>
 
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
@@ -1389,26 +1423,92 @@ function App() {
         </main>
       </div>
 
+      {/* نافذة معاينة وطباعة الفاتورة بالتصميم المطابق تماماً لملف "جولد جم" */}
       {printingInvoice && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
           <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
-              <h2>{t.taxInvoiceTitle}</h2>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={() => window.print()} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>🖨️ طباعة الفاتورة / PDF</button>
+              </div>
               <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.closeModal}</button>
             </div>
-            <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '15px' }}>
-              <h2>{businessName}</h2>
-              <p><strong>{t.invNo}</strong> #{printingInvoice.invoiceNo}</p>
-              <table style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0', fontSize: '13px' }}>
-                <thead><tr style={{ background: '#0f172a', color: '#fff' }}><th style={{ padding: '8px' }}>Item</th><th style={{ padding: '8px' }}>Qty</th><th style={{ padding: '8px' }}>Total</th></tr></thead>
+
+            {/* قالب الفاتورة المطابق تماماً لتصميم "جولد جم" */}
+            <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
+              
+              {/* ترويسة الفاتورة (الشعار واسم المنشأة ورقم الفاتورة والحالة) */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
+                <div>
+                  {companyLogo ? (
+                    <img src={companyLogo} alt="Logo" style={{ width: '70px', height: '70px', objectFit: 'contain', marginBottom: '8px' }} />
+                  ) : null}
+                  <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
+                  <p style={{ margin: '3px 0', fontSize: '12px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
+                </div>
+                <div style={{ textAlign: 'left' }}>
+                  <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#d97706' }}>{t.taxInvoiceTitle}</h3>
+                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>{t.invoiceNo || 'رقم الفاتورة'}:</strong> INV-{printingInvoice.invoiceNo}</p>
+                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>الحالة:</strong> <span style={{ color: '#10b981', fontWeight: 'bold' }}>{t.invoiceStatusPaid}</span></p>
+                  <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
+                  <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الاستحقاق:</strong> {t.invoiceDueDateText}</p>
+                </div>
+              </div>
+
+              {/* بيانات العميل */}
+              <div style={{ background: '#f8fafc', padding: '12px 15px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#0f172a' }}>بيانات العميل:</h4>
+                <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
+                <p style={{ margin: '3px 0' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
+                <p style={{ margin: '3px 0' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
+              </div>
+
+              {/* جدول المنتجات / الخدمات المطابق للتصميم */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: '#0f172a', color: '#fff' }}>
+                    <th style={{ padding: '10px', textAlign: 'right' }}>{t.itemDesc}</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>{t.itemQuantity}</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>{t.unitPriceCol}</th>
+                    <th style={{ padding: '10px', textAlign: 'left' }}>{t.totalCol}</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {(printingInvoice.items || []).map((it, idx)=>(
-                    <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}><td style={{ padding: '8px' }}>{it.product?.name}</td><td style={{ padding: '8px' }}>{it.quantity}</td><td style={{ padding: '8px' }}>{it.subtotal}</td></tr>
+                  {(printingInvoice.items || []).map((it, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || 'خدمة عامة'}</td>
+                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity}</td>
+                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
+                      <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
+                    </tr>
                   ))}
                 </tbody>
               </table>
-              <h3>{t.totalDue} {printingInvoice.totalAmount} {t.currency}</h3>
+
+              {/* تفاصيل المبالغ النهائية والضريبة */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '15px' }}>
+                <img src={generateZatcaQR(printingInvoice, businessName)} alt="ZATCA QR" style={{ width: '100px', height: '100px' }} />
+                <div style={{ textAlign: 'left', fontSize: '14px', minWidth: '220px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}>
+                    <span style={{ color: '#64748b' }}>{t.subtotal}</span>
+                    <strong>{printingInvoice.subtotal} {t.currency}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}>
+                    <span style={{ color: '#64748b' }}>{t.vatAmount}</span>
+                    <strong>{printingInvoice.taxAmount} {t.currency}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '1px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#d97706' }}>
+                    <strong>{t.totalDue}</strong>
+                    <strong>{printingInvoice.totalAmount} {t.currency}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>
+                {t.invoiceFooterNote}
+              </div>
             </div>
+
           </div>
         </div>
       )}
