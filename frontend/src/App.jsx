@@ -432,8 +432,6 @@ function App() {
   const fetchInventory = async () => { try { const res = await API.get('/api/inventory'); if (res.data) setInventory(res.data); } catch (e) {} };
   const fetchCustomers = async () => { try { const res = await API.get('/api/customers'); if (res.data) setCustomers(res.data); } catch (e) {} };
   const fetchSuppliers = async () => { try { const res = await API.get('/api/suppliers'); if (res.data) setSuppliers(res.data); } catch (e) {} };
-  
-  // تحميل الفواتير وربط حالة الدفع المحفوظة محلياً بشكل دائم
   const fetchInvoices = async () => { 
     try { 
       const res = await API.get('/api/sales'); 
@@ -451,10 +449,8 @@ function App() {
       } 
     } catch (e) {} 
   };
-
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
 
-  // دالة تحويل الحالة إلى مدفوعة عند النقر على "تم الدفع" مع تأكيد منبثق لمنع الضغط الخطأ
   const handleMarkInvoiceAsPaid = (invoiceId) => {
     if (!window.confirm('هل أنت متأكد من تأكيد سداد هذا المبلغ وتحويل الفاتورة إلى (مدفوعة)؟')) return;
     
@@ -619,20 +615,22 @@ function App() {
     exportToExcel(title, headers, rows, lang);
   };
 
+  // المبيعات والفوترة: التزام تام بالسعر اليدوي المُدخل وعدم تغييره بسعر المخزون الافتراضي
   const handleAddItemToSalesCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
     if (!product) return;
     const qty = Number(itemQty);
     if (qty <= 0) return;
-    const price = itemPrice !== '' ? Number(itemPrice) : product.price;
+    // الالتزام التام بالسعر المُدخل يدوياً، وإذا ترك فارغاً يُأخذ سعر المخزون
+    const price = itemPrice !== '' && !isNaN(Number(itemPrice)) ? Number(itemPrice) : product.price;
 
-    const existing = cartItems.find(it => it.productId === product.id);
+    const existing = cartItems.find(it => it.productId === product.id && it.unitPrice === price);
     const reqQ = (existing ? existing.quantity : 0) + qty;
     if (reqQ > product.stock) { alert('Stock limit exceeded'); return; }
 
     if (existing) {
-      setCartItems(cartItems.map(it => it.productId === product.id ? { ...it, quantity: reqQ, unitPrice: price, subtotal: Number((reqQ * price).toFixed(2)) } : it));
+      setCartItems(cartItems.map(it => (it.productId === product.id && it.unitPrice === price) ? { ...it, quantity: reqQ, subtotal: Number((reqQ * price).toFixed(2)) } : it));
     } else {
       setCartItems([...cartItems, { productId: product.id, name: product.name, quantity: qty, unitPrice: price, subtotal: Number((qty * price).toFixed(2)) }]);
     }
@@ -679,6 +677,7 @@ function App() {
     }
   };
 
+  // نقطة البيع (POS): الأسعار ثابتة حسب المخزون
   const handleSavePosInvoice = async () => {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
@@ -1146,7 +1145,7 @@ function App() {
             </div>
           )}
 
-          {/* 3. المبيعات والفوترة الشاملة */}
+          {/* 3. المبيعات والفوترة الشاملة - مع تثبيت السعر اليدوي بدقة تامة */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1175,7 +1174,7 @@ function App() {
                       onChange={e => {
                         setSelectedProductId(e.target.value);
                         const p = inventory.find(x => x.id === Number(e.target.value));
-                        if (p) setItemPrice(p.price);
+                        if (p) setItemPrice(p.price); // تعبئة السعر الافتراضي القابل للتعديل اليدوي
                       }} 
                       style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}
                     >
@@ -1280,7 +1279,7 @@ function App() {
             </div>
           )}
 
-          {/* سجل الفواتير مع زر "تم الدفع" المؤكد */}
+          {/* سجل الفواتير */}
           {activeTab === 'invoicesList' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
