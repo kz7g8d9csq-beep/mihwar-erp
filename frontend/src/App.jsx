@@ -659,7 +659,7 @@ function App() {
     return p.name.toLowerCase().includes(q);
   });
 
-  // المبيعات والفوترة: الالتزام التام بالسعر اليدوي المُدخل وعدم ضياعه أو استبداله
+  // المبيعات والفوترة: استخدام السعر اليدوي المخصص وتثبيته تماماً دون أي إعادة تعيين
   const handleAddItemToSalesCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
@@ -1194,7 +1194,7 @@ function App() {
             </div>
           )}
 
-          {/* 3. المبيعات والفوترة الشاملة - الالتزام التام بالسعر اليدوي وعدم ضياعه */}
+          {/* 3. المبيعات والفوترة الشاملة - الإصلاح النهائي لثبات السعر اليدوي المخصص */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
