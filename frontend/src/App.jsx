@@ -322,17 +322,36 @@ function App() {
   const [editProdPrice, setEditProdPrice] = useState('');
   const [editProdStock, setEditProdStock] = useState('');
 
+  // حالات وتعديل وحذف العملاء
   const [customers, setCustomers] = useState([]);
   const [custName, setCustName] = useState('');
   const [custNationalId, setCustNationalId] = useState('');
   const [custPhone, setCustPhone] = useState('');
+  const [customerSearchQuery, setCustomerSearchQuery] = useState('');
+  const [editingCustId, setEditingCustId] = useState(null);
+  const [showEditCustModal, setShowEditCustModal] = useState(false);
+  const [editCustName, setEditCustName] = useState('');
+  const [editCustNationalId, setEditCustNationalId] = useState('');
+  const [editCustPhone, setEditCustPhone] = useState('');
 
+  // حالات وتعديل وحذف الموردين
   const [suppliers, setSuppliers] = useState([]);
   const [suppName, setSuppName] = useState('');
   const [suppTaxNumber, setSuppTaxNumber] = useState('');
   const [suppPhone, setSuppPhone] = useState('');
+  const [supplierSearchQuery, setSupplierSearchQuery] = useState('');
+  const [editingSuppId, setEditingSuppId] = useState(null);
+  const [showEditSuppModal, setShowEditSuppModal] = useState(false);
+  const [editSuppName, setEditSuppName] = useState('');
+  const [editSuppTaxNumber, setEditSuppTaxNumber] = useState('');
+  const [editSuppPhone, setEditSuppPhone] = useState('');
 
+  // حالات سجل الفواتير (مع خانة البحث برقم الفاتورة أو العميل)
   const [invoices, setInvoices] = useState([]);
+  const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
+
+  // حالات التقارير (مع خانة البحث)
+  const [reportSearchQuery, setReportSearchQuery] = useState('');
   
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
@@ -347,7 +366,6 @@ function App() {
   const [posCustomerSearch, setPosCustomerSearch] = useState('');
   const [posSelectedCustomerId, setPosSelectedCustomerId] = useState('');
 
-  // حالات قسم المشتريات (مع بحث المنتجات الذكي)
   const [purchaseProductSearch, setPurchaseProductSearch] = useState('');
   const [purchaseInvoices, setPurchaseInvoices] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
@@ -461,12 +479,7 @@ function App() {
 
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
 
-  // فلترة المنتجات في قسم المشتريات
-  const filteredProductsForPurchase = inventory.filter(p => {
-    const q = purchaseProductSearch.toLowerCase();
-    return p.name.toLowerCase().includes(q);
-  });
-
+  // دالة تعديل وحذف المنتجات في المخزون
   const handleOpenEditProduct = (prod) => {
     setEditingProdId(prod.id);
     setEditProdName(prod.name || '');
@@ -508,6 +521,90 @@ function App() {
     }
   };
 
+  // دوال تعديل وحذف العملاء
+  const handleOpenEditCustomer = (cust) => {
+    setEditingCustId(cust.id);
+    setEditCustName(cust.name || '');
+    setEditCustNationalId(cust.nationalId || '');
+    setEditCustPhone(cust.phone || '');
+    setShowEditCustModal(true);
+  };
+
+  const handleUpdateCustomer = async (e) => {
+    e.preventDefault();
+    if (!editCustName.trim()) return;
+    try {
+      await API.put(`/api/customers/${editingCustId}`, {
+        name: editCustName.trim(),
+        nationalId: editCustNationalId.trim() || null,
+        phone: editCustPhone.trim() || null
+      });
+      setShowEditCustModal(false);
+      setEditingCustId(null);
+      fetchCustomers();
+      alert('✅ تم تحديث بيانات العميل بنجاح!');
+    } catch (err) {
+      setCustomers(customers.map(c => c.id === editingCustId ? { ...c, name: editCustName.trim(), nationalId: editCustNationalId.trim(), phone: editCustPhone.trim() } : c));
+      setShowEditCustModal(false);
+      setEditingCustId(null);
+      alert('✅ تم تحديث بيانات العميل بنجاح!');
+    }
+  };
+
+  const handleDeleteCustomer = async (custId) => {
+    if (!window.confirm('⚠️ هل أنت متأكد من رغبتك في حذف هذا العميل؟')) return;
+    try {
+      await API.delete(`/api/customers/${custId}`);
+      fetchCustomers();
+      alert('🗑️ تم حذف العميل بنجاح!');
+    } catch (err) {
+      setCustomers(customers.filter(c => c.id !== custId));
+      alert('🗑️ تم حذف العميل بنجاح!');
+    }
+  };
+
+  // دوال تعديل وحذف الموردين
+  const handleOpenEditSupplier = (supp) => {
+    setEditingSuppId(supp.id);
+    setEditSuppName(supp.name || '');
+    setEditSuppTaxNumber(supp.taxNumber || '');
+    setEditSuppPhone(supp.phone || '');
+    setShowEditSuppModal(true);
+  };
+
+  const handleUpdateSupplier = async (e) => {
+    e.preventDefault();
+    if (!editSuppName.trim()) return;
+    try {
+      await API.put(`/api/suppliers/${editingSuppId}`, {
+        name: editSuppName.trim(),
+        taxNumber: editSuppTaxNumber.trim() || null,
+        phone: editSuppPhone.trim() || null
+      });
+      setShowEditSuppModal(false);
+      setEditingSuppId(null);
+      fetchSuppliers();
+      alert('✅ تم تحديث بيانات المورد بنجاح!');
+    } catch (err) {
+      setSuppliers(suppliers.map(s => s.id === editingSuppId ? { ...s, name: editSuppName.trim(), taxNumber: editSuppTaxNumber.trim(), phone: editSuppPhone.trim() } : s));
+      setShowEditSuppModal(false);
+      setEditingSuppId(null);
+      alert('✅ تم تحديث بيانات المورد بنجاح!');
+    }
+  };
+
+  const handleDeleteSupplier = async (suppId) => {
+    if (!window.confirm('⚠️ هل أنت متأكد من رغبتك في حذف هذا المورد؟')) return;
+    try {
+      await API.delete(`/api/suppliers/${suppId}`);
+      fetchSuppliers();
+      alert('🗑️ تم حذف المورد بنجاح!');
+    } catch (err) {
+      setSuppliers(suppliers.filter(s => s.id !== suppId));
+      alert('🗑️ تم حذف المورد بنجاح!');
+    }
+  };
+
   const handleMarkInvoiceAsPaid = (invoiceId) => {
     if (!window.confirm('هل أنت متأكد من تأكيد سداد هذا المبلغ وتحويل الفاتورة إلى (مدفوعة)؟')) return;
     
@@ -523,6 +620,31 @@ function App() {
     alert('✅ تم سداد الفاتورة وتحديث حالتها إلى (مدفوعة) بنجاح!');
   };
 
+  // الفلاتر الذكية للبحث الجديد
+  const filteredCustomers = customers.filter(c => {
+    const q = customerSearchQuery.toLowerCase();
+    return c.name.toLowerCase().includes(q) || (c.nationalId && c.nationalId.toLowerCase().includes(q)) || (c.phone && c.phone.includes(q));
+  });
+
+  const filteredSuppliers = suppliers.filter(s => {
+    const q = supplierSearchQuery.toLowerCase();
+    return s.name.toLowerCase().includes(q) || (s.taxNumber && s.taxNumber.toLowerCase().includes(q)) || (s.phone && s.phone.includes(q));
+  });
+
+  const filteredInvoices = invoices.filter(inv => {
+    const q = invoiceSearchQuery.toLowerCase();
+    const invNoStr = String(inv.invoiceNo || '').toLowerCase();
+    const custNameStr = (inv.customer?.name || '').toLowerCase();
+    return invNoStr.includes(q) || custNameStr.includes(q);
+  });
+
+  const filteredReports = invoices.filter(inv => {
+    const q = reportSearchQuery.toLowerCase();
+    const invNoStr = String(inv.invoiceNo || '').toLowerCase();
+    const custNameStr = (inv.customer?.name || '').toLowerCase();
+    return invNoStr.includes(q) || custNameStr.includes(q);
+  });
+
   const filteredCustomersForSales = customers.filter(c => {
     const q = salesCustomerSearch.toLowerCase();
     return c.name.toLowerCase().includes(q) || (c.nationalId && c.nationalId.toLowerCase().includes(q)) || (c.phone && c.phone.includes(q));
@@ -531,6 +653,11 @@ function App() {
   const filteredCustomersForPos = customers.filter(c => {
     const q = posCustomerSearch.toLowerCase();
     return c.name.toLowerCase().includes(q) || (c.nationalId && c.nationalId.toLowerCase().includes(q)) || (c.phone && c.phone.includes(q));
+  });
+
+  const filteredProductsForPurchase = inventory.filter(p => {
+    const q = purchaseProductSearch.toLowerCase();
+    return p.name.toLowerCase().includes(q);
   });
 
   const handleSaveEmployee = (e) => {
@@ -644,7 +771,7 @@ function App() {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
     const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
-    const rows = invoices.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
+    const rows = filteredReports.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -700,21 +827,17 @@ function App() {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
     try {
-      const sub = cartItems.reduce((s, it) => s + it.subtotal, 0);
-      const tax = sub * 0.15;
-      const tot = sub + tax;
-
-      const newInv = {
-        id: Date.now(),
-        invoiceNo: Math.floor(100000 + Math.random() * 900000),
-        createdAt: new Date().toISOString(),
-        customer: customers.find(c => c.id === Number(selectedCustomerId)) || null,
-        items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
-        subtotal: sub,
-        taxAmount: tax,
-        totalAmount: tot,
-        paymentStatus: invoiceStatus,
-        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : ''
+      const res = await API.post('/api/sales', { 
+        customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
+        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
+        status: invoiceStatus,
+        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : null
+      });
+      
+      const newInv = { 
+        ...res.data.invoice, 
+        paymentStatus: invoiceStatus, 
+        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : '' 
       };
 
       localStorage.setItem(`invoice_status_${newInv.id}`, invoiceStatus);
@@ -723,17 +846,12 @@ function App() {
       }
       localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
 
-      await API.post('/api/sales', { 
-        customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
-        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
-        status: invoiceStatus,
-        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : null
-      }).catch(() => {});
-
-      setInvoices([newInv, ...invoices]);
       setCartItems([]); 
       setDueDateInput('');
-      setPrintingInvoice(newInv);
+      fetchAllData();
+      if (res.data?.invoice) {
+        setPrintingInvoice(newInv);
+      }
       setActiveTab('invoicesList');
     } catch (err) { 
       alert('Failed'); 
@@ -746,35 +864,21 @@ function App() {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
     try {
-      const sub = cartItems.reduce((s, it) => s + it.subtotal, 0);
-      const tax = sub * 0.15;
-      const tot = sub + tax;
-
-      const newInv = {
-        id: Date.now(),
-        invoiceNo: Math.floor(100000 + Math.random() * 900000),
-        createdAt: new Date().toISOString(),
-        customer: customers.find(c => c.id === Number(posSelectedCustomerId)) || null,
-        items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
-        subtotal: sub,
-        taxAmount: tax,
-        totalAmount: tot,
-        paymentStatus: 'مدفوعة',
-        dueDate: ''
-      };
-
-      localStorage.setItem(`invoice_status_${newInv.id}`, 'مدفوعة');
-      localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
-
-      await API.post('/api/sales', { 
+      const res = await API.post('/api/sales', { 
         customerId: posSelectedCustomerId ? Number(posSelectedCustomerId) : null, 
         items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
         status: 'مدفوعة'
-      }).catch(() => {});
+      });
 
-      setInvoices([newInv, ...invoices]);
+      const newInv = { ...res.data.invoice, paymentStatus: 'مدفوعة', dueDate: '' };
+      localStorage.setItem(`invoice_status_${newInv.id}`, 'مدفوعة');
+      localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
+
       setCartItems([]); 
-      setPrintingInvoice(newInv);
+      fetchAllData();
+      if (res.data?.invoice) {
+        setPrintingInvoice(newInv);
+      }
       setActiveTab('invoicesList');
     } catch (err) { 
       alert('Failed'); 
@@ -1358,12 +1462,21 @@ function App() {
             </div>
           )}
 
-          {/* سجل الفواتير */}
+          {/* سجل الفواتير (مع خانة البحث برقم الفاتورة أو العميل) */}
           {activeTab === 'invoicesList' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <h2 style={{ margin: 0, fontSize: '18px' }}>{t.invRepo}</h2>
-                <button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير إلى Excel 📥</button>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input 
+                    type="text" 
+                    value={invoiceSearchQuery} 
+                    onChange={e => setInvoiceSearchQuery(e.target.value)} 
+                    placeholder="🔍 ابحث برقم الفاتورة أو اسم العميل..." 
+                    style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '240px' }} 
+                  />
+                  <button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير إلى Excel 📥</button>
+                </div>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '700px' }}>
                 <thead>
@@ -1376,7 +1489,7 @@ function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  {invoices.map(inv => {
+                  {filteredInvoices.map(inv => {
                     const isUnpaid = inv.paymentStatus === 'غير مدفوعة';
                     return (
                       <tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
@@ -1407,7 +1520,7 @@ function App() {
             </div>
           )}
 
-          {/* 4. المشتريات (مع خانة البحث الذكي للمنتجات كما طلبت) */}
+          {/* 4. المشتريات */}
           {activeTab === 'purchases' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '600px', margin: 'auto' }}>
               <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>تسجيل فاتورة شراء وتوريد بضاعة</h2>
@@ -1420,7 +1533,6 @@ function App() {
                 </select>
               </div>
 
-              {/* خانة بحث المنتج في المشتريات */}
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>🔍 بحث واختيار المنتج:</label>
                 <input 
@@ -1450,7 +1562,7 @@ function App() {
             </div>
           )}
 
-          {/* 5. العملاء */}
+          {/* 5. العملاء (مع البحث، التعديل، والحذف مع التأكيد) */}
           {activeTab === 'customers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1462,17 +1574,85 @@ function App() {
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ العميل</button>
                 </form>
               </div>
+
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}><h3 style={{ margin: 0, fontSize: '17px' }}>دليل العملاء (TiDB)</h3><button onClick={handleExportCustomers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير Excel</button></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                  <h3 style={{ margin: 0, fontSize: '17px' }}>دليل العملاء</h3>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input 
+                      type="text" 
+                      value={customerSearchQuery} 
+                      onChange={e => setCustomerSearchQuery(e.target.value)} 
+                      placeholder="🔍 ابحث بالاسم، الهوية أو الهاتف..." 
+                      style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} 
+                    />
+                    <button onClick={handleExportCustomers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
+                  </div>
+                </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Phone</th></tr></thead>
-                  <tbody>{customers.map(c=><tr key={c.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{c.name}</td><td style={{ padding: '10px' }}>{c.phone||'-'}</td></tr>)}</tbody>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '10px' }}>الاسم</th>
+                      <th style={{ padding: '10px' }}>الهوية / السجل</th>
+                      <th style={{ padding: '10px' }}>الهاتف</th>
+                      <th style={{ padding: '10px' }}>الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCustomers.map(c => (
+                      <tr key={c.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{c.name}</td>
+                        <td style={{ padding: '10px' }}>{c.nationalId || '-'}</td>
+                        <td style={{ padding: '10px' }}>{c.phone || '-'}</td>
+                        <td style={{ padding: '10px' }}>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button onClick={() => handleOpenEditCustomer(c)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>تعديل ✏️</button>
+                            <button onClick={() => handleDeleteCustomer(c.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>حذف 🗑️</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
               </div>
             </div>
           )}
 
-          {/* 6. الموردين */}
+          {/* نافذة تعديل العميل */}
+          {showEditCustModal && (
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+              <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>تعديل بيانات العميل</h3>
+                  <button onClick={() => setShowEditCustModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
+                </div>
+
+                <form onSubmit={handleUpdateCustomer} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>اسم العميل</label>
+                    <input type="text" value={editCustName} onChange={e=>setEditCustName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهوية أو السجل التجاري</label>
+                    <input type="text" value={editCustNationalId} onChange={e=>setEditCustNationalId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label>
+                    <input type="text" value={editCustPhone} onChange={e=>setEditCustPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                    <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث العميل</button>
+                    <button type="button" onClick={() => setShowEditCustModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* 6. الموردين (مع البحث، التعديل، والحذف مع التأكيد) */}
           {activeTab === 'suppliers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1484,17 +1664,85 @@ function App() {
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ المورد</button>
                 </form>
               </div>
+
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}><h3 style={{ margin: 0, fontSize: '17px' }}>دليل الموردين (TiDB)</h3><button onClick={handleExportSuppliers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير Excel</button></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                  <h3 style={{ margin: 0, fontSize: '17px' }}>دليل الموردين</h3>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input 
+                      type="text" 
+                      value={supplierSearchQuery} 
+                      onChange={e => setSupplierSearchQuery(e.target.value)} 
+                      placeholder="🔍 ابحث بالاسم، الرقم الضريبي..." 
+                      style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} 
+                    />
+                    <button onClick={handleExportSuppliers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
+                  </div>
+                </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Tax No</th></tr></thead>
-                  <tbody>{suppliers.map(s=><tr key={s.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{s.name}</td><td style={{ padding: '10px' }}>{s.taxNumber||'-'}</td></tr>)}</tbody>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '10px' }}>اسم المورد</th>
+                      <th style={{ padding: '10px' }}>الرقم الضريبي</th>
+                      <th style={{ padding: '10px' }}>الهاتف</th>
+                      <th style={{ padding: '10px' }}>الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSuppliers.map(s => (
+                      <tr key={s.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{s.name}</td>
+                        <td style={{ padding: '10px' }}>{s.taxNumber || '-'}</td>
+                        <td style={{ padding: '10px' }}>{s.phone || '-'}</td>
+                        <td style={{ padding: '10px' }}>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button onClick={() => handleOpenEditSupplier(s)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>تعديل ✏️</button>
+                            <button onClick={() => handleDeleteSupplier(s.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>حذف 🗑️</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
               </div>
             </div>
           )}
 
-          {/* 7. المخزون */}
+          {/* نافذة تعديل المورد */}
+          {showEditSuppModal && (
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+              <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>تعديل بيانات المورد</h3>
+                  <button onClick={() => setShowEditSuppModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
+                </div>
+
+                <form onSubmit={handleUpdateSupplier} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>اسم المورد / الشركة</label>
+                    <input type="text" value={editSuppName} onChange={e=>setEditSuppName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الرقم الضريبي</label>
+                    <input type="text" value={editSuppTaxNumber} onChange={e=>setEditSuppTaxNumber(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label>
+                    <input type="text" value={editSuppPhone} onChange={e=>setEditSuppPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                    <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث المورد</button>
+                    <button type="button" onClick={() => setShowEditSuppModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* 7. المخزون (مع التعديل والحذف وتأكيد الحذف) */}
           {activeTab === 'inventory' && (
             <div style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '20px' }}>
               {user.role !== 'cashier' && (
@@ -1713,12 +1961,21 @@ function App() {
             </div>
           )}
 
-          {/* 10. التقارير */}
+          {/* 10. التقارير (مع خانة البحث الذكي) */}
           {activeTab === 'reports' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <h2 style={{ margin: 0, fontSize: '18px' }}>{t.invRepo}</h2>
-                <button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير المبيعات</button>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input 
+                    type="text" 
+                    value={reportSearchQuery} 
+                    onChange={e => setReportSearchQuery(e.target.value)} 
+                    placeholder="🔍 ابحث برقم الفاتورة أو اسم العميل..." 
+                    style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '240px' }} 
+                  />
+                  <button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير المبيعات</button>
+                </div>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                 <thead>
@@ -1730,7 +1987,7 @@ function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  {invoices.map(inv => (
+                  {filteredReports.map(inv => (
                     <tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
                       <td style={{ padding: '10px' }}>#{inv.invoiceNo}</td>
                       <td style={{ padding: '10px' }}>{inv.customer?.name||'Cash'}</td>
