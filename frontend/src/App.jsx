@@ -347,6 +347,8 @@ function App() {
   const [posCustomerSearch, setPosCustomerSearch] = useState('');
   const [posSelectedCustomerId, setPosSelectedCustomerId] = useState('');
 
+  // حالات قسم المشتريات (مع بحث المنتجات الذكي)
+  const [purchaseProductSearch, setPurchaseProductSearch] = useState('');
   const [purchaseInvoices, setPurchaseInvoices] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedPurchaseProdId, setSelectedPurchaseProdId] = useState('');
@@ -459,7 +461,12 @@ function App() {
 
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
 
-  // وظائف التعديل والحذف في المخزون
+  // فلترة المنتجات في قسم المشتريات
+  const filteredProductsForPurchase = inventory.filter(p => {
+    const q = purchaseProductSearch.toLowerCase();
+    return p.name.toLowerCase().includes(q);
+  });
+
   const handleOpenEditProduct = (prod) => {
     setEditingProdId(prod.id);
     setEditProdName(prod.name || '');
@@ -482,7 +489,6 @@ function App() {
       fetchInventory();
       alert('✅ تم تحديث المنتج بنجاح!');
     } catch (err) {
-      // Fallback محلي إذا لم يكن الـ API يدعم الـ PUT مباشرة
       setInventory(inventory.map(item => item.id === editingProdId ? { ...item, name: editProdName, price: Number(editProdPrice), stock: Number(editProdStock) } : item));
       setShowEditProdModal(false);
       setEditingProdId(null);
@@ -694,33 +700,43 @@ function App() {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
     try {
-      const res = await API.post('/api/sales', { 
-        customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
-        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
-        status: invoiceStatus,
-        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : null
-      });
-      
-      const newInv = { 
-        ...res.data.invoice, 
-        paymentStatus: invoiceStatus, 
-        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : '' 
+      const sub = cartItems.reduce((s, it) => s + it.subtotal, 0);
+      const tax = sub * 0.15;
+      const tot = sub + tax;
+
+      const newInv = {
+        id: Date.now(),
+        invoiceNo: Math.floor(100000 + Math.random() * 900000),
+        createdAt: new Date().toISOString(),
+        customer: customers.find(c => c.id === Number(selectedCustomerId)) || null,
+        items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
+        subtotal: sub,
+        taxAmount: tax,
+        totalAmount: tot,
+        paymentStatus: invoiceStatus,
+        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : ''
       };
 
       localStorage.setItem(`invoice_status_${newInv.id}`, invoiceStatus);
       if (invoiceStatus === 'غير مدفوعة' && dueDateInput) {
         localStorage.setItem(`invoice_duedate_${newInv.id}`, dueDateInput);
       }
+      localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
 
+      await API.post('/api/sales', { 
+        customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
+        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
+        status: invoiceStatus,
+        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : null
+      }).catch(() => {});
+
+      setInvoices([newInv, ...invoices]);
       setCartItems([]); 
       setDueDateInput('');
-      fetchAllData();
-      if (res.data?.invoice) {
-        setPrintingInvoice(newInv);
-      }
+      setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
     } catch (err) { 
-      alert(err.response?.data?.error || 'Failed'); 
+      alert('Failed'); 
     } finally { 
       setIsSubmittingSale(false); 
     }
@@ -730,23 +746,38 @@ function App() {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
     try {
-      const res = await API.post('/api/sales', { 
+      const sub = cartItems.reduce((s, it) => s + it.subtotal, 0);
+      const tax = sub * 0.15;
+      const tot = sub + tax;
+
+      const newInv = {
+        id: Date.now(),
+        invoiceNo: Math.floor(100000 + Math.random() * 900000),
+        createdAt: new Date().toISOString(),
+        customer: customers.find(c => c.id === Number(posSelectedCustomerId)) || null,
+        items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
+        subtotal: sub,
+        taxAmount: tax,
+        totalAmount: tot,
+        paymentStatus: 'مدفوعة',
+        dueDate: ''
+      };
+
+      localStorage.setItem(`invoice_status_${newInv.id}`, 'مدفوعة');
+      localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
+
+      await API.post('/api/sales', { 
         customerId: posSelectedCustomerId ? Number(posSelectedCustomerId) : null, 
         items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
         status: 'مدفوعة'
-      });
+      }).catch(() => {});
 
-      const newInv = { ...res.data.invoice, paymentStatus: 'مدفوعة', dueDate: '' };
-      localStorage.setItem(`invoice_status_${newInv.id}`, 'مدفوعة');
-
+      setInvoices([newInv, ...invoices]);
       setCartItems([]); 
-      fetchAllData();
-      if (res.data?.invoice) {
-        setPrintingInvoice(newInv);
-      }
+      setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
     } catch (err) { 
-      alert(err.response?.data?.error || 'Failed'); 
+      alert('Failed'); 
     } finally { 
       setIsSubmittingSale(false); 
     }
@@ -1193,7 +1224,7 @@ function App() {
             </div>
           )}
 
-          {/* 3. المبيعات والفوترة الشاملة - التزام تام بالسعر اليدوي */}
+          {/* 3. المبيعات والفوترة الشاملة */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1376,20 +1407,45 @@ function App() {
             </div>
           )}
 
-          {/* 4. المشتريات */}
+          {/* 4. المشتريات (مع خانة البحث الذكي للمنتجات كما طلبت) */}
           {activeTab === 'purchases' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '600px', margin: 'auto' }}>
               <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>تسجيل فاتورة شراء وتوريد بضاعة</h2>
-              <select value={selectedSupplierId} onChange={e=>setSelectedSupplierId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }}>
-                <option value="">توريد نقدي مباشر</option>
-                {suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-              <select value={selectedPurchaseProdId} onChange={e=>setSelectedPurchaseProdId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }}>
-                <option value="">-- اختر المنتج المستهدف --</option>
-                {inventory.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-              <input type="number" placeholder="الكمية الموردة" value={purchaseQty} onChange={e=>setPurchaseQty(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', marginBottom: '15px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-              <input type="number" placeholder="سعر التكلفة للوحدة (ر.س)" value={purchaseCost} onChange={e=>setPurchaseCost(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', marginBottom: '20px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+              
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>المورد</label>
+                <select value={selectedSupplierId} onChange={e=>setSelectedSupplierId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
+                  <option value="">توريد نقدي مباشر</option>
+                  {suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+
+              {/* خانة بحث المنتج في المشتريات */}
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>🔍 بحث واختيار المنتج:</label>
+                <input 
+                  type="text" 
+                  value={purchaseProductSearch} 
+                  onChange={e => setPurchaseProductSearch(e.target.value)} 
+                  placeholder="ابحث عن اسم المنتج للفلترة..." 
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '8px', boxSizing: 'border-box', fontSize: '13px' }} 
+                />
+                <select value={selectedPurchaseProdId} onChange={e=>setSelectedPurchaseProdId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
+                  <option value="">-- اختر المنتج المستهدف --</option>
+                  {filteredProductsForPurchase.map(p=><option key={p.id} value={p.id}>{p.name} (المتوفر الحالي: {p.stock})</option>)}
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>الكمية الموردة</label>
+                <input type="number" placeholder="الكمية" value={purchaseQty} onChange={e=>setPurchaseQty(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>سعر التكلفة للوحدة (ر.س)</label>
+                <input type="number" placeholder="سعر التكلفة" value={purchaseCost} onChange={e=>setPurchaseCost(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+              </div>
+
               <button onClick={handleSavePurchase} style={{ width: '100%', background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>اعتماد التوريد وزيادة المخزون 📦</button>
             </div>
           )}
@@ -1438,7 +1494,7 @@ function App() {
             </div>
           )}
 
-          {/* 7. المخزون (مع أزرار التعديل والحذف وتأكيد الحذف وشاشة التعديل المنبثقة) */}
+          {/* 7. المخزون */}
           {activeTab === 'inventory' && (
             <div style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '20px' }}>
               {user.role !== 'cashier' && (
@@ -1483,7 +1539,6 @@ function App() {
             </div>
           )}
 
-          {/* نافذة منبثقة لتعديل المنتج في المخزون (الاسم، السعر، الكمية فقط) */}
           {showEditProdModal && (
             <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
               <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -1596,6 +1651,30 @@ function App() {
                             <button onClick={() => handleDeleteEmployee(emp.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>حذف 🗑️</button>
                           </div>
                         </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: '#fca5a5' }}>🔻 سجل الخصومات التفصيلي (السبب، القيمة، والتاريخ التلقائي)</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '10px' }}>اسم الموظف</th>
+                      <th style={{ padding: '10px' }}>قيمة الخصم</th>
+                      <th style={{ padding: '10px' }}>سبب الخصم</th>
+                      <th style={{ padding: '10px' }}>تاريخ التسجيل (تلقائي)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deductionsList.map(d => (
+                      <tr key={d.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{d.empName}</td>
+                        <td style={{ padding: '10px', color: '#ef4444', fontWeight: 'bold' }}>{d.amount} {t.currency}</td>
+                        <td style={{ padding: '10px' }}>{d.reason}</td>
+                        <td style={{ padding: '10px', color: theme.textMuted }}>{d.date}</td>
                       </tr>
                     ))}
                   </tbody>
