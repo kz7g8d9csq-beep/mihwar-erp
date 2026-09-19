@@ -497,8 +497,6 @@ function App() {
     const saved = localStorage.getItem('mihwar_low_stock_threshold');
     return saved ? Number(saved) : 30;
   });
-  const [tempThreshold, setTempThreshold] = useState(lowStockThreshold);
-  const [isEditingThreshold, setIsEditingThreshold] = useState(false);
 
   const [printingInvoice, setPrintingInvoice] = useState(null);
   const [currentPass, setCurrentPass] = useState('');
@@ -1010,7 +1008,6 @@ function App() {
 
         <main style={{ padding: '30px', flex: 1, boxSizing: 'border-box' }}>
           
-          {/* لوحة التحكم الشاملة والغنية بالرسوم البيانية وتنبيهات المخزون القابلة للتخصيص */}
           {activeTab === 'dashboard' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               
@@ -1018,35 +1015,6 @@ function App() {
                 <div>
                   <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.welcome} {user.name} 👋</h2>
                   <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>مرحباً بك في لوحة التحكم المركزية لنظام محور.</p>
-                </div>
-                
-                <div style={{ background: theme.bgMain, padding: '10px 15px', borderRadius: '10px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 'bold' }}>حد تنبيه المخزون:</span>
-                  {isEditingThreshold ? (
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                      <input 
-                        type="number" 
-                        value={tempThreshold} 
-                        onChange={e => setTempThreshold(Number(e.target.value))} 
-                        style={{ width: '50px', padding: '4px', borderRadius: '4px', border: '1px solid #d97706', background: theme.cardBg, color: theme.textDark, textAlign: 'center', fontWeight: 'bold' }} 
-                      />
-                      <button 
-                        onClick={() => {
-                          setLowStockThreshold(tempThreshold);
-                          localStorage.setItem('mihwar_low_stock_threshold', tempThreshold);
-                          setIsEditingThreshold(false);
-                        }} 
-                        style={{ background: '#d97706', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}
-                      >
-                        حفظ
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <strong style={{ color: '#d97706', fontSize: '14px' }}>{lowStockThreshold} قطعة</strong>
-                      <button onClick={() => setIsEditingThreshold(true)} style={{ background: 'transparent', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline' }}>تعديل</button>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -1057,7 +1025,7 @@ function App() {
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.netProfit}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
               </div>
 
-              {/* قسم التنبيهات مع إمكانية تعديل الحد الأدنى المباشرة بناءً على طلبك الأخير */}
+              {/* قسم التنبيهات مع خانة الإدخال المباشرة للحد الأدنى للمخزون في نفس مكان التنبيه تماماً */}
               <div style={{ background: lowStockItems.length > 0 ? '#7f1d1d22' : theme.cardBg, borderRadius: '16px', border: `1px solid ${lowStockItems.length > 0 ? '#7f1d1d' : theme.border}`, padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <div>
                   <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#fca5a5' : theme.textDark }}>
@@ -1074,9 +1042,9 @@ function App() {
                   )}
                 </div>
 
-                {/* زر وتعديل الحد الأدنى في مكان التنبيه بناءً على طلبك */}
+                {/* خانة التحكم المباشر بالحد الأدنى للمخزون */}
                 <div style={{ background: theme.bgMain, padding: '12px 18px', borderRadius: '10px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 'bold' }}>تحديد الحد الأدنى للمخزون:</span>
+                  <span style={{ fontSize: '13px', fontWeight: 'bold' }}>تحديد الحد الأدنى:</span>
                   <input 
                     type="number" 
                     value={lowStockThreshold} 
