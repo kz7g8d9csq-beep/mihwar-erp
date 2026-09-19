@@ -109,6 +109,7 @@ const dict = {
     hrTitle: 'الموارد البشرية والرواتب',
     hrSub: 'إدارة الموظفين، الرواتب، الأجازات، الخصومات المفتوحة، والوثائق.',
     addEmpBtn: 'إضافة موظف جديد +',
+    searchEmpPlaceholder: '🔍 ابحث عن موظف بالاسم أو رقم الهوية / الإقامة...',
     empName: 'الاسم الكامل *',
     empIdNumber: 'رقم الهوية / الإقامة',
     empNumber: 'رقم الموظف',
@@ -116,6 +117,7 @@ const dict = {
     empDept: 'القسم',
     empPhone: 'رقم الهاتف',
     empSalary: 'الراتب الأساسي (ر.س)',
+    empDeductions: 'الخصومات الشهرية (ر.س)',
     empVacations: 'رصيد الأجازات (أيام)',
     empInsurance: 'التأمين الطبي',
     empStatus: 'الحالة',
@@ -183,6 +185,7 @@ const dict = {
     hrTitle: 'Human Resources & Payroll',
     hrSub: 'Manage employees, salaries, vacations, open deductions, and documents.',
     addEmpBtn: 'Add New Employee +',
+    searchEmpPlaceholder: '🔍 Search by name or National ID / Iqama...',
     empName: 'Full Name *',
     empIdNumber: 'National ID / Iqama',
     empNumber: 'Employee ID',
@@ -190,6 +193,7 @@ const dict = {
     empDept: 'Department',
     empPhone: 'Phone Number',
     empSalary: 'Basic Salary (SAR)',
+    empDeductions: 'Monthly Deductions (SAR)',
     empVacations: 'Vacation Balance (Days)',
     empInsurance: 'Medical Insurance',
     empStatus: 'Status',
@@ -309,7 +313,7 @@ function App() {
   const [purchaseQty, setPurchaseQty] = useState(10);
   const [purchaseCost, setPurchaseCost] = useState('');
 
-  // حالات إدارة الموارد البشرية والخصومات المفتوحة
+  // حالات إدارة الموارد البشرية والبحث السريع
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
@@ -335,6 +339,8 @@ function App() {
     ];
   });
   
+  const [hrSearchQuery, setHrSearchQuery] = useState(''); // حالة البحث في الموارد البشرية
+
   const [showAddEmpModal, setShowAddEmpModal] = useState(false);
   const [empName, setEmpName] = useState('');
   const [empIdNumber, setEmpIdNumber] = useState('');
@@ -350,7 +356,6 @@ function App() {
   const [empHealthEnd, setEmpHealthEnd] = useState('');
   const [empContractEnd, setEmpContractEnd] = useState('');
 
-  // نافذة إدارة الخصومات المفتوحة لكل موظف
   const [managingDeductionsEmp, setManagingDeductionsEmp] = useState(null);
   const [newDeductionAmount, setNewDeductionAmount] = useState('');
   const [newDeductionReason, setNewDeductionReason] = useState('');
@@ -438,7 +443,6 @@ function App() {
     localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
   };
 
-  // دوال إدارة الخصومات المفتوحة (إضافة وحذف/إعفاء مع تاريخ تلقائي)
   const handleAddDeduction = (e) => {
     e.preventDefault();
     if (!managingDeductionsEmp || !newDeductionAmount) return;
@@ -569,6 +573,15 @@ function App() {
     const totalEmpDed = (e.deductionsList || []).reduce((s, d) => s + Number(d.amount || 0), 0);
     return sum + Math.max(0, Number(e.salary || 0) - totalEmpDed);
   }, 0);
+
+  // تصفية الموظفين بناءً على حقل البحث (بالاسم أو برقم الهوية/الإقامة)
+  const filteredEmployees = employees.filter(emp => {
+    const q = hrSearchQuery.toLowerCase();
+    const nameMatch = emp.name.toLowerCase().includes(q);
+    const idMatch = String(emp.idNumber).toLowerCase().includes(q);
+    const noMatch = String(emp.empNo).toLowerCase().includes(q);
+    return nameMatch || idMatch || noMatch;
+  });
 
   const currentYear = new Date().getFullYear();
   const currentYearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === currentYear);
@@ -814,74 +827,6 @@ function App() {
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.purchasesTotal}</p><h2 style={{ color: '#f59e0b', margin: '8px 0 0 0', fontSize: '22px' }}>{totalPurchasesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.netProfit}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
               </div>
-
-              <div style={{ background: lowStockItems.length > 0 ? '#7f1d1d22' : theme.cardBg, borderRadius: '16px', border: `1px solid ${lowStockItems.length > 0 ? '#7f1d1d' : theme.border}`, padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                <div>
-                  <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#fca5a5' : theme.textDark }}>
-                    {lowStockItems.length > 0 ? `⚠️ تنبيه: يوجد ${lowStockItems.length} صنف وصل للحد الأدنى للمخزون (${lowStockThreshold} قطع أو أقل)` : t.lowStockClean}
-                  </h3>
-                  {lowStockItems.length > 0 && (
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
-                      {lowStockItems.map(item => (
-                        <span key={item.id} style={{ background: '#7f1d1d', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>
-                          {item.name} (المتبقي: {item.stock})
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div style={{ background: theme.bgMain, padding: '12px 18px', borderRadius: '10px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 'bold' }}>تحديد الحد الأدنى:</span>
-                  <input type="number" value={lowStockThreshold} onChange={e => { const val = Number(e.target.value); setLowStockThreshold(val); localStorage.setItem('mihwar_low_stock_threshold', val); }} style={{ width: '65px', padding: '6px', borderRadius: '6px', border: '1px solid #d97706', background: theme.cardBg, color: theme.textDark, textAlign: 'center', fontWeight: 'bold', outline: 'none' }} />
-                  <span style={{ fontSize: '12px', color: theme.textMuted }}>قطعة</span>
-                </div>
-              </div>
-
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📅 تحليل أداء مبيعات السنة الحالية ({currentYear})</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
-                  <thead>
-                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '10px' }}>الشهر</th>
-                      <th style={{ padding: '10px' }}>عدد الفواتير</th>
-                      <th style={{ padding: '10px' }}>إجمالي المبيعات (ر.س)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {monthlyData.map((m, idx) => (
-                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{m.monthName}</td>
-                        <td style={{ padding: '10px' }}>{m.count} فاتورة</td>
-                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#10b981' }}>{m.total.toFixed(2)} {t.currency}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📊 سجل النمو المالي للسنوات الماضية</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
-                  <thead>
-                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '10px' }}>السنة المالية</th>
-                      <th style={{ padding: '10px' }}>عدد الفواتير</th>
-                      <th style={{ padding: '10px' }}>إجمالي المبيعات</th>
-                      <th style={{ padding: '10px' }}>صافي الربح</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pastYearsData.map((y, idx) => (
-                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#d97706' }}>{y.year}</td>
-                        <td style={{ padding: '10px' }}>{y.count} فاتورة</td>
-                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{y.totalSales.toFixed(2)} {t.currency}</td>
-                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#10b981' }}>+{y.totalProfit.toFixed(2)} {t.currency}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </div>
           )}
 
@@ -1070,7 +1015,7 @@ function App() {
             </div>
           )}
 
-          {/* 9. الموارد البشرية مع الخصومات المفتوحة وتاريخها */}
+          {/* 9. الموارد البشرية مع خيار البحث الشامل (بالاسم أو برقم الهوية/الإقامة) */}
           {activeTab === 'hr' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -1081,6 +1026,17 @@ function App() {
                 <button onClick={() => setShowAddEmpModal(true)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 22px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
                   {t.addEmpBtn}
                 </button>
+              </div>
+
+              {/* شريط البحث السريع عن الموظفين بالاسم أو برقم الهوية */}
+              <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <input 
+                  type="text" 
+                  value={hrSearchQuery} 
+                  onChange={e => setHrSearchQuery(e.target.value)} 
+                  placeholder={t.searchEmpPlaceholder} 
+                  style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '14px' }} 
+                />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
@@ -1100,181 +1056,56 @@ function App() {
                   <thead>
                     <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
                       <th style={{ padding: '12px' }}>الموظف</th>
+                      <th style={{ padding: '12px' }}>رقم الإقامة / الهوية</th>
                       <th style={{ padding: '12px' }}>المسمى والقسم</th>
-                      <th style={{ padding: '12px' }}>الراتب الأساسي</th>
-                      <th style={{ padding: '12px' }}>الخصومات المسجلة</th>
-                      <th style={{ padding: '12px' }}>الصافي المستحق</th>
+                      <th style={{ padding: '12px' }}>الهاتف</th>
+                      <th style={{ padding: '12px' }}>الراتب والخصومات</th>
+                      <th style={{ padding: '12px' }}>التأمين والأجازات</th>
+                      <th style={{ padding: '12px' }}>انتهاء الوثائق</th>
                       <th style={{ padding: '12px' }}>إدارة الخصومات</th>
                       <th style={{ padding: '12px' }}>الإجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {employees.map(emp => {
-                      const totalEmpDed = (emp.deductionsList || []).reduce((s, d) => s + Number(d.amount || 0), 0);
-                      const netSalary = Math.max(0, Number(emp.salary || 0) - totalEmpDed);
-                      return (
-                        <tr key={emp.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                          <td style={{ padding: '12px', fontWeight: 'bold' }}>{emp.name} <span style={{ fontSize: '11px', color: theme.textMuted }}>(#{emp.empNo})</span></td>
-                          <td style={{ padding: '12px' }}>{emp.role} <br/><span style={{ color: '#2dd4bf', fontSize: '11px' }}>{emp.dept}</span></td>
-                          <td style={{ padding: '12px', fontWeight: 'bold' }}>{emp.salary} {t.currency}</td>
-                          <td style={{ padding: '12px' }}>
-                            {(!emp.deductionsList || emp.deductionsList.length === 0) ? (
-                              <span style={{ color: '#94a3b8', fontSize: '12px' }}>لا توجد خصومات</span>
-                            ) : (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                {emp.deductionsList.map(ded => (
-                                  <div key={ded.id} style={{ background: '#7f1d1d33', border: '1px solid #7f1d1d', padding: '3px 6px', borderRadius: '4px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', gap: '10px', alignItems: 'center' }}>
-                                    <span><strong>{ded.amount} ر.س</strong> ({ded.reason}) - {ded.date}</span>
-                                    <button onClick={() => { setManagingDeductionsEmp(emp); handleRemoveDeduction(ded.id); }} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '3px', padding: '1px 5px', fontSize: '10px', cursor: 'pointer' }}>إعفاء ✖</button>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </td>
-                          <td style={{ padding: '12px', fontWeight: 'bold', color: '#10b981' }}>{netSalary.toFixed(2)} {t.currency}</td>
-                          <td style={{ padding: '12px' }}>
-                            <button onClick={() => setManagingDeductionsEmp(emp)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>إدارة الخصومات ➕</button>
-                          </td>
-                          <td style={{ padding: '12px' }}>
-                            <button onClick={() => handleDeleteEmployee(emp.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>حذف</button>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {filteredEmployees.length === 0 ? (
+                      <tr>
+                        <td colSpan="9" style={{ textAlign: 'center', padding: '30px', color: theme.textMuted }}>لا توجد نتائج مطابقة لبحثك.</td>
+                      </tr>
+                    ) : (
+                      filteredEmployees.map(emp => {
+                        const totalEmpDed = (emp.deductionsList || []).reduce((s, d) => s + Number(d.amount || 0), 0);
+                        const netSalary = Math.max(0, Number(emp.salary || 0) - totalEmpDed);
+                        return (
+                          <tr key={emp.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                            <td style={{ padding: '12px', fontWeight: 'bold' }}>{emp.name} <span style={{ fontSize: '11px', color: theme.textMuted }}>(#{emp.empNo})</span></td>
+                            <td style={{ padding: '12px' }}>{emp.idNumber}</td>
+                            <td style={{ padding: '12px' }}>{emp.role} <br/><span style={{ color: '#2dd4bf', fontSize: '11px' }}>{emp.dept}</span></td>
+                            <td style={{ padding: '12px' }}>{emp.phone}</td>
+                            <td style={{ padding: '12px' }}>
+                              <span style={{ color: '#10b981', fontWeight: 'bold' }}>{emp.salary} {t.currency}</span>
+                              <br/><span style={{ color: '#ef4444', fontSize: '11px' }}>خصم: {totalEmpDed} {t.currency}</span>
+                            </td>
+                            <td style={{ padding: '12px' }}>
+                              <span>{emp.insurance}</span>
+                              <br/><span style={{ color: '#38bdf8', fontSize: '11px' }}>أجازات: {emp.vacations} يوم</span>
+                            </td>
+                            <td style={{ padding: '12px', fontSize: '11px' }}>
+                              إقامة: {emp.iqamaEnd} <br/>
+                              صحي: {emp.healthEnd} <br/>
+                              عقد: {emp.contractEnd}
+                            </td>
+                            <td style={{ padding: '12px' }}>
+                              <button onClick={() => setManagingDeductionsEmp(emp)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>إدارة الخصومات ➕</button>
+                            </td>
+                            <td style={{ padding: '12px' }}>
+                              <button onClick={() => handleDeleteEmployee(emp.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>حذف</button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
-              </div>
-            </div>
-          )}
-
-          {/* نافذة إدارة الخصومات المفتوحة (إضافة سبب ومبلغ وتاريخ تلقائي وإعفاء/حذف) */}
-          {managingDeductionsEmp && (
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3500, padding: '15px' }}>
-              <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
-                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>إدارة خصومات الموظف: {managingDeductionsEmp.name}</h3>
-                  <button onClick={() => setManagingDeductionsEmp(null)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
-                </div>
-
-                <form onSubmit={handleAddDeduction} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '20px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px' }}>
-                    <input type="number" placeholder="مبلغ الخصم (ر.س)" value={newDeductionAmount} onChange={e=>setNewDeductionAmount(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-                    <input type="text" placeholder="سبب الخصم (مثال: تأخير، غياب...)" value={newDeductionReason} onChange={e=>setNewDeductionReason(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-                  </div>
-                  <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إضافة الخصم وتسجيل التاريخ تلقائياً ➕</button>
-                </form>
-
-                <h4 style={{ margin: '0 0 10px 0', fontSize: '15px' }}>سجل الخصومات الحالية (تاريخ آلي مع إمكانية الإعفاء):</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
-                  {(!managingDeductionsEmp.deductionsList || managingDeductionsEmp.deductionsList.length === 0) ? (
-                    <p style={{ color: theme.textMuted, fontSize: '13px' }}>لا توجد خصومات مسجلة لهذا الموظف حالياً.</p>
-                  ) : (
-                    managingDeductionsEmp.deductionsList.map(d => (
-                      <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme.bgMain, padding: '10px', borderRadius: '8px', border: `1px solid ${theme.border}`, fontSize: '13px' }}>
-                        <div>
-                          <strong style={{ color: '#ef4444' }}>{d.amount} ر.س</strong> - <span>{d.reason}</span>
-                          <span style={{ display: 'block', fontSize: '11px', color: theme.textMuted }}>تاريخ الخصم: {d.date}</span>
-                        </div>
-                        <button onClick={() => handleRemoveDeduction(d.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>إعفاء / حذف ✖</button>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <button onClick={() => setManagingDeductionsEmp(null)} style={{ width: '100%', background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '20px' }}>إغلاق</button>
-              </div>
-            </div>
-          )}
-
-          {/* نافذة إضافة موظف جديد شاملة */}
-          {showAddEmpModal && (
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-              <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
-                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>إضافة موظف جديد</h3>
-                  <button onClick={() => setShowAddEmpModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
-                </div>
-
-                <form onSubmit={handleSaveEmployee} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empName}</label>
-                      <input type="text" value={empName} onChange={e=>setEmpName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empNumber}</label>
-                      <input type="text" value={empNumber} onChange={e=>setEmpNumber(e.target.value)} placeholder="مثال: 22" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empIdNumber}</label>
-                      <input type="text" value={empIdNumber} onChange={e=>setEmpIdNumber(e.target.value)} placeholder="رقم الهوية أو الإقامة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empPhone}</label>
-                      <input type="text" value={empPhone} onChange={e=>setEmpPhone(e.target.value)} placeholder="05xxxxxxxx" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empRole}</label>
-                      <input type="text" value={empRole} onChange={e=>setEmpRole(e.target.value)} placeholder="المسمى الوظيفي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empDept}</label>
-                      <input type="text" value={empDept} onChange={e=>setEmpDept(e.target.value)} placeholder="القسم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empSalary}</label>
-                      <input type="number" value={empSalary} onChange={e=>setEmpSalary(e.target.value)} required placeholder="4000" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empVacations}</label>
-                      <input type="number" value={empVacations} onChange={e=>setEmpVacations(e.target.value)} placeholder="21" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empInsurance}</label>
-                      <input type="text" value={empInsurance} onChange={e=>setEmpInsurance(e.target.value)} placeholder="نوع التأمين الطبي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empStatus}</label>
-                      <select value={empStatus} onChange={e=>setEmpStatus(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }}>
-                        <option value="نشط">نشط</option>
-                        <option value="إجازة">إجازة</option>
-                        <option value="موقوف">موقوف</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                    <div>
-                      <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empIqamaEnd}</label>
-                      <input type="date" value={empIqamaEnd} onChange={e=>setEmpIqamaEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empHealthEnd}</label>
-                      <input type="date" value={empHealthEnd} onChange={e=>setEmpHealthEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empContractEnd}</label>
-                      <input type="date" value={empContractEnd} onChange={e=>setEmpContractEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
-                    <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveEmp}</button>
-                    <button type="button" onClick={() => setShowAddEmpModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
-                  </div>
-                </form>
               </div>
             </div>
           )}
@@ -1342,6 +1173,138 @@ function App() {
           )}
         </main>
       </div>
+
+      {/* نافذة إدارة الخصومات المفتوحة */}
+      {managingDeductionsEmp && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3500, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>إدارة خصومات الموظف: {managingDeductionsEmp.name}</h3>
+              <button onClick={() => setManagingDeductionsEmp(null)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
+            </div>
+
+            <form onSubmit={handleAddDeduction} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px' }}>
+                <input type="number" placeholder="مبلغ الخصم (ر.س)" value={newDeductionAmount} onChange={e=>setNewDeductionAmount(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                <input type="text" placeholder="سبب الخصم (مثال: تأخير، غياب...)" value={newDeductionReason} onChange={e=>setNewDeductionReason(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+              </div>
+              <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إضافة الخصم وتسجيل التاريخ تلقائياً ➕</button>
+            </form>
+
+            <h4 style={{ margin: '0 0 10px 0', fontSize: '15px' }}>سجل الخصومات الحالية (تاريخ آلي مع إمكانية الإعفاء):</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
+              {(!managingDeductionsEmp.deductionsList || managingDeductionsEmp.deductionsList.length === 0) ? (
+                <p style={{ color: theme.textMuted, fontSize: '13px' }}>لا توجد خصومات مسجلة لهذا الموظف حالياً.</p>
+              ) : (
+                managingDeductionsEmp.deductionsList.map(d => (
+                  <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme.bgMain, padding: '10px', borderRadius: '8px', border: `1px solid ${theme.border}`, fontSize: '13px' }}>
+                    <div>
+                      <strong style={{ color: '#ef4444' }}>{d.amount} ر.س</strong> - <span>{d.reason}</span>
+                      <span style={{ display: 'block', fontSize: '11px', color: theme.textMuted }}>تاريخ الخصم: {d.date}</span>
+                    </div>
+                    <button onClick={() => handleRemoveDeduction(d.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>إعفاء / حذف ✖</button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <button onClick={() => setManagingDeductionsEmp(null)} style={{ width: '100%', background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '20px' }}>إغلاق</button>
+          </div>
+        </div>
+      )}
+
+      {/* نافذة إضافة موظف جديد شاملة */}
+      {showAddEmpModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>إضافة موظف جديد</h3>
+              <button onClick={() => setShowAddEmpModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
+            </div>
+
+            <form onSubmit={handleSaveEmployee} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empName}</label>
+                  <input type="text" value={empName} onChange={e=>setEmpName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empNumber}</label>
+                  <input type="text" value={empNumber} onChange={e=>setEmpNumber(e.target.value)} placeholder="مثال: 22" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empIdNumber}</label>
+                  <input type="text" value={empIdNumber} onChange={e=>setEmpIdNumber(e.target.value)} placeholder="رقم الهوية أو الإقامة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empPhone}</label>
+                  <input type="text" value={empPhone} onChange={e=>setEmpPhone(e.target.value)} placeholder="05xxxxxxxx" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empRole}</label>
+                  <input type="text" value={empRole} onChange={e=>setEmpRole(e.target.value)} placeholder="المسمى الوظيفي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empDept}</label>
+                  <input type="text" value={empDept} onChange={e=>setEmpDept(e.target.value)} placeholder="القسم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empSalary}</label>
+                  <input type="number" value={empSalary} onChange={e=>setEmpSalary(e.target.value)} required placeholder="4000" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empVacations}</label>
+                  <input type="number" value={empVacations} onChange={e=>setEmpVacations(e.target.value)} placeholder="21" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empInsurance}</label>
+                  <input type="text" value={empInsurance} onChange={e=>setEmpInsurance(e.target.value)} placeholder="نوع التأمين الطبي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empStatus}</label>
+                  <select value={empStatus} onChange={e=>setEmpStatus(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }}>
+                    <option value="نشط">نشط</option>
+                    <option value="إجازة">إجازة</option>
+                    <option value="موقوف">موقوف</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empIqamaEnd}</label>
+                  <input type="date" value={empIqamaEnd} onChange={e=>setEmpIqamaEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empHealthEnd}</label>
+                  <input type="date" value={empHealthEnd} onChange={e=>setEmpHealthEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empContractEnd}</label>
+                  <input type="date" value={empContractEnd} onChange={e=>setEmpContractEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveEmp}</button>
+                <button type="button" onClick={() => setShowAddEmpModal(false)} style={{ flex: '1', background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {printingInvoice && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
