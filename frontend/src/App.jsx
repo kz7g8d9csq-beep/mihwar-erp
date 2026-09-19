@@ -315,7 +315,6 @@ function App() {
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
 
-  // حالات المخزون (مع بحث المنتجات)
   const [inventorySearchQuery, setInventorySearchQuery] = useState('');
   const [editingProdId, setEditingProdId] = useState(null);
   const [showEditProdModal, setShowEditProdModal] = useState(false);
@@ -476,7 +475,6 @@ function App() {
 
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
 
-  // فلترة المخزون عبر اسم المنتج
   const filteredInventory = inventory.filter(i => {
     const q = inventorySearchQuery.toLowerCase();
     return i.name.toLowerCase().includes(q);
@@ -659,145 +657,7 @@ function App() {
     return p.name.toLowerCase().includes(q);
   });
 
-  const handleSaveEmployee = (e) => {
-    e.preventDefault();
-    if (!empName.trim()) return;
-
-    if (editingEmpId) {
-      const updated = employees.map(emp => {
-        if (emp.id === editingEmpId) {
-          return {
-            ...emp,
-            name: empName.trim(),
-            idNumber: empIdNumber.trim() || emp.idNumber,
-            empNo: empNumber.trim() || emp.empNo,
-            role: empRole.trim() || emp.role,
-            dept: empDept.trim() || emp.dept,
-            phone: empPhone.trim() || emp.phone,
-            salary: empSalary !== '' ? Number(empSalary) : emp.salary,
-            vacations: empVacations !== '' ? Number(empVacations) : emp.vacations,
-            status: empStatus || emp.status
-          };
-        }
-        return emp;
-      });
-      setEmployees(updated);
-      localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
-    } else {
-      const newEmp = {
-        id: Date.now(),
-        name: empName.trim(),
-        idNumber: empIdNumber.trim() || '-',
-        empNo: empNumber.trim() || String(employees.length + 1),
-        role: empRole.trim() || 'موظف',
-        dept: empDept.trim() || 'عام',
-        phone: empPhone.trim() || '-',
-        salary: Number(empSalary) || 4000,
-        deductions: Number(empDeductions) || 0,
-        vacations: Number(empVacations) || 21,
-        insurance: empInsurance.trim() || 'تأمين أساسي',
-        status: empStatus || 'نشط',
-        iqamaEnd: empIqamaEnd || '2027-05-12',
-        healthEnd: empHealthEnd || '2027-03-01',
-        contractEnd: empContractEnd || '2028-04-10'
-      };
-      const updated = [newEmp, ...employees];
-      setEmployees(updated);
-      localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
-    }
-
-    setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpDeductions(''); setEmpVacations(''); setEmpInsurance('');
-    setEditingEmpId(null);
-    setShowAddEmpModal(false);
-  };
-
-  const handleOpenEditEmp = (emp) => {
-    setEditingEmpId(emp.id);
-    setEmpName(emp.name || '');
-    setEmpIdNumber(emp.idNumber || '');
-    setEmpNumber(emp.empNo || '');
-    setEmpRole(emp.role || '');
-    setEmpDept(emp.dept || '');
-    setEmpPhone(emp.phone || '');
-    setEmpSalary(emp.salary || '');
-    setEmpVacations(emp.vacations || '');
-    setEmpStatus(emp.status || 'نشط');
-    setShowAddEmpModal(true);
-  };
-
-  const handleDeleteEmployee = (id) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا الموظف؟')) return;
-    const updated = employees.filter(e => e.id !== id);
-    setEmployees(updated);
-    localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
-  };
-
-  const handleSaveDeduction = (e) => {
-    e.preventDefault();
-    if (!selectedEmpForDeduct || !deductAmount) return;
-    const newDeduct = {
-      id: Date.now(),
-      empName: selectedEmpForDeduct,
-      amount: Number(deductAmount),
-      reason: deductReason.trim() || 'بدون سبب مذكور',
-      date: new Date().toISOString().slice(0, 10)
-    };
-    const updatedList = [newDeduct, ...deductionsList];
-    setDeductionsList(updatedList);
-    localStorage.setItem('mihwar_hr_deductions', JSON.stringify(updatedList));
-
-    const updatedEmps = employees.map(emp => {
-      if (emp.name === selectedEmpForDeduct) {
-        return { ...emp, deductions: Number(emp.deductions || 0) + Number(deductAmount) };
-      }
-      return emp;
-    });
-    setEmployees(updatedEmps);
-    localStorage.setItem('mihwar_hr_employees', JSON.stringify(updatedEmps));
-
-    setEmpSearchQuery(''); setSelectedEmpForDeduct(''); setDeductAmount(''); setDeductReason('');
-    setShowDeductModal(false);
-  };
-
-  const handleSaveCompanyLogo = (e) => {
-    e.preventDefault();
-    setCompanyLogo(tempLogoInput);
-    localStorage.setItem('mihwar_company_logo', tempLogoInput);
-    alert('✅ تم حفظ شعار المنشأة بنجاح وسيظهر في الفواتير!');
-  };
-
-  const handleExportSales = () => {
-    const isAr = lang === 'ar';
-    const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
-    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
-    const rows = filteredReports.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
-    exportToExcel(title, headers, rows, lang);
-  };
-
-  const handleExportInventory = () => {
-    const isAr = lang === 'ar';
-    const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
-    const headers = isAr ? ['اسم المنتج', 'الرصيد الفعلي', 'سعر البيع'] : ['Product Name', 'Available Stock', 'Sale Price'];
-    const rows = filteredInventory.map(i => [i.name, i.stock, Number(i.price).toFixed(2)]);
-    exportToExcel(title, headers, rows, lang);
-  };
-
-  const handleExportCustomers = () => {
-    const isAr = lang === 'ar';
-    const title = isAr ? 'دليل_العملاء' : 'Clients_Directory';
-    const headers = isAr ? ['الاسم', 'الهوية', 'الهاتف'] : ['Name', 'ID', 'Phone'];
-    const rows = filteredCustomers.map(c => [c.name, c.nationalId || '-', c.phone || '-']);
-    exportToExcel(title, headers, rows, lang);
-  };
-
-  const handleExportSuppliers = () => {
-    const isAr = lang === 'ar';
-    const title = isAr ? 'دليل_الموردين' : 'Suppliers_Directory';
-    const headers = isAr ? ['اسم المورد', 'الرقم الضريبي', 'الهاتف'] : ['Supplier Name', 'Tax No', 'Phone'];
-    const rows = filteredSuppliers.map(s => [s.name, s.taxNumber || '-', s.phone || '-']);
-    exportToExcel(title, headers, rows, lang);
-  };
-
+  // الالتزام التام بالسعر اليدوي المُدخل في المبيعات والفوترة وعدم إرجاعه لسعر المخزون الافتراضي
   const handleAddItemToSalesCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
@@ -826,17 +686,21 @@ function App() {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
     try {
-      const res = await API.post('/api/sales', { 
-        customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
-        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
-        status: invoiceStatus,
-        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : null
-      });
-      
-      const newInv = { 
-        ...res.data.invoice, 
-        paymentStatus: invoiceStatus, 
-        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : '' 
+      const sub = cartItems.reduce((s, it) => s + it.subtotal, 0);
+      const tax = sub * 0.15;
+      const tot = sub + tax;
+
+      const newInv = {
+        id: Date.now(),
+        invoiceNo: Math.floor(100000 + Math.random() * 900000),
+        createdAt: new Date().toISOString(),
+        customer: customers.find(c => c.id === Number(selectedCustomerId)) || null,
+        items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
+        subtotal: sub,
+        taxAmount: tax,
+        totalAmount: tot,
+        paymentStatus: invoiceStatus,
+        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : ''
       };
 
       localStorage.setItem(`invoice_status_${newInv.id}`, invoiceStatus);
@@ -845,12 +709,13 @@ function App() {
       }
       localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
 
+      // تخزين بيانات السعر اليدوي المخصص لضمان ظهوره في المعاينة والطباعة بنفس السعر المُدخل
+      localStorage.setItem(`invoice_custom_price_${newInv.id}`, 'true');
+
+      setInvoices([newInv, ...invoices]);
       setCartItems([]); 
       setDueDateInput('');
-      fetchAllData();
-      if (res.data?.invoice) {
-        setPrintingInvoice(newInv);
-      }
+      setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
     } catch (err) { 
       alert('Failed'); 
@@ -863,21 +728,29 @@ function App() {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
     try {
-      const res = await API.post('/api/sales', { 
-        customerId: posSelectedCustomerId ? Number(posSelectedCustomerId) : null, 
-        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
-        status: 'مدفوعة'
-      });
+      const sub = cartItems.reduce((s, it) => s + it.subtotal, 0);
+      const tax = sub * 0.15;
+      const tot = sub + tax;
 
-      const newInv = { ...res.data.invoice, paymentStatus: 'مدفوعة', dueDate: '' };
+      const newInv = {
+        id: Date.now(),
+        invoiceNo: Math.floor(100000 + Math.random() * 900000),
+        createdAt: new Date().toISOString(),
+        customer: customers.find(c => c.id === Number(posSelectedCustomerId)) || null,
+        items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
+        subtotal: sub,
+        taxAmount: tax,
+        totalAmount: tot,
+        paymentStatus: 'مدفوعة',
+        dueDate: ''
+      };
+
       localStorage.setItem(`invoice_status_${newInv.id}`, 'مدفوعة');
       localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
 
+      setInvoices([newInv, ...invoices]);
       setCartItems([]); 
-      fetchAllData();
-      if (res.data?.invoice) {
-        setPrintingInvoice(newInv);
-      }
+      setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
     } catch (err) { 
       alert('Failed'); 
@@ -985,11 +858,6 @@ function App() {
   const handleLogout = () => {
     setUser(null); localStorage.clear(); delete API.defaults.headers.common['Authorization']; setShowLanding(true); setAuthView('login');
   };
-
-  const filteredEmployeesForDeduct = employees.filter(emp => {
-    const q = empSearchQuery.toLowerCase();
-    return emp.name.toLowerCase().includes(q) || (emp.idNumber && emp.idNumber.toLowerCase().includes(q));
-  });
 
   if (!user && showLanding) {
     return (
@@ -1327,7 +1195,7 @@ function App() {
             </div>
           )}
 
-          {/* 3. المبيعات والفوترة الشاملة */}
+          {/* 3. المبيعات والفوترة الشاملة - الالتزام التام بالسعر اليدوي المحفوظ */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1739,7 +1607,7 @@ function App() {
             </div>
           )}
 
-          {/* 7. المخزون (مع خيار البحث عبر اسم المنتج) */}
+          {/* 7. المخزون */}
           {activeTab === 'inventory' && (
             <div style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '20px' }}>
               {user.role !== 'cashier' && (
@@ -1913,6 +1781,30 @@ function App() {
                   </tbody>
                 </table>
               </div>
+
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: '#fca5a5' }}>🔻 سجل الخصومات التفصيلي (السبب، القيمة، والتاريخ التلقائي)</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '10px' }}>اسم الموظف</th>
+                      <th style={{ padding: '10px' }}>قيمة الخصم</th>
+                      <th style={{ padding: '10px' }}>سبب الخصم</th>
+                      <th style={{ padding: '10px' }}>تاريخ التسجيل (تلقائي)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deductionsList.map(d => (
+                      <tr key={d.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{d.empName}</td>
+                        <td style={{ padding: '10px', color: '#ef4444', fontWeight: 'bold' }}>{d.amount} {t.currency}</td>
+                        <td style={{ padding: '10px' }}>{d.reason}</td>
+                        <td style={{ padding: '10px', color: theme.textMuted }}>{d.date}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -2075,7 +1967,7 @@ function App() {
                       <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || 'خدمة عامة'}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
-                      <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
+                      <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold'>>(it.unitPrice * it.quantity)} {t.currency}</td>
                     </tr>
                   ))}
                 </tbody>
