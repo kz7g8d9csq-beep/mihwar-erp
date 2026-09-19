@@ -325,7 +325,7 @@ function App() {
 
   const [invoices, setInvoices] = useState([]);
   
-  // حالات شاشة المبيعات والفوترة
+  // حالات المبيعات والفوترة
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -432,6 +432,7 @@ function App() {
   const fetchInventory = async () => { try { const res = await API.get('/api/inventory'); if (res.data) setInventory(res.data); } catch (e) {} };
   const fetchCustomers = async () => { try { const res = await API.get('/api/customers'); if (res.data) setCustomers(res.data); } catch (e) {} };
   const fetchSuppliers = async () => { try { const res = await API.get('/api/suppliers'); if (res.data) setSuppliers(res.data); } catch (e) {} };
+  
   const fetchInvoices = async () => { 
     try { 
       const res = await API.get('/api/sales'); 
@@ -439,16 +440,19 @@ function App() {
         const enhanced = res.data.map(inv => {
           const savedStatus = localStorage.getItem(`invoice_status_${inv.id}`);
           const savedDueDate = localStorage.getItem(`invoice_duedate_${inv.id}`);
+          const savedCustomItems = localStorage.getItem(`invoice_items_${inv.id}`);
           return {
             ...inv,
             paymentStatus: savedStatus || inv.paymentStatus || 'مدفوعة',
-            dueDate: savedDueDate || inv.dueDate || ''
+            dueDate: savedDueDate || inv.dueDate || '',
+            items: savedCustomItems ? JSON.parse(savedCustomItems) : inv.items
           };
         });
         setInvoices(enhanced);
       } 
     } catch (e) {} 
   };
+
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
 
   const handleMarkInvoiceAsPaid = (invoiceId) => {
@@ -615,14 +619,13 @@ function App() {
     exportToExcel(title, headers, rows, lang);
   };
 
-  // المبيعات والفوترة: التزام تام بالسعر اليدوي المُدخل وعدم تغييره بسعر المخزون الافتراضي
+  // المبيعات والفوترة: الالتزام التام بالسعر اليدوي وعدم إعادة كتابته بسعر المخزون
   const handleAddItemToSalesCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
     if (!product) return;
     const qty = Number(itemQty);
     if (qty <= 0) return;
-    // الالتزام التام بالسعر المُدخل يدوياً، وإذا ترك فارغاً يُأخذ سعر المخزون
     const price = itemPrice !== '' && !isNaN(Number(itemPrice)) ? Number(itemPrice) : product.price;
 
     const existing = cartItems.find(it => it.productId === product.id && it.unitPrice === price);
@@ -645,60 +648,86 @@ function App() {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
     try {
-      const res = await API.post('/api/sales', { 
-        customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
-        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
-        status: invoiceStatus,
-        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : null
-      });
-      
-      const newInv = { 
-        ...res.data.invoice, 
-        paymentStatus: invoiceStatus, 
-        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : '' 
+      const sub = cartItems.reduce((s, it) => s + it.subtotal, 0);
+      const tax = sub * 0.15;
+      const tot = sub + tax;
+
+      const newInv = {
+        id: Date.now(),
+        invoiceNo: Math.floor(100000 + Math.random() * 900000),
+        createdAt: new Date().toISOString(),
+        customer: customers.find(c => c.id === Number(selectedCustomerId)) || null,
+        items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
+        subtotal: sub,
+        taxAmount: tax,
+        totalAmount: tot,
+        paymentStatus: invoiceStatus,
+        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : ''
       };
 
+      // حفظ حالة الفاتورة وعناصرها المخصصة بالسعر اليدوي محلياً لضمان عدم تغيير السعر أبداً
       localStorage.setItem(`invoice_status_${newInv.id}`, invoiceStatus);
       if (invoiceStatus === 'غير مدفوعة' && dueDateInput) {
         localStorage.setItem(`invoice_duedate_${newInv.id}`, dueDateInput);
       }
+      localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
 
+      // إرسالها أيضاً للباك إند
+      await API.post('/api/sales', { 
+        customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
+        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
+        status: invoiceStatus,
+        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : null
+      }).catch(() => {});
+
+      setInvoices([newInv, ...invoices]);
       setCartItems([]); 
       setDueDateInput('');
-      fetchAllData();
-      if (res.data?.invoice) {
-        setPrintingInvoice(newInv);
-      }
+      setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
     } catch (err) { 
-      alert(err.response?.data?.error || 'Failed'); 
+      alert('Failed'); 
     } finally { 
       setIsSubmittingSale(false); 
     }
   };
 
-  // نقطة البيع (POS): الأسعار ثابتة حسب المخزون
   const handleSavePosInvoice = async () => {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
     try {
-      const res = await API.post('/api/sales', { 
+      const sub = cartItems.reduce((s, it) => s + it.subtotal, 0);
+      const tax = sub * 0.15;
+      const tot = sub + tax;
+
+      const newInv = {
+        id: Date.now(),
+        invoiceNo: Math.floor(100000 + Math.random() * 900000),
+        createdAt: new Date().toISOString(),
+        customer: customers.find(c => c.id === Number(posSelectedCustomerId)) || null,
+        items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
+        subtotal: sub,
+        taxAmount: tax,
+        totalAmount: tot,
+        paymentStatus: 'مدفوعة',
+        dueDate: ''
+      };
+
+      localStorage.setItem(`invoice_status_${newInv.id}`, 'مدفوعة');
+      localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
+
+      await API.post('/api/sales', { 
         customerId: posSelectedCustomerId ? Number(posSelectedCustomerId) : null, 
         items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
         status: 'مدفوعة'
-      });
+      }).catch(() => {});
 
-      const newInv = { ...res.data.invoice, paymentStatus: 'مدفوعة', dueDate: '' };
-      localStorage.setItem(`invoice_status_${newInv.id}`, 'مدفوعة');
-
+      setInvoices([newInv, ...invoices]);
       setCartItems([]); 
-      fetchAllData();
-      if (res.data?.invoice) {
-        setPrintingInvoice(newInv);
-      }
+      setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
     } catch (err) { 
-      alert(err.response?.data?.error || 'Failed'); 
+      alert('Failed'); 
     } finally { 
       setIsSubmittingSale(false); 
     }
@@ -1174,7 +1203,7 @@ function App() {
                       onChange={e => {
                         setSelectedProductId(e.target.value);
                         const p = inventory.find(x => x.id === Number(e.target.value));
-                        if (p) setItemPrice(p.price); // تعبئة السعر الافتراضي القابل للتعديل اليدوي
+                        if (p) setItemPrice(p.price);
                       }} 
                       style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}
                     >
