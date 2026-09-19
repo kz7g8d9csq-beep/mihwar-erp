@@ -88,7 +88,8 @@ const dict = {
     workspace: 'مساحة العمل:',
     dashboard: 'لوحة التحكم',
     pos: 'نقطة البيع (POS)',
-    sales: 'الفواتير',
+    sales: 'المبيعات والفوترة',
+    invoicesList: 'سجل الفواتير',
     purchases: 'المشتريات',
     customers: 'العملاء',
     suppliers: 'الموردين',
@@ -152,6 +153,7 @@ const dict = {
     logoutBtn: 'تسجيل الخروج',
     taxInvoiceTitle: 'فاتورة ضريبية',
     invoiceStatusPaid: 'مدفوعة',
+    invoiceStatusUnpaid: 'غير مدفوعة',
     invoiceDueDateText: 'فوري (بدون مدة استحقاق)',
     clientCol: 'اسم العميل:',
     clientPhone: 'رقم الجوال:',
@@ -171,7 +173,8 @@ const dict = {
     workspace: 'Workspace:',
     dashboard: 'Dashboard',
     pos: 'POS Touch',
-    sales: 'Invoices',
+    sales: 'Sales & Invoicing',
+    invoicesList: 'Invoices List',
     purchases: 'Purchasing',
     customers: 'Clients',
     suppliers: 'Suppliers',
@@ -235,6 +238,7 @@ const dict = {
     logoutBtn: 'Sign Out',
     taxInvoiceTitle: 'Tax Invoice',
     invoiceStatusPaid: 'Paid',
+    invoiceStatusUnpaid: 'Unpaid',
     invoiceDueDateText: 'Immediate (No due term)',
     clientCol: 'Client Name:',
     clientPhone: 'Mobile No:',
@@ -299,7 +303,6 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [businessName, setBusinessName] = useState('نظام محور');
 
-  // شعار المنشأة المخزن في الـ localStorage لتظهر في الفاتورة
   const [companyLogo, setCompanyLogo] = useState(() => {
     return localStorage.getItem('mihwar_company_logo') || '';
   });
@@ -321,9 +324,13 @@ function App() {
   const [suppPhone, setSuppPhone] = useState('');
 
   const [invoices, setInvoices] = useState([]);
+  
+  // حالات شاشة المبيعات والفوترة الشاملة
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
   const [itemQty, setItemQty] = useState(1);
+  const [itemPrice, setItemPrice] = useState('');
+  const [invoiceStatus, setInvoiceStatus] = useState('مدفوعة'); // حالة الدفع: مدفوعة أو غير مدفوعة
   const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
@@ -333,7 +340,7 @@ function App() {
   const [purchaseQty, setPurchaseQty] = useState(10);
   const [purchaseCost, setPurchaseCost] = useState('');
 
-  // حالات الموارد البشرية والخصومات
+  // الموارد البشرية والخصومات والتعديل
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
@@ -402,8 +409,8 @@ function App() {
     if (user) {
       setBusinessName(user.businessName || 'نظام محور');
       fetchAllData();
-      if (user.role === 'cashier' && activeTab !== 'pos') {
-        setActiveTab('pos');
+      if (user.role === 'cashier' && activeTab !== 'sales') {
+        setActiveTab('sales');
       }
     }
   }, [user]);
@@ -421,6 +428,46 @@ function App() {
   const fetchSuppliers = async () => { try { const res = await API.get('/api/suppliers'); if (res.data) setSuppliers(res.data); } catch (e) {} };
   const fetchInvoices = async () => { try { const res = await API.get('/api/sales'); if (res.data) setInvoices(res.data); } catch (e) {} };
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
+
+  // إضافة صنف إلى سلة المبيعات والفوترة (مع التحكم بالسعر والكمية كتابةً أو أزرار)
+  const handleAddItemToSalesCart = () => {
+    if (!selectedProductId) return;
+    const product = inventory.find(p => p.id === Number(selectedProductId));
+    if (!product) return;
+    const qty = Number(itemQty);
+    if (qty <= 0) return;
+    const price = itemPrice !== '' ? Number(itemPrice) : product.price;
+
+    const existing = cartItems.find(it => it.productId === product.id);
+    const reqQ = (existing ? existing.quantity : 0) + qty;
+    if (reqQ > product.stock) { alert('Stock limit exceeded'); return; }
+
+    if (existing) {
+      setCartItems(cartItems.map(it => it.productId === product.id ? { ...it, quantity: reqQ, unitPrice: price, subtotal: Number((reqQ * price).toFixed(2)) } : it));
+    } else {
+      setCartItems([...cartItems, { productId: product.id, name: product.name, quantity: qty, unitPrice: price, subtotal: Number((qty * price).toFixed(2)) }]);
+    }
+    setSelectedProductId(''); setItemQty(1); setItemPrice('');
+  };
+
+  const handleRemoveSalesCartItem = (idx) => {
+    setCartItems(cartItems.filter((_, i) => i !== idx));
+  };
+
+  const handleSaveSalesInvoice = async () => {
+    if (!cartItems.length) return;
+    setIsSubmittingSale(true);
+    try {
+      const res = await API.post('/api/sales', { 
+        customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
+        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
+        status: invoiceStatus
+      });
+      setCartItems(''); fetchAllData();
+      if (res.data?.invoice) setPrintingInvoice({ ...res.data.invoice, paymentStatus: invoiceStatus });
+      setActiveTab('invoicesList');
+    } catch (err) { alert(err.response?.data?.error || 'Failed'); } finally { setIsSubmittingSale(false); }
+  };
 
   const handleSaveEmployee = (e) => {
     e.preventDefault();
@@ -559,34 +606,6 @@ function App() {
     const headers = isAr ? ['اسم المورد', 'الرقم الضريبي', 'الهاتف'] : ['Supplier Name', 'Tax No', 'Phone'];
     const rows = suppliers.map(s => [s.name, s.taxNumber || '-', s.phone || '-']);
     exportToExcel(title, headers, rows, lang);
-  };
-
-  const handleAddItemToCart = () => {
-    if (!selectedProductId) return;
-    const product = inventory.find(p => p.id === Number(selectedProductId));
-    if (!product) return;
-    const qty = Number(itemQty);
-    if (qty <= 0) return;
-    const existing = cartItems.find(it => it.productId === product.id);
-    const reqQ = (existing ? existing.quantity : 0) + qty;
-    if (reqQ > product.stock) { alert('Stock limit exceeded'); return; }
-    if (existing) {
-      setCartItems(cartItems.map(it => it.productId === product.id ? { ...it, quantity: reqQ, subtotal: Number((reqQ * product.price).toFixed(2)) } : it));
-    } else {
-      setCartItems([...cartItems, { productId: product.id, name: product.name, quantity: qty, price: product.price, subtotal: Number((qty * product.price).toFixed(2)) }]);
-    }
-    setSelectedProductId(''); setItemQty(1);
-  };
-
-  const handleSaveInvoice = async () => {
-    if (!cartItems.length) return;
-    setIsSubmittingSale(true);
-    try {
-      const res = await API.post('/api/sales', { customerId: selectedCustomerId ? Number(selectedCustomerId) : null, items: cartItems });
-      setCartItems([]); fetchAllData();
-      if (res.data?.invoice) setPrintingInvoice(res.data.invoice);
-      setActiveTab('sales');
-    } catch (err) { alert(err.response?.data?.error || 'Failed'); } finally { setIsSubmittingSale(false); }
   };
 
   const handleSavePurchase = async () => {
@@ -748,6 +767,7 @@ function App() {
     { id: 'dashboard', label: t.dashboard, adminOnly: true, icon: '📊' },
     { id: 'pos', label: t.pos, adminOnly: false, icon: '🛒' },
     { id: 'sales', label: t.sales, adminOnly: true, icon: '🧾' },
+    { id: 'invoicesList', label: t.invoicesList, adminOnly: true, icon: '📑' },
     { id: 'purchases', label: t.purchases, adminOnly: true, icon: '📥' },
     { id: 'customers', label: t.customers, adminOnly: true, icon: '👥' },
     { id: 'suppliers', label: t.suppliers, adminOnly: true, icon: '🏭' },
@@ -759,7 +779,7 @@ function App() {
   ];
 
   const availableTabs = user.role === 'cashier' 
-    ? allTabs.filter(tab => !tab.adminOnly || tab.id === 'pos' || tab.id === 'settings') 
+    ? allTabs.filter(tab => !tab.adminOnly || tab.id === 'pos' || tab.id === 'sales' || tab.id === 'invoicesList' || tab.id === 'settings') 
     : allTabs;
 
   return (
@@ -775,7 +795,7 @@ function App() {
         }
       `}</style>
 
-      {/* الشريط الجانبي (Sidebar) على اليمين */}
+      {/* الشريط الجانبي (Sidebar) */}
       <aside className="sidebar-nav" style={{ width: '260px', background: theme.sidebarBg, borderLeft: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '20px 0', boxSizing: 'border-box', minHeight: '100vh', position: 'sticky', top: 0, zIndex: 100 }}>
         <div>
           <div style={{ padding: '0 20px 20px 20px', borderBottom: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -947,7 +967,7 @@ function App() {
             </div>
           )}
 
-          {/* 2. نقطة البيع (POS) */}
+          {/* نقطة البيع (POS) */}
           {activeTab === 'pos' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '20px' }}>
@@ -999,7 +1019,7 @@ function App() {
                       <span style={{ color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span>
                     </div>
                   </div>
-                  <button onClick={handleSaveInvoice} disabled={!cartItems.length || isSubmittingSale} style={{ width: '100%', background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                  <button onClick={handleSaveSalesInvoice} disabled={!cartItems.length || isSubmittingSale} style={{ width: '100%', background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
                     إتمام الدفع وإصدار الفاتورة 💳
                   </button>
                 </div>
@@ -1007,11 +1027,130 @@ function App() {
             </div>
           )}
 
-          {/* 3. الفواتير */}
+          {/* 3. المبيعات والفوترة الشاملة (التي طلب إرجاعها بكل الخيارات) */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+                <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#d97706' }}>⚡ إصدار فاتورة بيع جديدة</h2>
+                
+                {/* اختيار العميل */}
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>العميل المستلم</label>
+                  <select value={selectedCustomerId} onChange={e=>setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
+                    <option value="">عميل نقدي عام (افتراضي)</option>
+                    {customers.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+
+                {/* اختيار المنتج وتحديد السعر والكمية يدوياً أو بالأزرار */}
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '10px', marginBottom: '15px', alignItems: 'end' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>اختيار المنتج</label>
+                    <select 
+                      value={selectedProductId} 
+                      onChange={e => {
+                        setSelectedProductId(e.target.value);
+                        const p = inventory.find(x => x.id === Number(e.target.value));
+                        if (p) setItemPrice(p.price);
+                      }} 
+                      style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}
+                    >
+                      <option value="">-- اختر المنتج --</option>
+                      {inventory.map(p=><option key={p.id} value={p.id}>{p.name} (متوفر: {p.stock})</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>السعر (ر.س)</label>
+                    <input type="number" value={itemPrice} onChange={e=>setItemPrice(e.target.value)} placeholder="السعر" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الكمية</label>
+                    <div style={{ display: 'flex', alignItems: 'center', background: theme.bgMain, borderRadius: '8px', border: `1px solid ${theme.border}`, padding: '3px' }}>
+                      <button type="button" onClick={() => setItemQty(Math.max(1, itemQty - 1))} style={{ background: '#ef4444', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>-</button>
+                      <input type="number" min="1" value={itemQty} onChange={e=>setItemQty(Math.max(1, Number(e.target.value)))} style={{ width: '35px', textAlign: 'center', border: 'none', background: 'transparent', fontWeight: 'bold', color: theme.textDark, outline: 'none', fontSize: '13px' }} />
+                      <button type="button" onClick={() => setItemQty(itemQty + 1)} style={{ background: '#d97706', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>+</button>
+                    </div>
+                  </div>
+
+                  <button onClick={handleAddItemToSalesCart} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '11px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>➕ إضافة</button>
+                </div>
+
+                {/* حالة الدفع */}
+                <div style={{ marginBottom: '20px', background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 'bold' }}>حالة الدفع:</span>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                    <input type="radio" name="payStatus" checked={invoiceStatus === 'مدفوعة'} onChange={() => setInvoiceStatus('مدفوعة')} /> مدفوعة
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                    <input type="radio" name="payStatus" checked={invoiceStatus === 'غير مدفوعة'} onChange={() => setInvoiceStatus('غير مدفوعة')} /> غير مدفوعة
+                  </label>
+                </div>
+
+                {/* جدول بنود السلة الحالية */}
+                <h3 style={{ margin: '0 0 10px 0', fontSize: '15px' }}>🛒 محتويات الفاتورة الحالية</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '20px' }}>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '8px' }}>المنتج</th>
+                      <th style={{ padding: '8px' }}>الكمية</th>
+                      <th style={{ padding: '8px' }}>السعر</th>
+                      <th style={{ padding: '8px' }}>المجموع</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cartItems.map((it, idx) => (
+                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '8px' }}>{it.name}</td>
+                        <td style={{ padding: '8px' }}>{it.quantity}</td>
+                        <td style={{ padding: '8px' }}>{it.unitPrice} {t.currency}</td>
+                        <td style={{ padding: '8px', color: '#10b981', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
+                        <td style={{ padding: '8px' }}><button onClick={() => handleRemoveSalesCartItem(idx)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>✖</button></td>
+                      </tr>
+                    ))}
+                    {!cartItems.length && (
+                      <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لم يتم إضافة أي صنف للفاتورة بعد.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+
+                <button onClick={handleSaveSalesInvoice} disabled={!cartItems.length || isSubmittingSale} style={{ width: '100%', background: '#10b981', color: '#fff', padding: '14px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>
+                  💳 إصدار الفاتورة واعتماد الخصم من المخزون
+                </button>
+              </div>
+
+              {/* ملخص الحسبة التلقائية */}
+              <div style={{ background: '#020617', borderRadius: '16px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#38bdf8' }}>ملخص الحسبة التلقائية</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#94a3b8' }}>المبلغ الخاضع للضريبة:</span>
+                      <strong>{cartSubtotal.toFixed(2)} {t.currency}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#94a3b8' }}>ضريبة القيمة المضافة (15%):</span>
+                      <strong>{cartTax.toFixed(2)} {t.currency}</strong>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ borderTop: '1px dashed #334155', paddingTop: '15px', marginTop: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold' }}>
+                    <span>الإجمالي النهائي:</span>
+                    <span style={{ color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* سجل الفواتير */}
+          {activeTab === 'invoicesList' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
-                <h2 style={{ margin: 0, fontSize: '18px' }}>سجل الفواتير والمبيعات المعتمدة</h2>
+                <h2 style={{ margin: 0, fontSize: '18px' }}>{t.invRepo}</h2>
                 <button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير إلى Excel 📥</button>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
@@ -1384,7 +1523,7 @@ function App() {
             </div>
           )}
 
-          {/* 11. الإعدادات (مع خيار إدخال أو رفع شعار المنشأة للفاتورة كما طلبتم) */}
+          {/* 11. الإعدادات */}
           {activeTab === 'settings' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
@@ -1399,7 +1538,6 @@ function App() {
                 </div>
               </div>
 
-              {/* قسم شعار المنشأة */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
                 <h3 style={{ margin: '0 0 5px 0', fontSize: '17px' }}>{t.companyLogoTitle}</h3>
                 <p style={{ fontSize: '12px', color: theme.textMuted, margin: '0 0 12px 0' }}>{t.companyLogoDesc}</p>
@@ -1434,10 +1572,7 @@ function App() {
               <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.closeModal}</button>
             </div>
 
-            {/* قالب الفاتورة المطابق تماماً لتصميم "جولد جم" */}
             <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
-              
-              {/* ترويسة الفاتورة (الشعار واسم المنشأة ورقم الفاتورة والحالة) */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
                 <div>
                   {companyLogo ? (
@@ -1448,14 +1583,13 @@ function App() {
                 </div>
                 <div style={{ textAlign: 'left' }}>
                   <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#d97706' }}>{t.taxInvoiceTitle}</h3>
-                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>{t.invoiceNo || 'رقم الفاتورة'}:</strong> INV-{printingInvoice.invoiceNo}</p>
-                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>الحالة:</strong> <span style={{ color: '#10b981', fontWeight: 'bold' }}>{t.invoiceStatusPaid}</span></p>
+                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>رقم الفاتورة:</strong> INV-{printingInvoice.invoiceNo}</p>
+                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>الحالة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#f43f5e' : '#10b981', fontWeight: 'bold' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
                   <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
                   <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الاستحقاق:</strong> {t.invoiceDueDateText}</p>
                 </div>
               </div>
 
-              {/* بيانات العميل */}
               <div style={{ background: '#f8fafc', padding: '12px 15px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', border: '1px solid #e2e8f0' }}>
                 <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#0f172a' }}>بيانات العميل:</h4>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
@@ -1463,7 +1597,6 @@ function App() {
                 <p style={{ margin: '3px 0' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
               </div>
 
-              {/* جدول المنتجات / الخدمات المطابق للتصميم */}
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#0f172a', color: '#fff' }}>
@@ -1485,7 +1618,6 @@ function App() {
                 </tbody>
               </table>
 
-              {/* تفاصيل المبالغ النهائية والضريبة */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '15px' }}>
                 <img src={generateZatcaQR(printingInvoice, businessName)} alt="ZATCA QR" style={{ width: '100px', height: '100px' }} />
                 <div style={{ textAlign: 'left', fontSize: '14px', minWidth: '220px' }}>
