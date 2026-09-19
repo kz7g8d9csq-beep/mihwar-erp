@@ -432,11 +432,12 @@ function App() {
   const fetchInventory = async () => { try { const res = await API.get('/api/inventory'); if (res.data) setInventory(res.data); } catch (e) {} };
   const fetchCustomers = async () => { try { const res = await API.get('/api/customers'); if (res.data) setCustomers(res.data); } catch (e) {} };
   const fetchSuppliers = async () => { try { const res = await API.get('/api/suppliers'); if (res.data) setSuppliers(res.data); } catch (e) {} };
+  
+  // تحميل الفواتير وربط حالة الدفع المحفوظة محلياً بشكل دائم
   const fetchInvoices = async () => { 
     try { 
       const res = await API.get('/api/sales'); 
       if (res.data) {
-        // دمج حالة الدفع المحفوظة محلياً أو من الـ API
         const enhanced = res.data.map(inv => {
           const savedStatus = localStorage.getItem(`invoice_status_${inv.id}`);
           const savedDueDate = localStorage.getItem(`invoice_duedate_${inv.id}`);
@@ -450,10 +451,13 @@ function App() {
       } 
     } catch (e) {} 
   };
+
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
 
-  // دالة تحويل حالة الفوعة إلى "مدفوعة" (تم السداد) وتحديثها محلياً وفورياً
+  // دالة تحويل الحالة إلى مدفوعة عند النقر على "تم الدفع" مع تأكيد منبثق لمنع الضغط الخطأ
   const handleMarkInvoiceAsPaid = (invoiceId) => {
+    if (!window.confirm('هل أنت متأكد من تأكيد سداد هذا المبلغ وتحويل الفاتورة إلى (مدفوعة)؟')) return;
+    
     const updated = invoices.map(inv => {
       if (inv.id === invoiceId) {
         localStorage.setItem(`invoice_status_${inv.id}`, 'مدفوعة');
@@ -463,7 +467,7 @@ function App() {
       return inv;
     });
     setInvoices(updated);
-    alert('✅ تم تحديث حالة الفوعة إلى (مدفوعة / تم السداد) بنجاح!');
+    alert('✅ تم سداد الفاتورة وتحديث حالتها إلى (مدفوعة) بنجاح!');
   };
 
   const filteredCustomersForSales = customers.filter(c => {
@@ -586,8 +590,8 @@ function App() {
   const handleExportSales = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
-    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
-    const rows = invoices.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
+    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
+    const rows = invoices.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -656,7 +660,6 @@ function App() {
         dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : '' 
       };
 
-      // حفظ حالة الدفع محلياً لضمان عدم ضياعها
       localStorage.setItem(`invoice_status_${newInv.id}`, invoiceStatus);
       if (invoiceStatus === 'غير مدفوعة' && dueDateInput) {
         localStorage.setItem(`invoice_duedate_${newInv.id}`, dueDateInput);
@@ -1061,7 +1064,7 @@ function App() {
             </div>
           )}
 
-          {/* 2. نقطة البيع (POS) - تم دعم اختيار العميل مع البحث الذكي */}
+          {/* 2. نقطة البيع (POS) */}
           {activeTab === 'pos' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '20px' }}>
@@ -1277,7 +1280,7 @@ function App() {
             </div>
           )}
 
-          {/* سجل الفواتير (مع إمكانية تحويل الحالة إلى "تم السداد / مدفوعة") */}
+          {/* سجل الفواتير مع زر "تم الدفع" المؤكد */}
           {activeTab === 'invoicesList' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
@@ -1313,7 +1316,7 @@ function App() {
                             <button onClick={() => setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>معاينة وطباعة 👁️</button>
                             {isUnpaid && (
                               <button onClick={() => handleMarkInvoiceAsPaid(inv.id)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>
-                                تم السداد ✓
+                                تم الدفع ✓
                               </button>
                             )}
                           </div>
@@ -1799,4 +1802,4 @@ function App() {
   );
 }
 
-App;
+export default App;
