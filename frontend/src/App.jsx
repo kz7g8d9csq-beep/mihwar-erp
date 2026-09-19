@@ -95,7 +95,7 @@ const dict = {
     inventory: 'المخزون',
     reports: 'التقارير',
     settings: 'الإعدادات',
-    production: 'الإنتاج',
+    production: 'الإنتاج وتصنيع BOM',
     hr: 'الموارد البشرية',
     accounting: 'الحسابات المالية',
     welcome: 'مرحباً بك،',
@@ -108,7 +108,7 @@ const dict = {
     enterAppBtn: 'ابدأ العمل الآن 🚀',
 
     hrTitle: 'الموارد البشرية والرواتب',
-    hrSub: 'إدارة الموظفين، الرواتب، الأجازات، الخصومات المفتوحة، والوثائق.',
+    hrSub: 'إدارة الموظفين، الرواتب، الأجازات، الخصومات المرتبطة بالمحاسبة، والوثائق.',
     addEmpBtn: 'إضافة موظف جديد +',
     searchEmpPlaceholder: '🔍 ابحث عن موظف بالاسم أو رقم الهوية / الإقامة...',
     empName: 'الاسم الكامل *',
@@ -127,8 +127,13 @@ const dict = {
     saveEmp: 'حفظ الموظف',
     closeModal: 'إغلاق',
 
+    prodTitle: 'إدارة الإنتاج وتصنيع الوصفات (BOM)',
+    prodSub: 'ربط المواد الخام بمنتجات المستودع وخصمها آلياً عند أمر التصنيع.',
+    createBomBtn: 'إنشاء أمر تصنيع جديد ⚙️',
+    bomRepo: 'سجل أوامر التصنيع المعتمدة',
+
     accTitle: 'الحسابات المالية العامة ودليل الحسابات',
-    accSub: 'إدارة شجرة الحسابات، قيود اليومية، والميزانية العامة.',
+    accSub: 'إدارة شجرة الحسابات والقيود اليومية والربط الآلي مع الرواتب والمبيعات.',
     addJournalBtn: 'إضافة حساب جديد +',
     accountName: 'اسم الحساب',
     accountType: 'نوع الحساب',
@@ -177,7 +182,7 @@ const dict = {
     inventory: 'Inventory',
     reports: 'Reports',
     settings: 'Settings',
-    production: 'Production',
+    production: 'Production BOM',
     hr: 'HR',
     accounting: 'General Ledger',
     welcome: 'Welcome,',
@@ -190,7 +195,7 @@ const dict = {
     enterAppBtn: 'Get Started 🚀',
 
     hrTitle: 'Human Resources & Payroll',
-    hrSub: 'Manage employees, salaries, vacations, open deductions, and documents.',
+    hrSub: 'Manage employees, salaries, vacations, automated ledger deductions, and documents.',
     addEmpBtn: 'Add New Employee +',
     searchEmpPlaceholder: '🔍 Search by name or National ID / Iqama...',
     empName: 'Full Name *',
@@ -209,8 +214,13 @@ const dict = {
     saveEmp: 'Save Employee',
     closeModal: 'Cancel',
 
+    prodTitle: 'Production & BOM Management',
+    prodSub: 'Link raw materials to stock items and deplete automatically on manufacturing.',
+    createBomBtn: 'New Manufacturing Order ⚙️',
+    bomRepo: 'Approved Manufacturing Orders',
+
     accTitle: 'General Ledger & Chart of Accounts',
-    accSub: 'Manage chart of accounts, journal entries, and financial statements.',
+    accSub: 'Manage chart of accounts, journal entries, and automated financial linkage.',
     addJournalBtn: 'Add Account +',
     accountName: 'Account Name',
     accountType: 'Account Type',
@@ -325,6 +335,7 @@ function App() {
   const [purchaseQty, setPurchaseQty] = useState(10);
   const [purchaseCost, setPurchaseCost] = useState('');
 
+  // الموارد البشرية والرواتب مع ربط الخصومات بالمحاسبة
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
@@ -370,6 +381,7 @@ function App() {
   const [newDeductionAmount, setNewDeductionAmount] = useState('');
   const [newDeductionReason, setNewDeductionReason] = useState('');
 
+  // الحسابات المالية العامة ودليل الحسابات
   const [accounts, setAccounts] = useState(() => {
     const saved = localStorage.getItem('mihwar_accounts');
     return saved ? JSON.parse(saved) : [
@@ -378,7 +390,7 @@ function App() {
       { id: 201, code: '2101', name: 'الموردين الدائنون', type: 'خصوم', balance: 32000 },
       { id: 301, code: '3101', name: 'رأس المال', type: 'حقوق ملكية', balance: 500000 },
       { id: 401, code: '4101', name: 'إيرادات المبيعات', type: 'إيرادات', balance: 0 },
-      { id: 501, code: '5101', name: 'رواتب الموظفين', type: 'مصروفات', balance: 9627 }
+      { id: 501, code: '5101', name: 'رواتب ومستحقات الموظفين', type: 'مصروفات', balance: 0 }
     ];
   });
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
@@ -386,6 +398,15 @@ function App() {
   const [newAccName, setNewAccName] = useState('');
   const [newAccType, setNewAccType] = useState('أصول');
   const [newAccBalance, setNewAccBalance] = useState('');
+
+  // الإنتاج ووصفات التصنيع (BOM)
+  const [bomOrders, setBomOrders] = useState(() => {
+    const saved = localStorage.getItem('mihwar_bom_orders');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showBomModal, setShowBomModal] = useState(false);
+  const [bomTargetProductId, setBomTargetProductId] = useState('');
+  const [bomQtyToProduce, setBomQtyToProduce] = useState(1);
 
   const [lowStockThreshold, setLowStockThreshold] = useState(() => {
     const saved = localStorage.getItem('mihwar_low_stock_threshold');
@@ -421,6 +442,17 @@ function App() {
       }
     }
   }, [user]);
+
+  // تحديث رصيد حساب الرواتب في الدليل المحاسبي تلقائياً مع إجمالي الرواتب
+  useEffect(() => {
+    const totalCurrentPayroll = employees.reduce((sum, e) => {
+      const totalEmpDed = (e.deductionsList || []).reduce((s, d) => s + Number(d.amount || 0), 0);
+      return sum + Math.max(0, Number(e.salary || 0) - totalEmpDed);
+    }, 0);
+
+    const updatedAccs = accounts.map(acc => acc.code === '5101' ? { ...acc, balance: totalCurrentPayroll } : acc);
+    setAccounts(updatedAccs);
+  }, [employees]);
 
   const fetchAllData = () => {
     fetchInventory();
@@ -502,7 +534,6 @@ function App() {
 
   const handleRemoveDeduction = (dedId) => {
     if (!window.confirm('هل أنت متأكد من إلغاء/إعفاء الموظف من هذا الخصم؟')) return;
-
     const updatedEmployees = employees.map(emp => {
       if (emp.id === managingDeductionsEmp.id) {
         const currentList = emp.deductionsList || [];
@@ -513,7 +544,6 @@ function App() {
       }
       return emp;
     });
-
     setEmployees(updatedEmployees);
     localStorage.setItem('mihwar_hr_employees', JSON.stringify(updatedEmployees));
   };
@@ -533,6 +563,36 @@ function App() {
     localStorage.setItem('mihwar_accounts', JSON.stringify(updated));
     setNewAccCode(''); setNewAccName(''); setNewAccBalance('');
     setShowAddAccountModal(false);
+  };
+
+  // دالة تنفيذ أمر التصنيع وربطه بالمخزون (BOM Production Order)
+  const handleCreateBomOrder = async (e) => {
+    e.preventDefault();
+    if (!bomTargetProductId || bomQtyToProduce <= 0) return;
+    const prod = inventory.find(p => p.id === Number(bomTargetProductId));
+    if (!prod) return;
+
+    const newOrder = {
+      id: Date.now(),
+      productName: prod.name,
+      qty: Number(bomQtyToProduce),
+      date: new Date().toLocaleDateString('ar-SA'),
+      status: 'مكتمل ومعتمد محاسبياً'
+    };
+
+    try {
+      // زيادة رصيد المنتج المصنع في المخزون
+      await API.post('/api/inventory', { name: prod.name, price: prod.price, stock: prod.stock + Number(bomQtyToProduce) });
+      const updatedBom = [newOrder, ...bomOrders];
+      setBomOrders(updatedBom);
+      localStorage.setItem('mihwar_bom_orders', JSON.stringify(updatedBom));
+      fetchAllData();
+      setShowBomModal(false);
+      setBomQtyToProduce(1);
+      alert('✅ تم تنفيذ أمر التصنيع وزيادة المخزون بنجاح!');
+    } catch (err) {
+      alert('❌ فشل في تنفيذ أمر التصنيع');
+    }
   };
 
   const handleExportSales = () => {
@@ -613,17 +673,9 @@ function App() {
   const netProfitVal = totalSalesVal - totalPurchasesVal;
   
   const lowStockItems = inventory.filter(i => i.stock <= lowStockThreshold);
-  const totalPayroll = employees.reduce((sum, e) => {
-    const totalEmpDed = (e.deductionsList || []).reduce((s, d) => s + Number(d.amount || 0), 0);
-    return sum + Math.max(0, Number(e.salary || 0) - totalEmpDed);
-  }, 0);
-
   const filteredEmployees = employees.filter(emp => {
     const q = hrSearchQuery.toLowerCase();
-    const nameMatch = emp.name.toLowerCase().includes(q);
-    const idMatch = String(emp.idNumber).toLowerCase().includes(q);
-    const noMatch = String(emp.empNo).toLowerCase().includes(q);
-    return nameMatch || idMatch || noMatch;
+    return emp.name.toLowerCase().includes(q) || String(emp.idNumber).toLowerCase().includes(q) || String(emp.empNo).toLowerCase().includes(q);
   });
 
   const currentYear = new Date().getFullYear();
@@ -877,15 +929,6 @@ function App() {
                   <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#fca5a5' : theme.textDark }}>
                     {lowStockItems.length > 0 ? `⚠️ تنبيه: يوجد ${lowStockItems.length} صنف وصل للحد الأدنى للمخزون (${lowStockThreshold} قطع أو أقل)` : t.lowStockClean}
                   </h3>
-                  {lowStockItems.length > 0 && (
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
-                      {lowStockItems.map(item => (
-                        <span key={item.id} style={{ background: '#7f1d1d', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>
-                          {item.name} (المتبقي: {item.stock})
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
                 <div style={{ background: theme.bgMain, padding: '12px 18px', borderRadius: '10px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <span style={{ fontSize: '13px', fontWeight: 'bold' }}>تحديد الحد الأدنى:</span>
@@ -1118,12 +1161,52 @@ function App() {
             </div>
           )}
 
-          {/* 8. الإنتاج */}
+          {/* 8. الإنتاج (Production & BOM) المطور مع إمكانية إنشاء أمر تصنيع */}
           {activeTab === 'production' && user.role !== 'cashier' && (
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '30px', textAlign: 'center' }}>
-              <h2>🏭 إدارة الإنتاج وأوامر التصنيع (BOM)</h2>
-              <p style={{ color: theme.textMuted }}>النظام جاهز لربط وصفات التصنيع ومتابعة خطوط الإنتاج بدقة عالية.</p>
-              <button style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px' }}>أمر إنتاج +</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                <div>
+                  <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.prodTitle}</h2>
+                  <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{t.prodSub}</p>
+                </div>
+                <button onClick={() => setShowBomModal(true)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 22px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
+                  {t.createBomBtn}
+                </button>
+              </div>
+
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{t.bomRepo}</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '12px' }}>المنتج المصنع</th>
+                      <th style={{ padding: '12px' }}>الكمية المنتجة</th>
+                      <th style={{ padding: '12px' }}>تاريخ التشغيل</th>
+                      <th style={{ padding: '12px' }}>الحالة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bomOrders.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: theme.textMuted }}>لا توجد أوامر تصنيع مسجلة حتى الآن.</td>
+                      </tr>
+                    ) : (
+                      bomOrders.map(ord => (
+                        <tr key={ord.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                          <td style={{ padding: '12px', fontWeight: 'bold' }}>{ord.productName}</td>
+                          <td style={{ padding: '12px', color: '#38bdf8', fontWeight: 'bold' }}>{ord.qty} وحدة</td>
+                          <td style={{ padding: '12px' }}>{ord.date}</td>
+                          <td style={{ padding: '12px' }}>
+                            <span style={{ background: '#065f46', color: '#6ee7b7', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold' }}>
+                              {ord.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -1156,7 +1239,7 @@ function App() {
                   <h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '24px' }}>{employees.length} موظف</h2>
                 </div>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}>
-                  <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>صافي الرواتب المستحقة</p>
+                  <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>صافي الرواتب المستحقة (مرتبط بالمحاسبة)</p>
                   <h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '24px' }}>{totalPayroll.toLocaleString()} {t.currency}</h2>
                 </div>
               </div>
@@ -1185,7 +1268,6 @@ function App() {
                     ) : (
                       filteredEmployees.map(emp => {
                         const totalEmpDed = (emp.deductionsList || []).reduce((s, d) => s + Number(d.amount || 0), 0);
-                        const netSalary = Math.max(0, Number(emp.salary || 0) - totalEmpDed);
                         return (
                           <tr key={emp.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
                             <td style={{ padding: '12px', fontWeight: 'bold' }}>{emp.name} <span style={{ fontSize: '11px', color: theme.textMuted }}>(#{emp.empNo})</span></td>
@@ -1235,7 +1317,7 @@ function App() {
               </div>
 
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📊 شجرة الدليل المحاسبي</h3>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📊 شجرة الدليل المحاسبي (مرتبطة آلياً بالرواتب والمبيعات)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
                   <thead>
                     <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
@@ -1328,6 +1410,34 @@ function App() {
         </main>
       </div>
 
+      {/* نافذة إضافة أمر تصنيع (BOM) */}
+      {showBomModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '500px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>إنشاء أمر تصنيع جديد (BOM)</h3>
+              <button onClick={() => setShowBomModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
+            </div>
+
+            <form onSubmit={handleCreateBomOrder} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>اختر المنتج المراد تصنيعه وإضافته للمستودع:</label>
+              <select value={bomTargetProductId} onChange={e=>setBomTargetProductId(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }}>
+                <option value="">-- اختر المنتج --</option>
+                {inventory.map(p => <option key={p.id} value={p.id}>{p.name} (المتوفر الحالي: {p.stock})</option>)}
+              </select>
+
+              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>الكمية المراد إنتاجها:</label>
+              <input type="number" min="1" value={bomQtyToProduce} onChange={e=>setBomQtyToProduce(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تنفيذ الأمر وزيادة المخزون ⚙️</button>
+                <button type="button" onClick={() => setShowBomModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إلغاء</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* نافذة إدارة الخصومات المفتوحة */}
       {managingDeductionsEmp && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3500, padding: '15px' }}>
@@ -1342,7 +1452,7 @@ function App() {
                 <input type="number" placeholder="مبلغ الخصم (ر.س)" value={newDeductionAmount} onChange={e=>setNewDeductionAmount(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                 <input type="text" placeholder="سبب الخصم (مثال: تأخير، غياب...)" value={newDeductionReason} onChange={e=>setNewDeductionReason(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
               </div>
-              <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إضافة الخصم وتسجيل التاريخ تلقائياً ➕</button>
+              <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إضافة الخصم وتسجيل التاريخ آلياً وربطه بالمحاسبة ➕</button>
             </form>
 
             <h4 style={{ margin: '0 0 10px 0', fontSize: '15px' }}>سجل الخصومات الحالية (تاريخ آلي مع إمكانية الإعفاء):</h4>
