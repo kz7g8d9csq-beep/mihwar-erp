@@ -315,14 +315,14 @@ function App() {
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
 
-  // حالات تعديل المنتج في المخزون
+  // حالات المخزون (مع بحث المنتجات)
+  const [inventorySearchQuery, setInventorySearchQuery] = useState('');
   const [editingProdId, setEditingProdId] = useState(null);
   const [showEditProdModal, setShowEditProdModal] = useState(false);
   const [editProdName, setEditProdName] = useState('');
   const [editProdPrice, setEditProdPrice] = useState('');
   const [editProdStock, setEditProdStock] = useState('');
 
-  // حالات وتعديل وحذف العملاء
   const [customers, setCustomers] = useState([]);
   const [custName, setCustName] = useState('');
   const [custNationalId, setCustNationalId] = useState('');
@@ -334,7 +334,6 @@ function App() {
   const [editCustNationalId, setEditCustNationalId] = useState('');
   const [editCustPhone, setEditCustPhone] = useState('');
 
-  // حالات وتعديل وحذف الموردين
   const [suppliers, setSuppliers] = useState([]);
   const [suppName, setSuppName] = useState('');
   const [suppTaxNumber, setSuppTaxNumber] = useState('');
@@ -346,11 +345,9 @@ function App() {
   const [editSuppTaxNumber, setEditSuppTaxNumber] = useState('');
   const [editSuppPhone, setEditSuppPhone] = useState('');
 
-  // حالات سجل الفواتير (مع خانة البحث برقم الفاتورة أو العميل)
   const [invoices, setInvoices] = useState([]);
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
 
-  // حالات التقارير (مع خانة البحث)
   const [reportSearchQuery, setReportSearchQuery] = useState('');
   
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
@@ -479,7 +476,12 @@ function App() {
 
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
 
-  // دالة تعديل وحذف المنتجات في المخزون
+  // فلترة المخزون عبر اسم المنتج
+  const filteredInventory = inventory.filter(i => {
+    const q = inventorySearchQuery.toLowerCase();
+    return i.name.toLowerCase().includes(q);
+  });
+
   const handleOpenEditProduct = (prod) => {
     setEditingProdId(prod.id);
     setEditProdName(prod.name || '');
@@ -521,7 +523,6 @@ function App() {
     }
   };
 
-  // دوال تعديل وحذف العملاء
   const handleOpenEditCustomer = (cust) => {
     setEditingCustId(cust.id);
     setEditCustName(cust.name || '');
@@ -563,7 +564,6 @@ function App() {
     }
   };
 
-  // دوال تعديل وحذف الموردين
   const handleOpenEditSupplier = (supp) => {
     setEditingSuppId(supp.id);
     setEditSuppName(supp.name || '');
@@ -620,7 +620,6 @@ function App() {
     alert('✅ تم سداد الفاتورة وتحديث حالتها إلى (مدفوعة) بنجاح!');
   };
 
-  // الفلاتر الذكية للبحث الجديد
   const filteredCustomers = customers.filter(c => {
     const q = customerSearchQuery.toLowerCase();
     return c.name.toLowerCase().includes(q) || (c.nationalId && c.nationalId.toLowerCase().includes(q)) || (c.phone && c.phone.includes(q));
@@ -779,7 +778,7 @@ function App() {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
     const headers = isAr ? ['اسم المنتج', 'الرصيد الفعلي', 'سعر البيع'] : ['Product Name', 'Available Stock', 'Sale Price'];
-    const rows = inventory.map(i => [i.name, i.stock, Number(i.price).toFixed(2)]);
+    const rows = filteredInventory.map(i => [i.name, i.stock, Number(i.price).toFixed(2)]);
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -787,7 +786,7 @@ function App() {
     const isAr = lang === 'ar';
     const title = isAr ? 'دليل_العملاء' : 'Clients_Directory';
     const headers = isAr ? ['الاسم', 'الهوية', 'الهاتف'] : ['Name', 'ID', 'Phone'];
-    const rows = customers.map(c => [c.name, c.nationalId || '-', c.phone || '-']);
+    const rows = filteredCustomers.map(c => [c.name, c.nationalId || '-', c.phone || '-']);
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -795,7 +794,7 @@ function App() {
     const isAr = lang === 'ar';
     const title = isAr ? 'دليل_الموردين' : 'Suppliers_Directory';
     const headers = isAr ? ['اسم المورد', 'الرقم الضريبي', 'الهاتف'] : ['Supplier Name', 'Tax No', 'Phone'];
-    const rows = suppliers.map(s => [s.name, s.taxNumber || '-', s.phone || '-']);
+    const rows = filteredSuppliers.map(s => [s.name, s.taxNumber || '-', s.phone || '-']);
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -1462,7 +1461,7 @@ function App() {
             </div>
           )}
 
-          {/* سجل الفواتير (مع خانة البحث برقم الفاتورة أو العميل) */}
+          {/* سجل الفواتير */}
           {activeTab === 'invoicesList' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -1562,7 +1561,7 @@ function App() {
             </div>
           )}
 
-          {/* 5. العملاء (مع البحث، التعديل، والحذف مع التأكيد) */}
+          {/* 5. العملاء */}
           {activeTab === 'customers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1618,7 +1617,6 @@ function App() {
             </div>
           )}
 
-          {/* نافذة تعديل العميل */}
           {showEditCustModal && (
             <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
               <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -1652,7 +1650,7 @@ function App() {
             </div>
           )}
 
-          {/* 6. الموردين (مع البحث، التعديل، والحذف مع التأكيد) */}
+          {/* 6. الموردين */}
           {activeTab === 'suppliers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1708,7 +1706,6 @@ function App() {
             </div>
           )}
 
-          {/* نافذة تعديل المورد */}
           {showEditSuppModal && (
             <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
               <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -1742,7 +1739,7 @@ function App() {
             </div>
           )}
 
-          {/* 7. المخزون (مع التعديل والحذف وتأكيد الحذف) */}
+          {/* 7. المخزون (مع خيار البحث عبر اسم المنتج) */}
           {activeTab === 'inventory' && (
             <div style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '20px' }}>
               {user.role !== 'cashier' && (
@@ -1757,7 +1754,19 @@ function App() {
                 </div>
               )}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}><h3 style={{ margin: 0, fontSize: '17px' }}>{t.stockRepo}</h3><button onClick={handleExportInventory} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير Excel</button></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                  <h3 style={{ margin: 0, fontSize: '17px' }}>{t.stockRepo}</h3>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input 
+                      type="text" 
+                      value={inventorySearchQuery} 
+                      onChange={e => setInventorySearchQuery(e.target.value)} 
+                      placeholder="🔍 ابحث باسم المنتج..." 
+                      style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} 
+                    />
+                    <button onClick={handleExportInventory} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
+                  </div>
+                </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                   <thead>
                     <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
@@ -1768,7 +1777,7 @@ function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {inventory.map(i => (
+                    {filteredInventory.map(i => (
                       <tr key={i.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
                         <td style={{ padding: '10px' }}>{i.name}</td>
                         <td style={{ padding: '10px' }}>{i.price}</td>
@@ -1904,30 +1913,6 @@ function App() {
                   </tbody>
                 </table>
               </div>
-
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: '#fca5a5' }}>🔻 سجل الخصومات التفصيلي (السبب، القيمة، والتاريخ التلقائي)</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
-                  <thead>
-                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '10px' }}>اسم الموظف</th>
-                      <th style={{ padding: '10px' }}>قيمة الخصم</th>
-                      <th style={{ padding: '10px' }}>سبب الخصم</th>
-                      <th style={{ padding: '10px' }}>تاريخ التسجيل (تلقائي)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {deductionsList.map(d => (
-                      <tr key={d.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{d.empName}</td>
-                        <td style={{ padding: '10px', color: '#ef4444', fontWeight: 'bold' }}>{d.amount} {t.currency}</td>
-                        <td style={{ padding: '10px' }}>{d.reason}</td>
-                        <td style={{ padding: '10px', color: theme.textMuted }}>{d.date}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </div>
           )}
 
@@ -1961,7 +1946,7 @@ function App() {
             </div>
           )}
 
-          {/* 10. التقارير (مع خانة البحث الذكي) */}
+          {/* 10. التقارير */}
           {activeTab === 'reports' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
