@@ -325,12 +325,12 @@ function App() {
 
   const [invoices, setInvoices] = useState([]);
   
-  // حالات شاشة المبيعات والفوترة الشاملة
+  // حالات شاشة المبيعات والفوترة
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
   const [itemQty, setItemQty] = useState(1);
   const [itemPrice, setItemPrice] = useState('');
-  const [invoiceStatus, setInvoiceStatus] = useState('مدفوعة'); // حالة الدفع: مدفوعة أو غير مدفوعة
+  const [invoiceStatus, setInvoiceStatus] = useState('مدفوعة');
   const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
@@ -340,7 +340,7 @@ function App() {
   const [purchaseQty, setPurchaseQty] = useState(10);
   const [purchaseCost, setPurchaseCost] = useState('');
 
-  // الموارد البشرية والخصومات والتعديل
+  // الموارد البشرية والخصومات
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
@@ -428,46 +428,6 @@ function App() {
   const fetchSuppliers = async () => { try { const res = await API.get('/api/suppliers'); if (res.data) setSuppliers(res.data); } catch (e) {} };
   const fetchInvoices = async () => { try { const res = await API.get('/api/sales'); if (res.data) setInvoices(res.data); } catch (e) {} };
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
-
-  // إضافة صنف إلى سلة المبيعات والفوترة (مع التحكم بالسعر والكمية كتابةً أو أزرار)
-  const handleAddItemToSalesCart = () => {
-    if (!selectedProductId) return;
-    const product = inventory.find(p => p.id === Number(selectedProductId));
-    if (!product) return;
-    const qty = Number(itemQty);
-    if (qty <= 0) return;
-    const price = itemPrice !== '' ? Number(itemPrice) : product.price;
-
-    const existing = cartItems.find(it => it.productId === product.id);
-    const reqQ = (existing ? existing.quantity : 0) + qty;
-    if (reqQ > product.stock) { alert('Stock limit exceeded'); return; }
-
-    if (existing) {
-      setCartItems(cartItems.map(it => it.productId === product.id ? { ...it, quantity: reqQ, unitPrice: price, subtotal: Number((reqQ * price).toFixed(2)) } : it));
-    } else {
-      setCartItems([...cartItems, { productId: product.id, name: product.name, quantity: qty, unitPrice: price, subtotal: Number((qty * price).toFixed(2)) }]);
-    }
-    setSelectedProductId(''); setItemQty(1); setItemPrice('');
-  };
-
-  const handleRemoveSalesCartItem = (idx) => {
-    setCartItems(cartItems.filter((_, i) => i !== idx));
-  };
-
-  const handleSaveSalesInvoice = async () => {
-    if (!cartItems.length) return;
-    setIsSubmittingSale(true);
-    try {
-      const res = await API.post('/api/sales', { 
-        customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
-        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
-        status: invoiceStatus
-      });
-      setCartItems(''); fetchAllData();
-      if (res.data?.invoice) setPrintingInvoice({ ...res.data.invoice, paymentStatus: invoiceStatus });
-      setActiveTab('invoicesList');
-    } catch (err) { alert(err.response?.data?.error || 'Failed'); } finally { setIsSubmittingSale(false); }
-  };
 
   const handleSaveEmployee = (e) => {
     e.preventDefault();
@@ -608,6 +568,54 @@ function App() {
     exportToExcel(title, headers, rows, lang);
   };
 
+  // دالة إضافة البند للسلة مع فحص السعر والكمية بدقة وتجنب أي خطأ برمجي
+  const handleAddItemToSalesCart = () => {
+    if (!selectedProductId) return;
+    const product = inventory.find(p => p.id === Number(selectedProductId));
+    if (!product) return;
+    const qty = Number(itemQty);
+    if (qty <= 0) return;
+    const price = itemPrice !== '' ? Number(itemPrice) : product.price;
+
+    const existing = cartItems.find(it => it.productId === product.id);
+    const reqQ = (existing ? existing.quantity : 0) + qty;
+    if (reqQ > product.stock) { alert('Stock limit exceeded'); return; }
+
+    if (existing) {
+      setCartItems(cartItems.map(it => it.productId === product.id ? { ...it, quantity: reqQ, unitPrice: price, subtotal: Number((reqQ * price).toFixed(2)) } : it));
+    } else {
+      setCartItems([...cartItems, { productId: product.id, name: product.name, quantity: qty, unitPrice: price, subtotal: Number((qty * price).toFixed(2)) }]);
+    }
+    setSelectedProductId(''); setItemQty(1); setItemPrice('');
+  };
+
+  const handleRemoveSalesCartItem = (idx) => {
+    setCartItems(cartItems.filter((_, i) => i !== idx));
+  };
+
+  // دالة إتمام وحفظ الفاتورة مع إصلاح تفريغ السلة ليكون مصفوفة فارغة `[]` تماماً لمنع حدوث شاشة بيضاء
+  const handleSaveSalesInvoice = async () => {
+    if (!cartItems.length) return;
+    setIsSubmittingSale(true);
+    try {
+      const res = await API.post('/api/sales', { 
+        customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
+        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
+        status: invoiceStatus
+      });
+      setCartItems([]); 
+      fetchAllData();
+      if (res.data?.invoice) {
+        setPrintingInvoice({ ...res.data.invoice, paymentStatus: invoiceStatus });
+      }
+      setActiveTab('invoicesList');
+    } catch (err) { 
+      alert(err.response?.data?.error || 'Failed'); 
+    } finally { 
+      setIsSubmittingSale(false); 
+    }
+  };
+
   const handleSavePurchase = async () => {
     if (!selectedPurchaseProdId || !purchaseQty || !purchaseCost) return;
     try {
@@ -639,14 +647,14 @@ function App() {
 
   const pastYearsData = Array.from({ length: 10 }, (_, i) => {
     const targetYear = currentYear - i;
-    const yearInvs = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
-    const totalSales = yearInvs.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-    const totalProfit = yearInvs.reduce((sum, inv) => {
+    const yearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
+    const totalSales = yearInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const totalProfit = yearInvoices.reduce((sum, inv) => {
       const rev = Number(inv.subtotal || 0);
       const cogs = (inv.items || []).reduce((s, it) => s + ((it.product?.cost || 0) * it.quantity), 0);
       return sum + (rev - cogs);
     }, 0);
-    const count = yearInvs.length;
+    const count = yearInvoices.length;
     return { year: targetYear, totalSales, totalProfit, count };
   }).filter(y => y.count > 0 || y.year === currentYear);
 
@@ -795,7 +803,7 @@ function App() {
         }
       `}</style>
 
-      {/* الشريط الجانبي (Sidebar) */}
+      {/* الشريط الجانبي (Sidebar) على اليمين */}
       <aside className="sidebar-nav" style={{ width: '260px', background: theme.sidebarBg, borderLeft: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '20px 0', boxSizing: 'border-box', minHeight: '100vh', position: 'sticky', top: 0, zIndex: 100 }}>
         <div>
           <div style={{ padding: '0 20px 20px 20px', borderBottom: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1027,13 +1035,12 @@ function App() {
             </div>
           )}
 
-          {/* 3. المبيعات والفوترة الشاملة (التي طلب إرجاعها بكل الخيارات) */}
+          {/* 3. المبيعات والفوترة الشاملة */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
                 <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#d97706' }}>⚡ إصدار فاتورة بيع جديدة</h2>
                 
-                {/* اختيار العميل */}
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>العميل المستلم</label>
                   <select value={selectedCustomerId} onChange={e=>setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
@@ -1042,7 +1049,6 @@ function App() {
                   </select>
                 </div>
 
-                {/* اختيار المنتج وتحديد السعر والكمية يدوياً أو بالأزرار */}
                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '10px', marginBottom: '15px', alignItems: 'end' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>اختيار المنتج</label>
@@ -1077,7 +1083,6 @@ function App() {
                   <button onClick={handleAddItemToSalesCart} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '11px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>➕ إضافة</button>
                 </div>
 
-                {/* حالة الدفع */}
                 <div style={{ marginBottom: '20px', background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '15px' }}>
                   <span style={{ fontSize: '13px', fontWeight: 'bold' }}>حالة الدفع:</span>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
@@ -1088,7 +1093,6 @@ function App() {
                   </label>
                 </div>
 
-                {/* جدول بنود السلة الحالية */}
                 <h3 style={{ margin: '0 0 10px 0', fontSize: '15px' }}>🛒 محتويات الفاتورة الحالية</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '20px' }}>
                   <thead>
@@ -1117,11 +1121,10 @@ function App() {
                 </table>
 
                 <button onClick={handleSaveSalesInvoice} disabled={!cartItems.length || isSubmittingSale} style={{ width: '100%', background: '#10b981', color: '#fff', padding: '14px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>
-                  💳 إصدار الفاتورة واعتماد الخصم من المخزون
+                  إتمام الدفع وإصدار الفاتورة 💳
                 </button>
               </div>
 
-              {/* ملخص الحسبة التلقائية */}
               <div style={{ background: '#020617', borderRadius: '16px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div>
                   <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#38bdf8' }}>ملخص الحسبة التلقائية</h3>
@@ -1561,7 +1564,6 @@ function App() {
         </main>
       </div>
 
-      {/* نافذة معاينة وطباعة الفاتورة بالتصميم المطابق تماماً لملف "جولد جم" */}
       {printingInvoice && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
           <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
