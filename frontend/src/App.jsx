@@ -95,9 +95,8 @@ const dict = {
     inventory: 'المخزون',
     reports: 'التقارير',
     settings: 'الإعدادات',
-    production: 'الإنتاج وتصنيع BOM',
+    production: 'الإنتاج',
     hr: 'الموارد البشرية',
-    accounting: 'الحسابات المالية',
     welcome: 'مرحباً بك،',
     currency: 'ر.س',
     roleLabel: 'اختر نوع الدخول:',
@@ -108,9 +107,8 @@ const dict = {
     enterAppBtn: 'ابدأ العمل الآن 🚀',
 
     hrTitle: 'الموارد البشرية والرواتب',
-    hrSub: 'إدارة الموظفين، الرواتب، الأجازات، الخصومات المفتوحة، والوثائق.',
+    hrSub: 'إدارة الموظفين، الرواتب، الأجازات، الخصومات، والوثائق.',
     addEmpBtn: 'إضافة موظف جديد +',
-    searchEmpPlaceholder: '🔍 ابحث عن موظف بالاسم أو رقم الهوية / الإقامة...',
     empName: 'الاسم الكامل *',
     empIdNumber: 'رقم الهوية / الإقامة',
     empNumber: 'رقم الموظف',
@@ -118,6 +116,7 @@ const dict = {
     empDept: 'القسم',
     empPhone: 'رقم الهاتف',
     empSalary: 'الراتب الأساسي (ر.س)',
+    empDeductions: 'الخصومات الشهرية (ر.س)',
     empVacations: 'رصيد الأجازات (أيام)',
     empInsurance: 'التأمين الطبي',
     empStatus: 'الحالة',
@@ -126,17 +125,6 @@ const dict = {
     empContractEnd: 'انتهاء العقد',
     saveEmp: 'حفظ الموظف',
     closeModal: 'إغلاق',
-
-    prodTitle: 'إدارة الإنتاج وتصنيع الوصفات (BOM)',
-    prodSub: 'ربط المواد الخام بمنتجات المستودع وخصمها آلياً عند أمر التصنيع.',
-    createBomBtn: 'إنشاء أمر تصنيع جديد ⚙️',
-    bomRepo: 'سجل أوامر التصنيع المعتمدة',
-
-    accTitle: 'الحسابات المالية العامة ودليل الحسابات',
-    accSub: 'إدارة شجرة الحسابات والقيود اليومية والربط الآلي.',
-    addJournalBtn: 'إضافة حساب جديد +',
-    accountName: 'اسم الحساب',
-    accountType: 'نوع الحساب',
 
     invValue: 'قيمة المخزون الإجمالية',
     salesTotal: 'إجمالي المبيعات (شامل الضريبة)',
@@ -164,10 +152,7 @@ const dict = {
     subtotal: 'المبلغ الخاضع للضريبة:',
     vatAmount: 'ضريبة القيمة المضافة (15%):',
     totalDue: 'الإجمالي المستحق:',
-    invoiceFooterNote: 'شكراً لتعاملكم معنا • صدرت إلكترونياً عبر نظام محور',
-    exportSalesBtn: '📥 تصدير المبيعات للإقرار الضريبي (Excel)',
-    exportPurchasesBtn: '📥 تصدير المشتريات (Excel)',
-    exportInventoryBtn: '📥 تصدير جرد المستودع (Excel)'
+    invoiceFooterNote: 'شكراً لتعاملكم معنا • صدرت إلكترونياً عبر نظام محور'
   },
   en: {
     brand: 'Mihwar ERP',
@@ -182,9 +167,8 @@ const dict = {
     inventory: 'Inventory',
     reports: 'Reports',
     settings: 'Settings',
-    production: 'Production BOM',
+    production: 'Production',
     hr: 'HR',
-    accounting: 'General Ledger',
     welcome: 'Welcome,',
     currency: 'SAR',
     roleLabel: 'Select Login Role:',
@@ -195,9 +179,8 @@ const dict = {
     enterAppBtn: 'Get Started 🚀',
 
     hrTitle: 'Human Resources & Payroll',
-    hrSub: 'Manage employees, salaries, vacations, open deductions, and documents.',
+    hrSub: 'Manage employees, salaries, vacations, deductions, and documents.',
     addEmpBtn: 'Add New Employee +',
-    searchEmpPlaceholder: '🔍 Search by name or National ID / Iqama...',
     empName: 'Full Name *',
     empIdNumber: 'National ID / Iqama',
     empNumber: 'Employee ID',
@@ -205,6 +188,7 @@ const dict = {
     empDept: 'Department',
     empPhone: 'Phone Number',
     empSalary: 'Basic Salary (SAR)',
+    empDeductions: 'Monthly Deductions (SAR)',
     empVacations: 'Vacation Balance (Days)',
     empInsurance: 'Medical Insurance',
     empStatus: 'Status',
@@ -213,17 +197,6 @@ const dict = {
     empContractEnd: 'Contract Expiry',
     saveEmp: 'Save Employee',
     closeModal: 'Cancel',
-
-    prodTitle: 'Production & BOM Management',
-    prodSub: 'Link raw materials to stock items and deplete automatically.',
-    createBomBtn: 'New Manufacturing Order ⚙️',
-    bomRepo: 'Approved Manufacturing Orders',
-
-    accTitle: 'General Ledger & Chart of Accounts',
-    accSub: 'Manage chart of accounts and journal entries.',
-    addJournalBtn: 'Add Account +',
-    accountName: 'Account Name',
-    accountType: 'Account Type',
 
     invValue: 'Total Inventory Valuation',
     salesTotal: 'Gross Sales',
@@ -251,10 +224,7 @@ const dict = {
     subtotal: 'Taxable Amount:',
     vatAmount: 'Value Added Tax (15%):',
     totalDue: 'Total Amount Due:',
-    invoiceFooterNote: 'Thank you for your business • Issued electronically via Mihwar ERP',
-    exportSalesBtn: '📥 Export Sales Tax Report (Excel)',
-    exportPurchasesBtn: '📥 Export Purchases (Excel)',
-    exportInventoryBtn: '📥 Export Warehouse Audit (Excel)'
+    invoiceFooterNote: 'Thank you for your business • Issued electronically via Mihwar ERP'
   }
 };
 
@@ -335,32 +305,14 @@ function App() {
   const [purchaseQty, setPurchaseQty] = useState(10);
   const [purchaseCost, setPurchaseCost] = useState('');
 
+  // حالات إدارة الموارد البشرية الشاملة
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
-      { 
-        id: 1, 
-        name: 'أحمد حلمي محمد', 
-        idNumber: '799032458578', 
-        empNo: '20', 
-        role: 'مندوب جملة', 
-        dept: 'مبيعات وتوزيع', 
-        phone: '0530044627', 
-        salary: 4577, 
-        deductionsList: [
-          { id: 101, amount: 120, reason: 'تأخير صباحي', date: '2026-06-01' }
-        ],
-        vacations: 14, 
-        insurance: 'شامل الفئة أ', 
-        status: 'نشط', 
-        iqamaEnd: '2027-05-12', 
-        healthEnd: '2027-03-01', 
-        contractEnd: '2028-04-10' 
-      }
+      { id: 1, name: 'أحمد حلمي محمد', idNumber: '799032458578', empNo: '20', role: 'مندوب جملة', dept: 'مبيعات وتوزيع', phone: '0530044627', salary: 4577, deductions: 120, vacations: 14, insurance: 'شامل الفئة أ', status: 'نشط', iqamaEnd: '2027-05-12', healthEnd: '2027-03-01', contractEnd: '2028-04-10' },
+      { id: 2, name: 'محمد عبدالله الزهراني', idNumber: '288145789632', empNo: '21', role: 'مشرف خط إنتاج', dept: 'إنتاج وتعبئة', phone: '0501234567', salary: 5050, deductions: 50, vacations: 21, insurance: 'شامل الفئة ب', status: 'نشط', iqamaEnd: '2026-10-15', healthEnd: '2026-08-20', contractEnd: '2027-01-01' }
     ];
   });
-  
-  const [hrSearchQuery, setHrSearchQuery] = useState('');
   const [showAddEmpModal, setShowAddEmpModal] = useState(false);
   const [empName, setEmpName] = useState('');
   const [empIdNumber, setEmpIdNumber] = useState('');
@@ -369,6 +321,7 @@ function App() {
   const [empDept, setEmpDept] = useState('');
   const [empPhone, setEmpPhone] = useState('');
   const [empSalary, setEmpSalary] = useState('');
+  const [empDeductions, setEmpDeductions] = useState('');
   const [empVacations, setEmpVacations] = useState('');
   const [empInsurance, setEmpInsurance] = useState('');
   const [empStatus, setEmpStatus] = useState('نشط');
@@ -376,39 +329,12 @@ function App() {
   const [empHealthEnd, setEmpHealthEnd] = useState('');
   const [empContractEnd, setEmpContractEnd] = useState('');
 
-  const [managingDeductionsEmp, setManagingDeductionsEmp] = useState(null);
-  const [newDeductionAmount, setNewDeductionAmount] = useState('');
-  const [newDeductionReason, setNewDeductionReason] = useState('');
-
-  const [accounts, setAccounts] = useState(() => {
-    const saved = localStorage.getItem('mihwar_accounts');
-    return saved ? JSON.parse(saved) : [
-      { id: 101, code: '1101', name: 'الصندوق / النقدية', type: 'أصول', balance: 125400 },
-      { id: 102, code: '1102', name: 'البنك التجاري', type: 'أصول', balance: 450000 },
-      { id: 201, code: '2101', name: 'الموردين الدائنون', type: 'خصوم', balance: 32000 },
-      { id: 301, code: '3101', name: 'رأس المال', type: 'حقوق ملكية', balance: 500000 },
-      { id: 401, code: '4101', name: 'إيرادات المبيعات', type: 'إيرادات', balance: 0 },
-      { id: 501, code: '5101', name: 'رواتب ومستحقات الموظفين', type: 'مصروفات', balance: 0 }
-    ];
-  });
-  const [showAddAccountModal, setShowAddAccountModal] = useState(false);
-  const [newAccCode, setNewAccCode] = useState('');
-  const [newAccName, setNewAccName] = useState('');
-  const [newAccType, setNewAccType] = useState('أصول');
-  const [newAccBalance, setNewAccBalance] = useState('');
-
-  const [bomOrders, setBomOrders] = useState(() => {
-    const saved = localStorage.getItem('mihwar_bom_orders');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [showBomModal, setShowBomModal] = useState(false);
-  const [bomTargetProductId, setBomTargetProductId] = useState('');
-  const [bomQtyToProduce, setBomQtyToProduce] = useState(1);
-
   const [lowStockThreshold, setLowStockThreshold] = useState(() => {
     const saved = localStorage.getItem('mihwar_low_stock_threshold');
     return saved ? Number(saved) : 30;
   });
+  const [tempThreshold, setTempThreshold] = useState(lowStockThreshold);
+  const [isEditingThreshold, setIsEditingThreshold] = useState(false);
 
   const [printingInvoice, setPrintingInvoice] = useState(null);
   const [currentPass, setCurrentPass] = useState('');
@@ -466,7 +392,7 @@ function App() {
       dept: empDept.trim() || 'عام',
       phone: empPhone.trim() || '-',
       salary: Number(empSalary) || 4000,
-      deductionsList: [],
+      deductions: Number(empDeductions) || 0,
       vacations: Number(empVacations) || 21,
       insurance: empInsurance.trim() || 'تأمين أساسي',
       status: empStatus || 'نشط',
@@ -477,7 +403,7 @@ function App() {
     const updated = [newEmp, ...employees];
     setEmployees(updated);
     localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
-    setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpVacations(''); setEmpInsurance('');
+    setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpDeductions(''); setEmpVacations(''); setEmpInsurance('');
     setShowAddEmpModal(false);
   };
 
@@ -486,97 +412,6 @@ function App() {
     const updated = employees.filter(e => e.id !== id);
     setEmployees(updated);
     localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
-  };
-
-  const handleAddDeduction = (e) => {
-    e.preventDefault();
-    if (!managingDeductionsEmp || !newDeductionAmount) return;
-    const amt = Number(newDeductionAmount);
-    if (amt <= 0) return;
-
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const newDed = {
-      id: Date.now(),
-      amount: amt,
-      reason: newDeductionReason.trim() || 'خصم إداري',
-      date: todayStr
-    };
-
-    const updatedEmployees = employees.map(emp => {
-      if (emp.id === managingDeductionsEmp.id) {
-        const currentList = emp.deductionsList || [];
-        const updatedEmp = { ...emp, deductionsList: [newDed, ...currentList] };
-        setManagingDeductionsEmp(updatedEmp);
-        return updatedEmp;
-      }
-      return emp;
-    });
-
-    setEmployees(updatedEmployees);
-    localStorage.setItem('mihwar_hr_employees', JSON.stringify(updatedEmployees));
-    setNewDeductionAmount('');
-    setNewDeductionReason('');
-  };
-
-  const handleRemoveDeduction = (dedId) => {
-    if (!window.confirm('هل أنت متأكد من إلغاء/إعفاء الموظف من هذا الخصم؟')) return;
-    const updatedEmployees = employees.map(emp => {
-      if (emp.id === managingDeductionsEmp.id) {
-        const currentList = emp.deductionsList || [];
-        const updatedList = currentList.filter(d => d.id !== dedId);
-        const updatedEmp = { ...emp, deductionsList: updatedList };
-        setManagingDeductionsEmp(updatedEmp);
-        return updatedEmp;
-      }
-      return emp;
-    });
-    setEmployees(updatedEmployees);
-    localStorage.setItem('mihwar_hr_employees', JSON.stringify(updatedEmployees));
-  };
-
-  const handleAddAccount = (e) => {
-    e.preventDefault();
-    if (!newAccName.trim() || !newAccCode.trim()) return;
-    const newAcc = {
-      id: Date.now(),
-      code: newAccCode.trim(),
-      name: newAccName.trim(),
-      type: newAccType,
-      balance: Number(newAccBalance) || 0
-    };
-    const updated = [...accounts, newAcc];
-    setAccounts(updated);
-    localStorage.setItem('mihwar_accounts', JSON.stringify(updated));
-    setNewAccCode(''); setNewAccName(''); setNewAccBalance('');
-    setShowAddAccountModal(false);
-  };
-
-  const handleCreateBomOrder = async (e) => {
-    e.preventDefault();
-    if (!bomTargetProductId || bomQtyToProduce <= 0) return;
-    const prod = inventory.find(p => p.id === Number(bomTargetProductId));
-    if (!prod) return;
-
-    const newOrder = {
-      id: Date.now(),
-      productName: prod.name,
-      qty: Number(bomQtyToProduce),
-      date: new Date().toLocaleDateString('ar-SA'),
-      status: 'مكتمل ومعتمد محاسبياً'
-    };
-
-    try {
-      await API.post('/api/inventory', { name: prod.name, price: prod.price, stock: prod.stock + Number(bomQtyToProduce) });
-      const updatedBom = [newOrder, ...bomOrders];
-      setBomOrders(updatedBom);
-      localStorage.setItem('mihwar_bom_orders', JSON.stringify(updatedBom));
-      fetchAllData();
-      setShowBomModal(false);
-      setBomQtyToProduce(1);
-      alert('✅ تم تنفيذ أمر التصنيع وزيادة المخزون بنجاح!');
-    } catch (err) {
-      alert('❌ فشل في تنفيذ أمر التصنيع');
-    }
   };
 
   const handleExportSales = () => {
@@ -589,7 +424,7 @@ function App() {
 
   const handleExportInventory = () => {
     const isAr = lang === 'ar';
-    const title = isAr ? 'تقرير_جرد_المستودع' : 'Inventory_Audit_Report';
+    const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
     const headers = isAr ? ['اسم المنتج', 'الرصيد الفعلي', 'سعر البيع'] : ['Product Name', 'Available Stock', 'Sale Price'];
     const rows = inventory.map(i => [i.name, i.stock, Number(i.price).toFixed(2)]);
     exportToExcel(title, headers, rows, lang);
@@ -657,18 +492,7 @@ function App() {
   const netProfitVal = totalSalesVal - totalPurchasesVal;
   
   const lowStockItems = inventory.filter(i => i.stock <= lowStockThreshold);
-  const totalPayroll = employees.reduce((sum, e) => {
-    const totalEmpDed = (e.deductionsList || []).reduce((s, d) => s + Number(d.amount || 0), 0);
-    return sum + Math.max(0, Number(e.salary || 0) - totalEmpDed);
-  }, 0);
-
-  const filteredEmployees = employees.filter(emp => {
-    const q = hrSearchQuery.toLowerCase();
-    const nameMatch = emp.name.toLowerCase().includes(q);
-    const idMatch = String(emp.idNumber).toLowerCase().includes(q);
-    const noMatch = String(emp.empNo).toLowerCase().includes(q);
-    return nameMatch || idMatch || noMatch;
-  });
+  const totalPayroll = employees.reduce((sum, e) => sum + Number(e.salary || 0), 0);
 
   const currentYear = new Date().getFullYear();
   const currentYearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === currentYear);
@@ -681,14 +505,14 @@ function App() {
 
   const pastYearsData = Array.from({ length: 10 }, (_, i) => {
     const targetYear = currentYear - i;
-    const yearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
-    const totalSales = yearInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-    const totalProfit = yearInvoices.reduce((sum, inv) => {
+    const yearInvs = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
+    const totalSales = yearInvs.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const totalProfit = yearInvs.reduce((sum, inv) => {
       const rev = Number(inv.subtotal || 0);
       const cogs = (inv.items || []).reduce((s, it) => s + ((it.product?.cost || 0) * it.quantity), 0);
       return sum + (rev - cogs);
     }, 0);
-    const count = yearInvoices.length;
+    const count = yearInvs.length;
     return { year: targetYear, totalSales, totalProfit, count };
   }).filter(y => y.count > 0 || y.year === currentYear);
 
@@ -810,7 +634,6 @@ function App() {
     { id: 'inventory', label: t.inventory, adminOnly: false, icon: '📦' },
     { id: 'production', label: t.production, adminOnly: true, icon: '⚙️' },
     { id: 'hr', label: t.hr, adminOnly: true, icon: '👔' },
-    { id: 'accounting', label: t.accounting, adminOnly: true, icon: '💰' },
     { id: 'reports', label: t.reports, adminOnly: true, icon: '📈' },
     { id: 'settings', label: t.settings, adminOnly: false, icon: '⚙️' }
   ];
@@ -905,83 +728,15 @@ function App() {
           {activeTab === 'dashboard' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
-                <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.welcome} {user.name} 👋</h2>
-                <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>مرحباً بك في لوحة التحكم المركزية لنظام محور.</p>
+                <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>لوحة التحكم</h2>
+                <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>مرحباً بك في نظام محور المطور.</p>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.invValue}</p><h2 style={{ color: '#d97706', margin: '8px 0 0 0', fontSize: '22px' }}>{inventoryVal.toLocaleString()} {t.currency}</h2></div>
-                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.salesTotal}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{totalSalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
-                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.purchasesTotal}</p><h2 style={{ color: '#f59e0b', margin: '8px 0 0 0', fontSize: '22px' }}>{totalPurchasesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
-                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.netProfit}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
-              </div>
-
-              <div style={{ background: lowStockItems.length > 0 ? '#7f1d1d22' : theme.cardBg, borderRadius: '16px', border: `1px solid ${lowStockItems.length > 0 ? '#7f1d1d' : theme.border}`, padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                <div>
-                  <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#fca5a5' : theme.textDark }}>
-                    {lowStockItems.length > 0 ? `⚠️ تنبيه: يوجد ${lowStockItems.length} صنف وصل للحد الأدنى للمخزون (${lowStockThreshold} قطع أو أقل)` : t.lowStockClean}
-                  </h3>
-                  {lowStockItems.length > 0 && (
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
-                      {lowStockItems.map(item => (
-                        <span key={item.id} style={{ background: '#7f1d1d', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>
-                          {item.name} (المتبقي: {item.stock})
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div style={{ background: theme.bgMain, padding: '12px 18px', borderRadius: '10px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 'bold' }}>تحديد الحد الأدنى:</span>
-                  <input type="number" value={lowStockThreshold} onChange={e => { const val = Number(e.target.value); setLowStockThreshold(val); localStorage.setItem('mihwar_low_stock_threshold', val); }} style={{ width: '65px', padding: '6px', borderRadius: '6px', border: '1px solid #d97706', background: theme.cardBg, color: theme.textDark, textAlign: 'center', fontWeight: 'bold', outline: 'none' }} />
-                  <span style={{ fontSize: '12px', color: theme.textMuted }}>قطعة</span>
-                </div>
-              </div>
-
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📅 تحليل أداء مبيعات السنة الحالية ({currentYear})</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
-                  <thead>
-                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '10px' }}>الشهر</th>
-                      <th style={{ padding: '10px' }}>عدد الفواتير</th>
-                      <th style={{ padding: '10px' }}>إجمالي المبيعات (ر.س)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {monthlyData.map((m, idx) => (
-                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{m.monthName}</td>
-                        <td style={{ padding: '10px' }}>{m.count} فاتورة</td>
-                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#10b981' }}>{m.total.toFixed(2)} {t.currency}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📊 سجل النمو المالي للسنوات الماضية</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
-                  <thead>
-                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '10px' }}>السنة المالية</th>
-                      <th style={{ padding: '10px' }}>عدد الفواتير</th>
-                      <th style={{ padding: '10px' }}>إجمالي المبيعات</th>
-                      <th style={{ padding: '10px' }}>صافي الربح</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pastYearsData.map((y, idx) => (
-                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#d97706' }}>{y.year}</td>
-                        <td style={{ padding: '10px' }}>{y.count} فاتورة</td>
-                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{y.totalSales.toFixed(2)} {t.currency}</td>
-                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#10b981' }}>+{y.totalProfit.toFixed(2)} {t.currency}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي المبيعات</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{totalSalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
+                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي المخزون</p><h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '22px' }}>{inventory.length} منتج</h2></div>
+                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>الفواتير المصدرة</p><h2 style={{ color: '#a855f7', margin: '8px 0 0 0', fontSize: '22px' }}>{invoices.length} فاتورة</h2></div>
               </div>
             </div>
           )}
@@ -1046,7 +801,7 @@ function App() {
             </div>
           )}
 
-          {/* 3. الفواتير والمبيعات */}
+          {/* 3. الفواتير */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
@@ -1076,7 +831,7 @@ function App() {
             </div>
           )}
 
-          {/* 4. المشتريات والتوريد */}
+          {/* 4. المشتريات */}
           {activeTab === 'purchases' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '600px', margin: 'auto' }}>
               <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>تسجيل فاتورة شراء وتوريد بضاعة</h2>
@@ -1164,54 +919,14 @@ function App() {
 
           {/* 8. الإنتاج */}
           {activeTab === 'production' && user.role !== 'cashier' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                <div>
-                  <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.prodTitle}</h2>
-                  <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{t.prodSub}</p>
-                </div>
-                <button onClick={() => setShowBomModal(true)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 22px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
-                  {t.createBomBtn}
-                </button>
-              </div>
-
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{t.bomRepo}</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
-                  <thead>
-                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '12px' }}>المنتج المصنع</th>
-                      <th style={{ padding: '12px' }}>الكمية المنتجة</th>
-                      <th style={{ padding: '12px' }}>تاريخ التشغيل</th>
-                      <th style={{ padding: '12px' }}>الحالة</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bomOrders.length === 0 ? (
-                      <tr>
-                        <td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: theme.textMuted }}>لا توجد أوامر تصنيع مسجلة حتى الآن.</td>
-                      </tr>
-                    ) : (
-                      bomOrders.map(ord => (
-                        <tr key={ord.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                          <td style={{ padding: '12px', fontWeight: 'bold' }}>{ord.productName}</td>
-                          <td style={{ padding: '12px', color: '#38bdf8', fontWeight: 'bold' }}>{ord.qty} وحدة</td>
-                          <td style={{ padding: '12px' }}>{ord.date}</td>
-                          <td style={{ padding: '12px' }}>
-                            <span style={{ background: '#065f46', color: '#6ee7b7', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold' }}>
-                              {ord.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '30px', textAlign: 'center' }}>
+              <h2>🏭 إدارة الإنتاج وأوامر التصنيع (BOM)</h2>
+              <p style={{ color: theme.textMuted }}>النظام جاهز لربط وصفات التصنيع ومتابعة خطوط الإنتاج بدقة عالية.</p>
+              <button style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px' }}>أمر إنتاج +</button>
             </div>
           )}
 
-          {/* 9. الموارد البشرية */}
+          {/* 9. الموارد البشرية والرواتب (HR & Payroll) الشامل */}
           {activeTab === 'hr' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -1219,19 +934,10 @@ function App() {
                   <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.hrTitle}</h2>
                   <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{t.hrSub}</p>
                 </div>
+                {/* زر إضافة موظف يعمل بكفاءة تامة */}
                 <button onClick={() => setShowAddEmpModal(true)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 22px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
                   {t.addEmpBtn}
                 </button>
-              </div>
-
-              <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <input 
-                  type="text" 
-                  value={hrSearchQuery} 
-                  onChange={e => setHrSearchQuery(e.target.value)} 
-                  placeholder={t.searchEmpPlaceholder} 
-                  style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '14px' }} 
-                />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
@@ -1240,14 +946,14 @@ function App() {
                   <h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '24px' }}>{employees.length} موظف</h2>
                 </div>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}>
-                  <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>صافي الرواتب المستحقة (مرتبط بالمحاسبة)</p>
+                  <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي الرواتب الأساسية</p>
                   <h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '24px' }}>{totalPayroll.toLocaleString()} {t.currency}</h2>
                 </div>
               </div>
 
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📋 سجل الموظفين وإدارة الخصومات المفتوحة</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '950px' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📋 سجل الموظفين، الرواتب، الأجازات والوثائق</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '900px' }}>
                   <thead>
                     <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
                       <th style={{ padding: '12px' }}>الموظف</th>
@@ -1257,88 +963,32 @@ function App() {
                       <th style={{ padding: '12px' }}>الراتب والخصومات</th>
                       <th style={{ padding: '12px' }}>التأمين والأجازات</th>
                       <th style={{ padding: '12px' }}>انتهاء الوثائق</th>
-                      <th style={{ padding: '12px' }}>إدارة الخصومات</th>
                       <th style={{ padding: '12px' }}>الإجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredEmployees.length === 0 ? (
-                      <tr>
-                        <td colSpan="9" style={{ textAlign: 'center', padding: '30px', color: theme.textMuted }}>لا توجد نتائج مطابقة لبحثك.</td>
-                      </tr>
-                    ) : (
-                      filteredEmployees.map(emp => {
-                        const totalEmpDed = (emp.deductionsList || []).reduce((s, d) => s + Number(d.amount || 0), 0);
-                        return (
-                          <tr key={emp.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                            <td style={{ padding: '12px', fontWeight: 'bold' }}>{emp.name} <span style={{ fontSize: '11px', color: theme.textMuted }}>(#{emp.empNo})</span></td>
-                            <td style={{ padding: '12px' }}>{emp.idNumber}</td>
-                            <td style={{ padding: '12px' }}>{emp.role} <br/><span style={{ color: '#2dd4bf', fontSize: '11px' }}>{emp.dept}</span></td>
-                            <td style={{ padding: '12px' }}>{emp.phone}</td>
-                            <td style={{ padding: '12px' }}>
-                              <span style={{ color: '#10b981', fontWeight: 'bold' }}>{emp.salary} {t.currency}</span>
-                              <br/><span style={{ color: '#ef4444', fontSize: '11px' }}>خصم: {totalEmpDed} {t.currency}</span>
-                            </td>
-                            <td style={{ padding: '12px' }}>
-                              <span>{emp.insurance}</span>
-                              <br/><span style={{ color: '#38bdf8', fontSize: '11px' }}>أجازات: {emp.vacations} يوم</span>
-                            </td>
-                            <td style={{ padding: '12px', fontSize: '11px' }}>
-                              إقامة: {emp.iqamaEnd} <br/>
-                              صحي: {emp.healthEnd} <br/>
-                              عقد: {emp.contractEnd}
-                            </td>
-                            <td style={{ padding: '12px' }}>
-                              <button onClick={() => setManagingDeductionsEmp(emp)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>إدارة الخصومات ➕</button>
-                            </td>
-                            <td style={{ padding: '12px' }}>
-                              <button onClick={() => handleDeleteEmployee(emp.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>حذف</button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* 10. الحسابات المالية العامة (General Ledger) */}
-          {activeTab === 'accounting' && user.role !== 'cashier' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                <div>
-                  <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.accTitle}</h2>
-                  <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{t.accSub}</p>
-                </div>
-                <button onClick={() => setShowAddAccountModal(true)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 22px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
-                  {t.addJournalBtn}
-                </button>
-              </div>
-
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📊 شجرة الدليل المحاسبي (مرتبطة آلياً بالرواتب والمبيعات)</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
-                  <thead>
-                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '12px' }}>رمز الحساب</th>
-                      <th style={{ padding: '12px' }}>{t.accountName}</th>
-                      <th style={{ padding: '12px' }}>{t.accountType}</th>
-                      <th style={{ padding: '12px' }}>الرصيد الحالي (ر.س)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {accounts.map(acc => (
-                      <tr key={acc.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td style={{ padding: '12px', fontWeight: 'bold', color: '#38bdf8' }}>{acc.code}</td>
-                        <td style={{ padding: '12px', fontWeight: 'bold' }}>{acc.name}</td>
+                    {employees.map(emp => (
+                      <tr key={emp.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '12px', fontWeight: 'bold' }}>{emp.name} <span style={{ fontSize: '11px', color: theme.textMuted }}>(#{emp.empNo})</span></td>
+                        <td style={{ padding: '12px' }}>{emp.idNumber}</td>
+                        <td style={{ padding: '12px' }}>{emp.role} <br/><span style={{ color: '#2dd4bf', fontSize: '11px' }}>{emp.dept}</span></td>
+                        <td style={{ padding: '12px' }}>{emp.phone}</td>
                         <td style={{ padding: '12px' }}>
-                          <span style={{ background: 'rgba(217, 119, 6, 0.15)', color: '#f59e0b', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold' }}>
-                            {acc.type}
-                          </span>
+                          <span style={{ color: '#10b981', fontWeight: 'bold' }}>{emp.salary} {t.currency}</span>
+                          <br/><span style={{ color: '#ef4444', fontSize: '11px' }}>خصم: {emp.deductions} {t.currency}</span>
                         </td>
-                        <td style={{ padding: '12px', fontWeight: 'bold', color: '#10b981' }}>{acc.balance.toLocaleString()} {t.currency}</td>
+                        <td style={{ padding: '12px' }}>
+                          <span>{emp.insurance}</span>
+                          <br/><span style={{ color: '#38bdf8', fontSize: '11px' }}>أجازات: {emp.vacations} يوم</span>
+                        </td>
+                        <td style={{ padding: '12px', fontSize: '11px' }}>
+                          إقامة: {emp.iqamaEnd} <br/>
+                          صحي: {emp.healthEnd} <br/>
+                          عقد: {emp.contractEnd}
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <button onClick={() => handleDeleteEmployee(emp.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>حذف</button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1347,43 +997,104 @@ function App() {
             </div>
           )}
 
-          {/* 11. التقارير */}
-          {activeTab === 'reports' && user.role !== 'cashier' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
-                <h2 style={{ margin: '0 0 5px 0', fontSize: '20px', fontWeight: '900' }}>📈 مركز التقارير والإقرارات الرسمية</h2>
-                <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>تصدير كافة تقارير المبيعات والمخزون والعملاء بصيغة Excel معتمدة.</p>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-                <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '15px' }}>
-                  <div>
-                    <h3 style={{ margin: '0 0 8px 0', fontSize: '17px' }}>{t.invRepo}</h3>
-                    <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي فواتير المبيعات والضرائب لتقديم الإقرار الضريبي لهيئة الزكاة.</p>
-                  </div>
-                  <button onClick={handleExportSales} style={{ background: theme.primary, color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.exportSalesBtn}</button>
+          {/* نافذة إضافة موظف جديد الشاملة (Modal) */}
+          {showAddEmpModal && (
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+              <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>إضافة موظف جديد (بيانات شاملة)</h3>
+                  <button onClick={() => setShowAddEmpModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
                 </div>
 
-                <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '15px' }}>
-                  <div>
-                    <h3 style={{ margin: '0 0 8px 0', fontSize: '17px' }}>{t.stockRepo}</h3>
-                    <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>تقرير جرد المستودع الحي وقيمة الأصول والمنتجات المتاحة.</p>
+                <form onSubmit={handleSaveEmployee} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empName}</label>
+                      <input type="text" value={empName} onChange={e=>setEmpName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empNumber}</label>
+                      <input type="text" value={empNumber} onChange={e=>setEmpNumber(e.target.value)} placeholder="مثال: 22" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                    </div>
                   </div>
-                  <button onClick={handleExportInventory} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.exportInventoryBtn}</button>
-                </div>
 
-                <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '15px' }}>
-                  <div>
-                    <h3 style={{ margin: '0 0 8px 0', fontSize: '17px' }}>دليل العملاء</h3>
-                    <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>قائمة تفصيلية بكافة العملاء المسجلين وقاعدة البيانات.</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empIdNumber}</label>
+                      <input type="text" value={empIdNumber} onChange={e=>setEmpIdNumber(e.target.value)} placeholder="رقم الهوية أو الإقامة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empPhone}</label>
+                      <input type="text" value={empPhone} onChange={e=>setEmpPhone(e.target.value)} placeholder="05xxxxxxxx" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                    </div>
                   </div>
-                  <button onClick={handleExportCustomers} style={{ background: '#059669', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير العملاء (Excel)</button>
-                </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empRole}</label>
+                      <input type="text" value={empRole} onChange={e=>setEmpRole(e.target.value)} placeholder="المسمى الوظيفي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empDept}</label>
+                      <input type="text" value={empDept} onChange={e=>setEmpDept(e.target.value)} placeholder="القسم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empSalary}</label>
+                      <input type="number" value={empSalary} onChange={e=>setEmpSalary(e.target.value)} required placeholder="4000" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empDeductions}</label>
+                      <input type="number" value={empDeductions} onChange={e=>setEmpDeductions(e.target.value)} placeholder="0" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empVacations}</label>
+                      <input type="number" value={empVacations} onChange={e=>setEmpVacations(e.target.value)} placeholder="21" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empInsurance}</label>
+                      <input type="text" value={empInsurance} onChange={e=>setEmpInsurance(e.target.value)} placeholder="نوع التأمين الطبي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empStatus}</label>
+                      <select value={empStatus} onChange={e=>setEmpStatus(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }}>
+                        <option value="نشط">نشط</option>
+                        <option value="إجازة">إجازة</option>
+                        <option value="موقوف">موقوف</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empIqamaEnd}</label>
+                      <input type="date" value={empIqamaEnd} onChange={e=>setEmpIqamaEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empHealthEnd}</label>
+                      <input type="date" value={empHealthEnd} onChange={e=>setEmpHealthEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empContractEnd}</label>
+                      <input type="date" value={empContractEnd} onChange={e=>setEmpContractEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                    <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveEmp}</button>
+                    <button type="button" onClick={() => setShowAddEmpModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
+                  </div>
+                </form>
               </div>
             </div>
           )}
 
-          {/* 12. الإعدادات */}
+          {/* 10. الإعدادات */}
           {activeTab === 'settings' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
@@ -1411,258 +1122,26 @@ function App() {
         </main>
       </div>
 
-      {/* نافذة إضافة أمر تصنيع (BOM) */}
-      {showBomModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '500px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>إنشاء أمر تصنيع جديد (BOM)</h3>
-              <button onClick={() => setShowBomModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
-            </div>
-
-            <form onSubmit={handleCreateBomOrder} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>اختر المنتج المراد تصنيعه وإضافته للمستودع:</label>
-              <select value={bomTargetProductId} onChange={e=>setBomTargetProductId(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }}>
-                <option value="">-- اختر المنتج --</option>
-                {inventory.map(p => <option key={p.id} value={p.id}>{p.name} (المتوفر الحالي: {p.stock})</option>)}
-              </select>
-
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>الكمية المراد إنتاجها:</label>
-              <input type="number" min="1" value={bomQtyToProduce} onChange={e=>setBomQtyToProduce(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-
-              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تنفيذ الأمر وزيادة المخزون ⚙️</button>
-                <button type="button" onClick={() => setShowBomModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إلغاء</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* نافذة إدارة الخصومات المفتوحة */}
-      {managingDeductionsEmp && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3500, padding: '15px' }}>
-          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>إدارة خصومات الموظف: {managingDeductionsEmp.name}</h3>
-              <button onClick={() => setManagingDeductionsEmp(null)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
-            </div>
-
-            <form onSubmit={handleAddDeduction} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px' }}>
-                <input type="number" placeholder="مبلغ الخصم (ر.س)" value={newDeductionAmount} onChange={e=>setNewDeductionAmount(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-                <input type="text" placeholder="سبب الخصم (مثال: تأخير، غياب...)" value={newDeductionReason} onChange={e=>setNewDeductionReason(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-              </div>
-              <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إضافة الخصم وتسجيل التاريخ آلياً وربطه بالمحاسبة ➕</button>
-            </form>
-
-            <h4 style={{ margin: '0 0 10px 0', fontSize: '15px' }}>سجل الخصومات الحالية (تاريخ آلي مع إمكانية الإعفاء):</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
-              {(!managingDeductionsEmp.deductionsList || managingDeductionsEmp.deductionsList.length === 0) ? (
-                <p style={{ color: theme.textMuted, fontSize: '13px' }}>لا توجد خصومات مسجلة لهذا الموظف حالياً.</p>
-              ) : (
-                managingDeductionsEmp.deductionsList.map(d => (
-                  <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme.bgMain, padding: '10px', borderRadius: '8px', border: `1px solid ${theme.border}`, fontSize: '13px' }}>
-                    <div>
-                      <strong style={{ color: '#ef4444' }}>{d.amount} ر.س</strong> - <span>{d.reason}</span>
-                      <span style={{ display: 'block', fontSize: '11px', color: theme.textMuted }}>تاريخ الخصم: {d.date}</span>
-                    </div>
-                    <button onClick={() => handleRemoveDeduction(d.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>إعفاء / حذف ✖</button>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <button onClick={() => setManagingDeductionsEmp(null)} style={{ width: '100%', background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '20px' }}>إغلاق</button>
-          </div>
-        </div>
-      )}
-
-      {/* نافذة إضافة موظف جديد شاملة */}
-      {showAddEmpModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>إضافة موظف جديد</h3>
-              <button onClick={() => setShowAddEmpModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
-            </div>
-
-            <form onSubmit={handleSaveEmployee} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empName}</label>
-                  <input type="text" value={empName} onChange={e=>setEmpName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empNumber}</label>
-                  <input type="text" value={empNumber} onChange={e=>setEmpNumber(e.target.value)} placeholder="مثال: 22" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empIdNumber}</label>
-                  <input type="text" value={empIdNumber} onChange={e=>setEmpIdNumber(e.target.value)} placeholder="رقم الهوية أو الإقامة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empPhone}</label>
-                  <input type="text" value={empPhone} onChange={e=>setEmpPhone(e.target.value)} placeholder="05xxxxxxxx" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empRole}</label>
-                  <input type="text" value={empRole} onChange={e=>setEmpRole(e.target.value)} placeholder="المسمى الوظيفي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empDept}</label>
-                  <input type="text" value={empDept} onChange={e=>setEmpDept(e.target.value)} placeholder="القسم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empSalary}</label>
-                  <input type="number" value={empSalary} onChange={e=>setEmpSalary(e.target.value)} required placeholder="4000" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empVacations}</label>
-                  <input type="number" value={empVacations} onChange={e=>setEmpVacations(e.target.value)} placeholder="21" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empInsurance}</label>
-                  <input type="text" value={empInsurance} onChange={e=>setEmpInsurance(e.target.value)} placeholder="نوع التأمين الطبي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empStatus}</label>
-                  <select value={empStatus} onChange={e=>setEmpStatus(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }}>
-                    <option value="نشط">نشط</option>
-                    <option value="إجازة">إجازة</option>
-                    <option value="موقوف">موقوف</option>
-                  </select>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empIqamaEnd}</label>
-                  <input type="date" value={empIqamaEnd} onChange={e=>setEmpIqamaEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empHealthEnd}</label>
-                  <input type="date" value={empHealthEnd} onChange={e=>setEmpHealthEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empContractEnd}</label>
-                  <input type="date" value={empContractEnd} onChange={e=>setEmpContractEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
-                <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveEmp}</button>
-                <button type="button" onClick={() => setShowAddEmpModal(false)} style={{ flex: '1', background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* نافذة إضافة حساب جديد */}
-      {showAddAccountModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '500px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>إضافة حساب جديد لدليل الحسابات</h3>
-              <button onClick={() => setShowAddAccountModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
-            </div>
-
-            <form onSubmit={handleAddAccount} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <input type="text" placeholder="رمز الحساب (مثال: 1103)" value={newAccCode} onChange={e=>setNewAccCode(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-              <input type="text" placeholder="اسم الحساب (مثال: عهد ومستحقات)" value={newAccName} onChange={e=>setNewAccName(e.target.value)} required style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-              <select value={newAccType} onChange={e=>setNewAccType(e.target.value)} style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }}>
-                <option value="أصول">أصول</option>
-                <option value="خصوم">خصوم</option>
-                <option value="حقوق ملكية">حقوق ملكية</option>
-                <option value="إيرادات">إيرادات</option>
-                <option value="مصروفات">مصروفات</option>
-              </select>
-              <input type="number" placeholder="الرصيد الافتتاحي (ر.س)" value={newAccBalance} onChange={e=>setNewAccBalance(e.target.value)} style={{ padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-              
-              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ الحساب</button>
-                <button type="button" onClick={() => setShowAddAccountModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إلغاء</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       {printingInvoice && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
           <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
               <h2>{t.taxInvoiceTitle}</h2>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={() => window.print()} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>📥 حفظ PDF / طباعة</button>
-                <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.closeModal}</button>
-              </div>
+              <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.closeModal}</button>
             </div>
-            
-            <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '15px', boxSizing: 'border-box' }}>
-              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, color: '#0f172a', fontSize: '20px' }}>{businessName}</h2>
-                <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0' }}>{t.taxInvoiceTitle}</p>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '20px', borderBottom: '1px solid #cbd5e1', paddingBottom: '12px' }}>
-                <div>
-                  <p style={{ margin: '4px 0' }}><strong>{t.invNo}</strong> #{printingInvoice.invoiceNo}</p>
-                  <p style={{ margin: '4px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي'}</p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ margin: '4px 0' }}><strong>{t.invoiceDate}</strong> {new Date(printingInvoice.createdAt).toLocaleString()}</p>
-                </div>
-              </div>
-
+            <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '15px' }}>
+              <h2>{businessName}</h2>
+              <p><strong>{t.invNo}</strong> #{printingInvoice.invoiceNo}</p>
               <table style={{ width: '100%', borderCollapse: 'collapse', margin: '20px 0', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ background: '#0f172a', color: '#fff' }}>
-                    <th style={{ padding: '10px', textAlign: 'right' }}>{t.itemDesc}</th>
-                    <th style={{ padding: '10px', textAlign: 'center' }}>{t.itemQuantity}</th>
-                    <th style={{ padding: '10px', textAlign: 'center'}>{t.unitPriceCol}</th>
-                    <th style={{ padding: '10px', textAlign: 'left' }}>{t.totalCol}</th>
-                  </tr>
-                </thead>
+                <thead><tr style={{ background: '#0f172a', color: '#fff' }}><th style={{ padding: '8px' }}>Item</th><th style={{ padding: '8px' }}>Qty</th><th style={{ padding: '8px' }}>Total</th></tr></thead>
                 <tbody>
                   {(printingInvoice.items || []).map((it, idx)=>(
-                    <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}>
-                      <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || 'صنف'}</td>
-                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity}</td>
-                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice}</td>
-                      <td style={{ padding: '10px', textAlign: 'left' }}>{it.subtotal}</td>
-                    </tr>
+                    <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}><td style={{ padding: '8px' }}>{it.product?.name}</td><td style={{ padding: '8px' }}>{it.quantity}</td><td style={{ padding: '8px' }}>{it.subtotal}</td></tr>
                   ))}
                 </tbody>
               </table>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '25px', borderTop: '1px solid #cbd5e1', paddingTop: '15px' }}>
-                <img src={generateZatcaQR(printingInvoice, businessName)} alt="QR" style={{ width: '110px', height: '110px' }} />
-                <div style={{ textAlign: 'right', fontSize: '14px' }}>
-                  <p style={{ margin: '5px 0' }}>{t.subtotal} <strong>{printingInvoice.subtotal}</strong> {t.currency}</p>
-                  <p style={{ margin: '5px 0' }}>{t.vatAmount} <strong>{printingInvoice.taxAmount}</strong> {t.currency}</p>
-                  <h3 style={{ margin: '10px 0 0 0', color: '#0f172a', fontSize: '16px' }}>{t.totalDue} <strong>{printingInvoice.totalAmount}</strong> {t.currency}</h3>
-                </div>
-              </div>
-
-              <div style={{ textAlign: 'center', marginTop: '35px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '12px' }}>
-                {t.invoiceFooterNote}
-              </div>
+              <h3>{t.totalDue} {printingInvoice.totalAmount} {t.currency}</h3>
             </div>
-
           </div>
         </div>
       )}
