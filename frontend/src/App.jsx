@@ -106,9 +106,10 @@ const dict = {
     adminSecretPlaceholder: 'أدخل كلمة سر الإدارة المعتمدة',
     enterAppBtn: 'ابدأ العمل الآن 🚀',
 
-    hrTitle: 'الموارد البشرية والرواتب',
-    hrSub: 'إدارة الموظفين، الرواتب، الأجازات، الخصومات، والوثائق.',
+    hrTitle: 'الموارد البشرية والرواتب والخصومات',
+    hrSub: 'إدارة الموظفين، الرواتب، الأجازات، وسجل الخصومات بالتاريخ التلقائي.',
     addEmpBtn: 'إضافة موظف جديد +',
+    addDeductBtn: 'إضافة خصم +',
     empName: 'الاسم الكامل *',
     empIdNumber: 'رقم الهوية / الإقامة',
     empNumber: 'رقم الموظف',
@@ -116,7 +117,7 @@ const dict = {
     empDept: 'القسم',
     empPhone: 'رقم الهاتف',
     empSalary: 'الراتب الأساسي (ر.س)',
-    empDeductions: 'الخصومات الشهرية (ر.س)',
+    empDeductions: 'إجمالي الخصومات (ر.س)',
     empVacations: 'رصيد الأجازات (أيام)',
     empInsurance: 'التأمين الطبي',
     empStatus: 'الحالة',
@@ -124,6 +125,7 @@ const dict = {
     empHealthEnd: 'انتهاء الشهادة الصحية',
     empContractEnd: 'انتهاء العقد',
     saveEmp: 'حفظ الموظف',
+    saveDeduct: 'تسجيل الخصم',
     closeModal: 'إغلاق',
 
     invValue: 'قيمة المخزون الإجمالية',
@@ -178,9 +180,10 @@ const dict = {
     adminSecretPlaceholder: 'Enter master admin secret password',
     enterAppBtn: 'Get Started 🚀',
 
-    hrTitle: 'Human Resources & Payroll',
-    hrSub: 'Manage employees, salaries, vacations, deductions, and documents.',
+    hrTitle: 'Human Resources, Payroll & Deductions',
+    hrSub: 'Manage employees, salaries, vacations, deductions with auto date.',
     addEmpBtn: 'Add New Employee +',
+    addDeductBtn: 'Add Deduction +',
     empName: 'Full Name *',
     empIdNumber: 'National ID / Iqama',
     empNumber: 'Employee ID',
@@ -188,7 +191,7 @@ const dict = {
     empDept: 'Department',
     empPhone: 'Phone Number',
     empSalary: 'Basic Salary (SAR)',
-    empDeductions: 'Monthly Deductions (SAR)',
+    empDeductions: 'Total Deductions (SAR)',
     empVacations: 'Vacation Balance (Days)',
     empInsurance: 'Medical Insurance',
     empStatus: 'Status',
@@ -196,6 +199,7 @@ const dict = {
     empHealthEnd: 'Health Cert Expiry',
     empContractEnd: 'Contract Expiry',
     saveEmp: 'Save Employee',
+    saveDeduct: 'Save Deduction',
     closeModal: 'Cancel',
 
     invValue: 'Total Inventory Valuation',
@@ -305,7 +309,7 @@ function App() {
   const [purchaseQty, setPurchaseQty] = useState(10);
   const [purchaseCost, setPurchaseCost] = useState('');
 
-  // حالات إدارة الموارد البشرية
+  // حالات إدارة الموارد البشرية والخصومات التفصيلية
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
@@ -313,7 +317,17 @@ function App() {
       { id: 2, name: 'محمد عبدالله الزهراني', idNumber: '288145789632', empNo: '21', role: 'مشرف خط إنتاج', dept: 'إنتاج وتعبئة', phone: '0501234567', salary: 5050, deductions: 50, vacations: 21, insurance: 'شامل الفئة ب', status: 'نشط', iqamaEnd: '2026-10-15', healthEnd: '2026-08-20', contractEnd: '2027-01-01' }
     ];
   });
+
+  const [deductionsList, setDeductionsList] = useState(() => {
+    const saved = localStorage.getItem('mihwar_hr_deductions');
+    return saved ? JSON.parse(saved) : [
+      { id: 1, empName: 'أحمد حلمي محمد', amount: 120, reason: 'تأخير عن الدوام الرسمي', date: new Date().toISOString().slice(0, 10) }
+    ];
+  });
+
   const [showAddEmpModal, setShowAddEmpModal] = useState(false);
+  const [showDeductModal, setShowDeductModal] = useState(false);
+
   const [empName, setEmpName] = useState('');
   const [empIdNumber, setEmpIdNumber] = useState('');
   const [empNumber, setEmpNumber] = useState('');
@@ -328,6 +342,11 @@ function App() {
   const [empIqamaEnd, setEmpIqamaEnd] = useState('');
   const [empHealthEnd, setEmpHealthEnd] = useState('');
   const [empContractEnd, setEmpContractEnd] = useState('');
+
+  // حقول نموذج الخصم السريع
+  const [selectedEmpForDeduct, setSelectedEmpForDeduct] = useState('');
+  const [deductAmount, setDeductAmount] = useState('');
+  const [deductReason, setDeductReason] = useState('');
 
   const [lowStockThreshold, setLowStockThreshold] = useState(() => {
     const saved = localStorage.getItem('mihwar_low_stock_threshold');
@@ -410,6 +429,35 @@ function App() {
     const updated = employees.filter(e => e.id !== id);
     setEmployees(updated);
     localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
+  };
+
+  // دالة حفظ الخصم مع التاريخ التلقائي
+  const handleSaveDeduction = (e) => {
+    e.preventDefault();
+    if (!selectedEmpForDeduct || !deductAmount) return;
+    const newDeduct = {
+      id: Date.now(),
+      empName: selectedEmpForDeduct,
+      amount: Number(deductAmount),
+      reason: deductReason.trim() || 'بدون سبب مذكور',
+      date: new Date().toISOString().slice(0, 10) // تاريخ اليوم تلقائياً
+    };
+    const updatedList = [newDeduct, ...deductionsList];
+    setDeductionsList(updatedList);
+    localStorage.setItem('mihwar_hr_deductions', JSON.stringify(updatedList));
+
+    // تحديث إجمالي الخصومات للموظف المستهدف
+    const updatedEmps = employees.map(emp => {
+      if (emp.name === selectedEmpForDeduct) {
+        return { ...emp, deductions: Number(emp.deductions || 0) + Number(deductAmount) };
+      }
+      return emp;
+    });
+    setEmployees(updatedEmps);
+    localStorage.setItem('mihwar_hr_employees', JSON.stringify(updatedEmps));
+
+    setSelectedEmpForDeduct(''); setDeductAmount(''); setDeductReason('');
+    setShowDeductModal(false);
   };
 
   const handleExportSales = () => {
@@ -1010,7 +1058,7 @@ function App() {
             </div>
           )}
 
-          {/* 9. الموارد البشرية والرواتب */}
+          {/* 9. الموارد البشرية والرواتب (HR & Payroll) */}
           {activeTab === 'hr' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -1018,11 +1066,17 @@ function App() {
                   <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.hrTitle}</h2>
                   <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{t.hrSub}</p>
                 </div>
-                <button onClick={() => setShowAddEmpModal(true)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 22px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
-                  {t.addEmpBtn}
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button onClick={() => setShowAddEmpModal(true)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 18px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
+                    {t.addEmpBtn}
+                  </button>
+                  <button onClick={() => setShowDeductModal(true)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '12px 18px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
+                    {t.addDeductBtn}
+                  </button>
+                </div>
               </div>
 
+              {/* بطاقات الإحصائيات */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}>
                   <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي الموظفين</p>
@@ -1034,8 +1088,9 @@ function App() {
                 </div>
               </div>
 
+              {/* جدول الموظفين */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📋 سجل الموظفين، الرواتب، الأجازات والوثائق</h3>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📋 سجل الموظفين، الرواتب والخصومات والوثائق</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '900px' }}>
                   <thead>
                     <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
@@ -1077,6 +1132,31 @@ function App() {
                   </tbody>
                 </table>
               </div>
+
+              {/* سجل الخصومات التفصيلي (السبب والقيمة والتاريخ التلقائي) */}
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: '#fca5a5' }}>🔻 سجل الخصومات التفصيلي (السبب، القيمة، والتاريخ التلقائي)</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '10px' }}>اسم الموظف</th>
+                      <th style={{ padding: '10px' }}>قيمة الخصم</th>
+                      <th style={{ padding: '10px' }}>سبب الخصم</th>
+                      <th style={{ padding: '10px' }}>تاريخ التسجيل (تلقائي)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deductionsList.map(d => (
+                      <tr key={d.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{d.empName}</td>
+                        <td style={{ padding: '10px', color: '#ef4444', fontWeight: 'bold' }}>{d.amount} {t.currency}</td>
+                        <td style={{ padding: '10px' }}>{d.reason}</td>
+                        <td style={{ padding: '10px', color: theme.textMuted }}>{d.date}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -1085,7 +1165,7 @@ function App() {
             <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
               <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
-                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>إضافة موظف جديد (بيانات شاملة)</h3>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>إضافة موظف جديد</h3>
                   <button onClick={() => setShowAddEmpModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
                 </div>
 
@@ -1138,39 +1218,50 @@ function App() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empInsurance}</label>
-                      <input type="text" value={empInsurance} onChange={e=>setEmpInsurance(e.target.value)} placeholder="نوع التأمين الطبي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empStatus}</label>
-                      <select value={empStatus} onChange={e=>setEmpStatus(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }}>
-                        <option value="نشط">نشط</option>
-                        <option value="إجازة">إجازة</option>
-                        <option value="موقوف">موقوف</option>
-                      </select>
-                    </div>
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                    <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveEmp}</button>
+                    <button type="button" onClick={() => setShowAddEmpModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* نافذة إضافة خصم سريع مع التاريخ التلقائي */}
+          {showDeductModal && (
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+              <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '500px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>تسجيل خصم مالي على موظف</h3>
+                  <button onClick={() => setShowDeductModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
+                </div>
+
+                <form onSubmit={handleSaveDeduction} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>اختر الموظف</label>
+                    <select value={selectedEmpForDeduct} onChange={e=>setSelectedEmpForDeduct(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }}>
+                      <option value="">-- اختر الموظف --</option>
+                      {employees.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}
+                    </select>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                    <div>
-                      <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empIqamaEnd}</label>
-                      <input type="date" value={empIqamaEnd} onChange={e=>setEmpIqamaEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empHealthEnd}</label>
-                      <input type="date" value={empHealthEnd} onChange={e=>setEmpHealthEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empContractEnd}</label>
-                      <input type="date" value={empContractEnd} onChange={e=>setEmpContractEnd(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
-                    </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>قيمة الخصم (ر.س)</label>
+                    <input type="number" value={deductAmount} onChange={e=>setDeductAmount(e.target.value)} required placeholder="100" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>سبب الخصم</label>
+                    <input type="text" value={deductReason} onChange={e=>setDeductReason(e.target.value)} placeholder="مثال: تأخير عن الدوام الرسمي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  </div>
+
+                  <div style={{ background: theme.bgMain, padding: '10px', borderRadius: '8px', fontSize: '12px', color: theme.textMuted }}>
+                    📅 تاريخ الخصم: <strong>{new Date().toISOString().slice(0, 10)}</strong> (تلقائي)
                   </div>
 
                   <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
-                    <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveEmp}</button>
-                    <button type="button" onClick={() => setShowAddEmpModal(false)} style={{ flex: '1', background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
+                    <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveDeduct}</button>
+                    <button type="button" onClick={() => setShowDeductModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
                   </div>
                 </form>
               </div>
