@@ -325,14 +325,20 @@ function App() {
 
   const [invoices, setInvoices] = useState([]);
   
-  // حالات شاشة المبيعات والفوترة
+  // حالات شاشة المبيعات والفوترة الشاملة
+  const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
   const [itemQty, setItemQty] = useState(1);
   const [itemPrice, setItemPrice] = useState('');
   const [invoiceStatus, setInvoiceStatus] = useState('مدفوعة');
+  const [dueDateInput, setDueDateInput] = useState(''); // مدة أو تاريخ الاستحقاق عند اختيار غير مدفوعة
   const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
+
+  // حالات نقطة البيع (POS) مع بحث العملاء
+  const [posCustomerSearch, setPosCustomerSearch] = useState('');
+  const [posSelectedCustomerId, setPosSelectedCustomerId] = useState('');
 
   const [purchaseInvoices, setPurchaseInvoices] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
@@ -409,8 +415,8 @@ function App() {
     if (user) {
       setBusinessName(user.businessName || 'نظام محور');
       fetchAllData();
-      if (user.role === 'cashier' && activeTab !== 'sales') {
-        setActiveTab('sales');
+      if (user.role === 'cashier' && activeTab !== 'pos') {
+        setActiveTab('pos');
       }
     }
   }, [user]);
@@ -428,6 +434,17 @@ function App() {
   const fetchSuppliers = async () => { try { const res = await API.get('/api/suppliers'); if (res.data) setSuppliers(res.data); } catch (e) {} };
   const fetchInvoices = async () => { try { const res = await API.get('/api/sales'); if (res.data) setInvoices(res.data); } catch (e) {} };
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
+
+  // فلترة العملاء للبحث الذكي (بالاسم، السجل التجاري، الرقم الضريبي، أو رقم الهوية)
+  const filteredCustomersForSales = customers.filter(c => {
+    const q = salesCustomerSearch.toLowerCase();
+    return c.name.toLowerCase().includes(q) || (c.nationalId && c.nationalId.toLowerCase().includes(q)) || (c.phone && c.phone.includes(q));
+  });
+
+  const filteredCustomersForPos = customers.filter(c => {
+    const q = posCustomerSearch.toLowerCase();
+    return c.name.toLowerCase().includes(q) || (c.nationalId && c.nationalId.toLowerCase().includes(q)) || (c.phone && c.phone.includes(q));
+  });
 
   const handleSaveEmployee = (e) => {
     e.preventDefault();
@@ -568,7 +585,7 @@ function App() {
     exportToExcel(title, headers, rows, lang);
   };
 
-  // دالة إضافة البند للسلة مع فحص السعر والكمية بدقة وتجنب أي خطأ برمجي
+  // إضافة صنف في المبيعات والفوترة
   const handleAddItemToSalesCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
@@ -593,7 +610,6 @@ function App() {
     setCartItems(cartItems.filter((_, i) => i !== idx));
   };
 
-  // دالة إتمام وحفظ الفاتورة مع إصلاح تفريغ السلة ليكون مصفوفة فارغة `[]` تماماً لمنع حدوث شاشة بيضاء
   const handleSaveSalesInvoice = async () => {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
@@ -601,12 +617,36 @@ function App() {
       const res = await API.post('/api/sales', { 
         customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
         items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
-        status: invoiceStatus
+        status: invoiceStatus,
+        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : null
       });
       setCartItems([]); 
       fetchAllData();
       if (res.data?.invoice) {
-        setPrintingInvoice({ ...res.data.invoice, paymentStatus: invoiceStatus });
+        setPrintingInvoice({ ...res.data.invoice, paymentStatus: invoiceStatus, dueDate: dueDateInput });
+      }
+      setActiveTab('invoicesList');
+    } catch (err) { 
+      alert(err.response?.data?.error || 'Failed'); 
+    } finally { 
+      setIsSubmittingSale(false); 
+    }
+  };
+
+  // إصدار فاتورة من نقطة البيع (POS) مع دعم اختيار العميل
+  const handleSavePosInvoice = async () => {
+    if (!cartItems.length) return;
+    setIsSubmittingSale(true);
+    try {
+      const res = await API.post('/api/sales', { 
+        customerId: posSelectedCustomerId ? Number(posSelectedCustomerId) : null, 
+        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
+        status: 'مدفوعة'
+      });
+      setCartItems([]); 
+      fetchAllData();
+      if (res.data?.invoice) {
+        setPrintingInvoice({ ...res.data.invoice, paymentStatus: 'مدفوعة' });
       }
       setActiveTab('invoicesList');
     } catch (err) { 
@@ -975,12 +1015,35 @@ function App() {
             </div>
           )}
 
-          {/* نقطة البيع (POS) */}
+          {/* 2. نقطة البيع (POS) - تم إضافة خانة البحث الذكي واختيار العميل */}
           {activeTab === 'pos' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '20px' }}>
                 <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>🛒 نقطة البيع السريعة</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px', maxHeight: '500px', overflowY: 'auto' }}>
+                
+                {/* خانة بحث واختيار العميل في نقطة البيع */}
+                <div style={{ marginBottom: '15px', background: theme.bgMain, padding: '10px', borderRadius: '10px', border: `1px solid ${theme.border}` }}>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#d97706' }}>🔍 البحث واختيار العميل للفاتورة:</label>
+                  <input 
+                    type="text" 
+                    value={posCustomerSearch} 
+                    onChange={e => setPosCustomerSearch(e.target.value)} 
+                    placeholder="ابحث باسم المنشأة، السجل التجاري، الرقم الضريبي، أو الهاتف..." 
+                    style={{ width: '100%', padding: '8px', borderRadius: '6px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '6px', boxSizing: 'border-box', fontSize: '12px' }} 
+                  />
+                  <select 
+                    value={posSelectedCustomerId} 
+                    onChange={e => setPosSelectedCustomerId(e.target.value)} 
+                    style={{ width: '100%', padding: '8px', borderRadius: '6px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '12px' }}
+                  >
+                    <option value="">-- عميل نقدي عام (افتراضي) --</option>
+                    {filteredCustomersForPos.map(c => (
+                      <option key={c.id} value={c.id}>{c.name} ({c.nationalId || c.phone || 'نقدي'})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px', maxHeight: '420px', overflowY: 'auto' }}>
                   {inventory.map(prod => {
                     const cartItem = cartItems.find(it => it.productId === prod.id);
                     const qty = cartItem ? cartItem.quantity : 0;
@@ -989,7 +1052,7 @@ function App() {
                       if (newQ > prod.stock) newQ = prod.stock;
                       if (newQ === 0) setCartItems(cartItems.filter(i => i.productId !== prod.id));
                       else if (cartItem) setCartItems(cartItems.map(i => i.productId === prod.id ? { ...i, quantity: newQ, subtotal: Number((newQ * prod.price).toFixed(2)) } : i));
-                      else setCartItems([...cartItems, { productId: prod.id, name: prod.name, quantity: newQ, price: prod.price, subtotal: Number((newQ * prod.price).toFixed(2)) }]);
+                      else setCartItems([...cartItems, { productId: prod.id, name: prod.name, quantity: newQ, unitPrice: prod.price, subtotal: Number((newQ * prod.price).toFixed(2)) }]);
                     };
                     return (
                       <div key={prod.id} style={{ background: theme.bgMain, border: `1px solid ${qty > 0 ? '#d97706' : theme.border}`, borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '8px' }}>
@@ -1027,7 +1090,7 @@ function App() {
                       <span style={{ color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span>
                     </div>
                   </div>
-                  <button onClick={handleSaveSalesInvoice} disabled={!cartItems.length || isSubmittingSale} style={{ width: '100%', background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                  <button onClick={handleSavePosInvoice} disabled={!cartItems.length || isSubmittingSale} style={{ width: '100%', background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
                     إتمام الدفع وإصدار الفاتورة 💳
                   </button>
                 </div>
@@ -1035,17 +1098,25 @@ function App() {
             </div>
           )}
 
-          {/* 3. المبيعات والفوترة الشاملة */}
+          {/* 3. المبيعات والفوترة الشاملة (مع البحث الذكي عن العميل وتحديد مدة الاستحقاق لغير المدفوعة) */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
                 <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#d97706' }}>⚡ إصدار فاتورة بيع جديدة</h2>
                 
+                {/* قسم البحث الذكي واختيار العميل */}
                 <div style={{ marginBottom: '15px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>العميل المستلم</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>🔍 بحث واختيار العميل (بالاسم، السجل التجاري، الرقم الضريبي، أو الهوية):</label>
+                  <input 
+                    type="text" 
+                    value={salesCustomerSearch} 
+                    onChange={e => setSalesCustomerSearch(e.target.value)} 
+                    placeholder="اكتب اسم المنشأة أو العميل للبحث السريع..." 
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '8px', boxSizing: 'border-box', fontSize: '13px' }} 
+                  />
                   <select value={selectedCustomerId} onChange={e=>setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
-                    <option value="">عميل نقدي عام (افتراضي)</option>
-                    {customers.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                    <option value="">-- عميل نقدي عام (افتراضي) --</option>
+                    {filteredCustomersForSales.map(c=><option key={c.id} value={c.id}>{c.name} ({c.nationalId || c.phone || 'نقدي'})</option>)}
                   </select>
                 </div>
 
@@ -1083,14 +1154,28 @@ function App() {
                   <button onClick={handleAddItemToSalesCart} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '11px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>➕ إضافة</button>
                 </div>
 
-                <div style={{ marginBottom: '20px', background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '15px' }}>
+                {/* حالة الدفع مع إمكانية كتابة مدة أو تاريخ الاستحقاق عند اختيار غير مدفوعة */}
+                <div style={{ marginBottom: '20px', background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '13px', fontWeight: 'bold' }}>حالة الدفع:</span>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
                     <input type="radio" name="payStatus" checked={invoiceStatus === 'مدفوعة'} onChange={() => setInvoiceStatus('مدفوعة')} /> مدفوعة
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
-                    <input type="radio" name="payStatus" checked={invoiceStatus === 'غير مدفوعة'} onChange={() => setInvoiceStatus('غير مدفوعة')} /> غير مدفوعة
+                    <input type="radio" name="payStatus" checked={invoiceStatus === 'غير مدفوعة'} onChange={() => setInvoiceStatus('غير مدفوعة')} /> غير مدفوعة (أجل)
                   </label>
+
+                  {invoiceStatus === 'غير مدفوعة' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 'auto' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f43f5e' }}>مدة / تاريخ الاستحقاق:</span>
+                      <input 
+                        type="text" 
+                        value={dueDateInput} 
+                        onChange={e => setDueDateInput(e.target.value)} 
+                        placeholder="مثال: بعد 30 يوم / 2026-10-01" 
+                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #f43f5e', background: theme.cardBg, color: theme.textDark, fontSize: '12px', outline: 'none' }} 
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <h3 style={{ margin: '0 0 10px 0', fontSize: '15px' }}>🛒 محتويات الفاتورة الحالية</h3>
@@ -1439,7 +1524,7 @@ function App() {
             </div>
           )}
 
-          {/* نافذة إضافة خصم مع البحث بالاسم أو الهوية وتاريخ تلقائي */}
+          {/* نافذة إضافة خصم */}
           {showDeductModal && (
             <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
               <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '520px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -1455,7 +1540,7 @@ function App() {
                       type="text" 
                       value={empSearchQuery} 
                       onChange={e => setEmpSearchQuery(e.target.value)} 
-                      placeholder="اكتب اسم الموظف أو رقم الهوية (مثال: محمد أو 799)..." 
+                      placeholder="اكتب اسم الموظف أو رقم الهوية..." 
                       style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '8px', boxSizing: 'border-box' }} 
                     />
                     
@@ -1587,8 +1672,10 @@ function App() {
                   <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#d97706' }}>{t.taxInvoiceTitle}</h3>
                   <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>رقم الفاتورة:</strong> INV-{printingInvoice.invoiceNo}</p>
                   <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>الحالة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#f43f5e' : '#10b981', fontWeight: 'bold' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
+                  {printingInvoice.dueDate && (
+                    <p style={{ margin: '2px 0', fontSize: '12px', color: '#f43f5e' }}><strong>مدة الاستحقاق:</strong> {printingInvoice.dueDate}</p>
+                  )}
                   <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
-                  <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الاستحقاق:</strong> {t.invoiceDueDateText}</p>
                 </div>
               </div>
 
