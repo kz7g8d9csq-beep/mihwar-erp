@@ -659,14 +659,13 @@ function App() {
     return p.name.toLowerCase().includes(q);
   });
 
-  // المبيعات والفوترة: حفظ وفصل السعر اليدوي بدقة تامة لكي لا يتم استبداله بسعر المخزون أبداً
+  // المبيعات والفوترة: الالتزام التام بالسعر اليدوي المُدخل وعدم ضياعه أو استبداله
   const handleAddItemToSalesCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
     if (!product) return;
     const qty = Number(itemQty);
     if (qty <= 0) return;
-    // استخدام السعر المُدخل يدوياً تماماً كما حددته
     const price = itemPrice !== '' && !isNaN(Number(itemPrice)) ? Number(itemPrice) : product.price;
 
     const existing = cartItems.find(it => it.productId === product.id && it.unitPrice === price);
@@ -698,7 +697,6 @@ function App() {
         invoiceNo: Math.floor(100000 + Math.random() * 900000),
         createdAt: new Date().toISOString(),
         customer: customers.find(c => c.id === Number(selectedCustomerId)) || null,
-        // حفظ العناصر مع السعر اليدوي المخصص تماماً لكي يظهر عند الطباعة
         items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
         subtotal: sub,
         taxAmount: tax,
@@ -714,7 +712,7 @@ function App() {
       localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
 
       setInvoices([newInv, ...invoices]);
-      setCartItems(''); 
+      setCartItems([]); 
       setDueDateInput('');
       setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
@@ -750,7 +748,7 @@ function App() {
       localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
 
       setInvoices([newInv, ...invoices]);
-      setCartItems(''); 
+      setCartItems([]); 
       setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
     } catch (err) { 
@@ -1196,7 +1194,7 @@ function App() {
             </div>
           )}
 
-          {/* 3. المبيعات والفوترة الشاملة - الالتزام التام بالسعر اليدوي وعدم تغييره أبداً */}
+          {/* 3. المبيعات والفوترة الشاملة - الالتزام التام بالسعر اليدوي وعدم ضياعه */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
