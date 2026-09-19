@@ -462,10 +462,12 @@ function App() {
         const enhanced = res.data.map(inv => {
           const savedStatus = localStorage.getItem(`invoice_status_${inv.id}`);
           const savedDueDate = localStorage.getItem(`invoice_duedate_${inv.id}`);
+          const savedItems = localStorage.getItem(`invoice_items_${inv.id}`);
           return {
             ...inv,
             paymentStatus: savedStatus || inv.paymentStatus || 'مدفوعة',
-            dueDate: savedDueDate || inv.dueDate || ''
+            dueDate: savedDueDate || inv.dueDate || '',
+            items: savedItems ? JSON.parse(savedItems) : inv.items
           };
         });
         setInvoices(enhanced);
@@ -657,13 +659,14 @@ function App() {
     return p.name.toLowerCase().includes(q);
   });
 
-  // الالتزام التام بالسعر اليدوي المُدخل في المبيعات والفوترة وعدم إرجاعه لسعر المخزون الافتراضي
+  // المبيعات والفوترة: حفظ وفصل السعر اليدوي بدقة تامة لكي لا يتم استبداله بسعر المخزون أبداً
   const handleAddItemToSalesCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
     if (!product) return;
     const qty = Number(itemQty);
     if (qty <= 0) return;
+    // استخدام السعر المُدخل يدوياً تماماً كما حددته
     const price = itemPrice !== '' && !isNaN(Number(itemPrice)) ? Number(itemPrice) : product.price;
 
     const existing = cartItems.find(it => it.productId === product.id && it.unitPrice === price);
@@ -695,6 +698,7 @@ function App() {
         invoiceNo: Math.floor(100000 + Math.random() * 900000),
         createdAt: new Date().toISOString(),
         customer: customers.find(c => c.id === Number(selectedCustomerId)) || null,
+        // حفظ العناصر مع السعر اليدوي المخصص تماماً لكي يظهر عند الطباعة
         items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
         subtotal: sub,
         taxAmount: tax,
@@ -709,11 +713,8 @@ function App() {
       }
       localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
 
-      // تخزين بيانات السعر اليدوي المخصص لضمان ظهوره في المعاينة والطباعة بنفس السعر المُدخل
-      localStorage.setItem(`invoice_custom_price_${newInv.id}`, 'true');
-
       setInvoices([newInv, ...invoices]);
-      setCartItems([]); 
+      setCartItems(''); 
       setDueDateInput('');
       setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
@@ -749,7 +750,7 @@ function App() {
       localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
 
       setInvoices([newInv, ...invoices]);
-      setCartItems([]); 
+      setCartItems(''); 
       setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
     } catch (err) { 
@@ -1195,7 +1196,7 @@ function App() {
             </div>
           )}
 
-          {/* 3. المبيعات والفوترة الشاملة - الالتزام التام بالسعر اليدوي المحفوظ */}
+          {/* 3. المبيعات والفوترة الشاملة - الالتزام التام بالسعر اليدوي وعدم تغييره أبداً */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1967,7 +1968,7 @@ function App() {
                       <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || 'خدمة عامة'}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
-                      <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold'>>(it.unitPrice * it.quantity)} {t.currency}</td>
+                      <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
                     </tr>
                   ))}
                 </tbody>
