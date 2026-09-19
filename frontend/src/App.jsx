@@ -305,7 +305,7 @@ function App() {
   const [purchaseQty, setPurchaseQty] = useState(10);
   const [purchaseCost, setPurchaseCost] = useState('');
 
-  // حالات إدارة الموارد البشرية الشاملة
+  // حالات إدارة الموارد البشرية
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
@@ -333,8 +333,6 @@ function App() {
     const saved = localStorage.getItem('mihwar_low_stock_threshold');
     return saved ? Number(saved) : 30;
   });
-  const [tempThreshold, setTempThreshold] = useState(lowStockThreshold);
-  const [isEditingThreshold, setIsEditingThreshold] = useState(false);
 
   const [printingInvoice, setPrintingInvoice] = useState(null);
   const [currentPass, setCurrentPass] = useState('');
@@ -599,7 +597,7 @@ function App() {
 
   if (!user) {
     return (
-      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', color: '#f8fafc' }}>
+      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', minHeight: '100vh', color: '#f8fafc' }}>
         <div style={{ display: 'flex', flex: 1, width: '100%', minHeight: '100vh', justifyContent: 'center', alignItems: 'center', padding: '40px' }}>
           <div style={{ width: '100%', maxWidth: '420px', background: '#1b2230', padding: '30px', borderRadius: '16px', border: '1px solid #263147' }}>
             <h1 style={{ color: '#f8fafc', fontSize: '24px', fontWeight: '900', margin: '0 0 20px 0' }}>تسجيل الدخول</h1>
@@ -727,16 +725,102 @@ function App() {
           {/* 1. لوحة التحكم */}
           {activeTab === 'dashboard' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
-                <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>لوحة التحكم</h2>
-                <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>مرحباً بك في نظام محور المطور.</p>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                <div>
+                  <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.welcome} {user.name} 👋</h2>
+                  <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>مرحباً بك في لوحة التحكم المركزية لنظام محور.</p>
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.invValue}</p><h2 style={{ color: '#d97706', margin: '8px 0 0 0', fontSize: '22px' }}>{inventoryVal.toLocaleString()} {t.currency}</h2></div>
-                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي المبيعات</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{totalSalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
-                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي المخزون</p><h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '22px' }}>{inventory.length} منتج</h2></div>
-                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>الفواتير المصدرة</p><h2 style={{ color: '#a855f7', margin: '8px 0 0 0', fontSize: '22px' }}>{invoices.length} فاتورة</h2></div>
+                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.salesTotal}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{totalSalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
+                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.purchasesTotal}</p><h2 style={{ color: '#f59e0b', margin: '8px 0 0 0', fontSize: '22px' }}>{totalPurchasesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
+                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.netProfit}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
+              </div>
+
+              <div style={{ background: lowStockItems.length > 0 ? '#7f1d1d22' : theme.cardBg, borderRadius: '16px', border: `1px solid ${lowStockItems.length > 0 ? '#7f1d1d' : theme.border}`, padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#fca5a5' : theme.textDark }}>
+                    {lowStockItems.length > 0 ? `⚠️ تنبيه: يوجد ${lowStockItems.length} صنف وصل للحد الأدنى للمخزون (${lowStockThreshold} قطع أو أقل)` : t.lowStockClean}
+                  </h3>
+                  {lowStockItems.length > 0 && (
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
+                      {lowStockItems.map(item => (
+                        <span key={item.id} style={{ background: '#7f1d1d', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>
+                          {item.name} (المتبقي: {item.stock})
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ background: theme.bgMain, padding: '12px 18px', borderRadius: '10px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 'bold' }}>تحديد الحد الأدنى:</span>
+                  <input 
+                    type="number" 
+                    value={lowStockThreshold} 
+                    onChange={e => {
+                      const val = Number(e.target.value);
+                      setLowStockThreshold(val);
+                      localStorage.setItem('mihwar_low_stock_threshold', val);
+                    }} 
+                    style={{ width: '65px', padding: '6px', borderRadius: '6px', border: '1px solid #d97706', background: theme.cardBg, color: theme.textDark, textAlign: 'center', fontWeight: 'bold', fontSize: '14px', outline: 'none' }} 
+                  />
+                  <span style={{ fontSize: '12px', color: theme.textMuted }}>قطعة</span>
+                </div>
+              </div>
+
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📅 تحليل أداء مبيعات السنة الحالية ({currentYear})</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '10px' }}>الشهر</th>
+                      <th style={{ padding: '10px' }}>عدد الفواتير</th>
+                      <th style={{ padding: '10px' }}>إجمالي المبيعات (ر.س)</th>
+                      <th style={{ padding: '10px' }}>نسبة الأداء</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthlyData.map((m, idx) => (
+                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{m.monthName}</td>
+                        <td style={{ padding: '10px' }}>{m.count} فاتورة</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#10b981' }}>{m.total.toFixed(2)} {t.currency}</td>
+                        <td style={{ padding: '10px' }}>
+                          <div style={{ width: '100%', maxWidth: '150px', height: '6px', background: theme.bgMain, borderRadius: '3px', overflow: 'hidden', border: `1px solid ${theme.border}` }}>
+                            <div style={{ width: `${Math.min(100, (m.total / (totalSalesVal || 1)) * 100)}%`, height: '100%', background: '#d97706' }}></div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📊 سجل النمو المالي للسنوات الماضية (حتى 10 سنوات)</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '10px' }}>السنة المالية</th>
+                      <th style={{ padding: '10px' }}>عدد الفواتير</th>
+                      <th style={{ padding: '10px' }}>إجمالي المبيعات</th>
+                      <th style={{ padding: '10px' }}>صافي الربح التقديري</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pastYearsData.map((y, idx) => (
+                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#d97706' }}>{y.year}</td>
+                        <td style={{ padding: '10px' }}>{y.count} فاتورة</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{y.totalSales.toFixed(2)} {t.currency}</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#10b981' }}>+{y.totalProfit.toFixed(2)} {t.currency}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -926,7 +1010,7 @@ function App() {
             </div>
           )}
 
-          {/* 9. الموارد البشرية والرواتب (HR & Payroll) الشامل */}
+          {/* 9. الموارد البشرية والرواتب */}
           {activeTab === 'hr' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -934,7 +1018,6 @@ function App() {
                   <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.hrTitle}</h2>
                   <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{t.hrSub}</p>
                 </div>
-                {/* زر إضافة موظف يعمل بكفاءة تامة */}
                 <button onClick={() => setShowAddEmpModal(true)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 22px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
                   {t.addEmpBtn}
                 </button>
@@ -997,7 +1080,7 @@ function App() {
             </div>
           )}
 
-          {/* نافذة إضافة موظف جديد الشاملة (Modal) */}
+          {/* نافذة إضافة موظف جديد */}
           {showAddEmpModal && (
             <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
               <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -1087,14 +1170,44 @@ function App() {
 
                   <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                     <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveEmp}</button>
-                    <button type="button" onClick={() => setShowAddEmpModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
+                    <button type="button" onClick={() => setShowAddEmpModal(false)} style={{ flex: '1', background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
                   </div>
                 </form>
               </div>
             </div>
           )}
 
-          {/* 10. الإعدادات */}
+          {/* 10. التقارير */}
+          {activeTab === 'reports' && user.role !== 'cashier' && (
+            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}>
+                <h2 style={{ margin: 0, fontSize: '18px' }}>{t.invRepo}</h2>
+                <button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير المبيعات</button>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                    <th style={{ padding: '10px' }}>No</th>
+                    <th style={{ padding: '10px' }}>Client</th>
+                    <th style={{ padding: '10px' }}>Total</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map(inv => (
+                    <tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                      <td style={{ padding: '10px' }}>#{inv.invoiceNo}</td>
+                      <td style={{ padding: '10px' }}>{inv.customer?.name||'Cash'}</td>
+                      <td style={{ padding: '10px' }}>{inv.totalAmount}</td>
+                      <td><button onClick={()=>setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>View</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* 11. الإعدادات */}
           {activeTab === 'settings' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
