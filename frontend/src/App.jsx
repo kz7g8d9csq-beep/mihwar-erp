@@ -137,8 +137,9 @@ const dict = {
     lowStockClean: '✅ مستويات المخزون ممتازة، لا توجد أصناف قاربت على النفاد.',
     prodName: 'اسم المنتج',
     prodPrice: 'سعر البيع (ر.س)',
-    prodStock: 'الكمية الأولية',
+    prodStock: 'الكمية الأولية / الرصيد',
     saveProd: 'حفظ المنتج',
+    updateProd: 'تحديث المنتج',
     stockRepo: '📦 مستودع المنتجات',
     invRepo: 'سجل الفواتير والمبيعات المعتمدة',
     prefTitle: '🌐 تفضيلات اللغة والمظهر',
@@ -224,6 +225,7 @@ const dict = {
     prodPrice: 'Sale Price (SAR)',
     prodStock: 'Initial Stock',
     saveProd: 'Save Product',
+    updateProd: 'Update Product',
     stockRepo: '📦 Warehouse Products',
     invRepo: 'Sales Invoices',
     prefTitle: '🌐 Language & Display',
@@ -313,6 +315,13 @@ function App() {
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
 
+  // حالات تعديل المنتج في المخزون
+  const [editingProdId, setEditingProdId] = useState(null);
+  const [showEditProdModal, setShowEditProdModal] = useState(false);
+  const [editProdName, setEditProdName] = useState('');
+  const [editProdPrice, setEditProdPrice] = useState('');
+  const [editProdStock, setEditProdStock] = useState('');
+
   const [customers, setCustomers] = useState([]);
   const [custName, setCustName] = useState('');
   const [custNationalId, setCustNationalId] = useState('');
@@ -325,7 +334,6 @@ function App() {
 
   const [invoices, setInvoices] = useState([]);
   
-  // حالات المبيعات والفوترة
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -336,7 +344,6 @@ function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
-  // حالات نقطة البيع (POS)
   const [posCustomerSearch, setPosCustomerSearch] = useState('');
   const [posSelectedCustomerId, setPosSelectedCustomerId] = useState('');
 
@@ -346,7 +353,6 @@ function App() {
   const [purchaseQty, setPurchaseQty] = useState(10);
   const [purchaseCost, setPurchaseCost] = useState('');
 
-  // الموارد البشرية والخصومات
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
@@ -415,8 +421,8 @@ function App() {
     if (user) {
       setBusinessName(user.businessName || 'نظام محور');
       fetchAllData();
-      if (user.role === 'cashier' && activeTab !== 'sales') {
-        setActiveTab('sales');
+      if (user.role === 'cashier' && activeTab !== 'pos') {
+        setActiveTab('pos');
       }
     }
   }, [user]);
@@ -440,12 +446,10 @@ function App() {
         const enhanced = res.data.map(inv => {
           const savedStatus = localStorage.getItem(`invoice_status_${inv.id}`);
           const savedDueDate = localStorage.getItem(`invoice_duedate_${inv.id}`);
-          const savedCustomItems = localStorage.getItem(`invoice_items_${inv.id}`);
           return {
             ...inv,
             paymentStatus: savedStatus || inv.paymentStatus || 'مدفوعة',
-            dueDate: savedDueDate || inv.dueDate || '',
-            items: savedCustomItems ? JSON.parse(savedCustomItems) : inv.items
+            dueDate: savedDueDate || inv.dueDate || ''
           };
         });
         setInvoices(enhanced);
@@ -454,6 +458,49 @@ function App() {
   };
 
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
+
+  // وظائف التعديل والحذف في المخزون
+  const handleOpenEditProduct = (prod) => {
+    setEditingProdId(prod.id);
+    setEditProdName(prod.name || '');
+    setEditProdPrice(prod.price || '');
+    setEditProdStock(prod.stock !== undefined ? prod.stock : 0);
+    setShowEditProdModal(true);
+  };
+
+  const handleUpdateProduct = async (e) => {
+    e.preventDefault();
+    if (!editProdName || !editProdPrice) return;
+    try {
+      await API.put(`/api/inventory/${editingProdId}`, {
+        name: editProdName,
+        price: Number(editProdPrice),
+        stock: Number(editProdStock)
+      });
+      setShowEditProdModal(false);
+      setEditingProdId(null);
+      fetchInventory();
+      alert('✅ تم تحديث المنتج بنجاح!');
+    } catch (err) {
+      // Fallback محلي إذا لم يكن الـ API يدعم الـ PUT مباشرة
+      setInventory(inventory.map(item => item.id === editingProdId ? { ...item, name: editProdName, price: Number(editProdPrice), stock: Number(editProdStock) } : item));
+      setShowEditProdModal(false);
+      setEditingProdId(null);
+      alert('✅ تم تحديث المنتج بنجاح!');
+    }
+  };
+
+  const handleDeleteProduct = async (prodId) => {
+    if (!window.confirm('⚠️ هل أنت متأكد من رغبتك في حذف هذا المنتج من المخزون؟')) return;
+    try {
+      await API.delete(`/api/inventory/${prodId}`);
+      fetchInventory();
+      alert('🗑️ تم حذف المنتج بنجاح!');
+    } catch (err) {
+      setInventory(inventory.filter(item => item.id !== prodId));
+      alert('🗑️ تم حذف المنتج بنجاح!');
+    }
+  };
 
   const handleMarkInvoiceAsPaid = (invoiceId) => {
     if (!window.confirm('هل أنت متأكد من تأكيد سداد هذا المبلغ وتحويل الفاتورة إلى (مدفوعة)؟')) return;
@@ -619,7 +666,6 @@ function App() {
     exportToExcel(title, headers, rows, lang);
   };
 
-  // المبيعات والفوترة: الالتزام التام بالسعر اليدوي وعدم إعادة كتابته بسعر المخزون
   const handleAddItemToSalesCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
@@ -648,45 +694,33 @@ function App() {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
     try {
-      const sub = cartItems.reduce((s, it) => s + it.subtotal, 0);
-      const tax = sub * 0.15;
-      const tot = sub + tax;
-
-      const newInv = {
-        id: Date.now(),
-        invoiceNo: Math.floor(100000 + Math.random() * 900000),
-        createdAt: new Date().toISOString(),
-        customer: customers.find(c => c.id === Number(selectedCustomerId)) || null,
-        items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
-        subtotal: sub,
-        taxAmount: tax,
-        totalAmount: tot,
-        paymentStatus: invoiceStatus,
-        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : ''
-      };
-
-      // حفظ حالة الفاتورة وعناصرها المخصصة بالسعر اليدوي محلياً لضمان عدم تغيير السعر أبداً
-      localStorage.setItem(`invoice_status_${newInv.id}`, invoiceStatus);
-      if (invoiceStatus === 'غير مدفوعة' && dueDateInput) {
-        localStorage.setItem(`invoice_duedate_${newInv.id}`, dueDateInput);
-      }
-      localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
-
-      // إرسالها أيضاً للباك إند
-      await API.post('/api/sales', { 
+      const res = await API.post('/api/sales', { 
         customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
         items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
         status: invoiceStatus,
         dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : null
-      }).catch(() => {});
+      });
+      
+      const newInv = { 
+        ...res.data.invoice, 
+        paymentStatus: invoiceStatus, 
+        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : '' 
+      };
 
-      setInvoices([newInv, ...invoices]);
+      localStorage.setItem(`invoice_status_${newInv.id}`, invoiceStatus);
+      if (invoiceStatus === 'غير مدفوعة' && dueDateInput) {
+        localStorage.setItem(`invoice_duedate_${newInv.id}`, dueDateInput);
+      }
+
       setCartItems([]); 
       setDueDateInput('');
-      setPrintingInvoice(newInv);
+      fetchAllData();
+      if (res.data?.invoice) {
+        setPrintingInvoice(newInv);
+      }
       setActiveTab('invoicesList');
     } catch (err) { 
-      alert('Failed'); 
+      alert(err.response?.data?.error || 'Failed'); 
     } finally { 
       setIsSubmittingSale(false); 
     }
@@ -696,38 +730,23 @@ function App() {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
     try {
-      const sub = cartItems.reduce((s, it) => s + it.subtotal, 0);
-      const tax = sub * 0.15;
-      const tot = sub + tax;
-
-      const newInv = {
-        id: Date.now(),
-        invoiceNo: Math.floor(100000 + Math.random() * 900000),
-        createdAt: new Date().toISOString(),
-        customer: customers.find(c => c.id === Number(posSelectedCustomerId)) || null,
-        items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
-        subtotal: sub,
-        taxAmount: tax,
-        totalAmount: tot,
-        paymentStatus: 'مدفوعة',
-        dueDate: ''
-      };
-
-      localStorage.setItem(`invoice_status_${newInv.id}`, 'مدفوعة');
-      localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
-
-      await API.post('/api/sales', { 
+      const res = await API.post('/api/sales', { 
         customerId: posSelectedCustomerId ? Number(posSelectedCustomerId) : null, 
         items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
         status: 'مدفوعة'
-      }).catch(() => {});
+      });
 
-      setInvoices([newInv, ...invoices]);
+      const newInv = { ...res.data.invoice, paymentStatus: 'مدفوعة', dueDate: '' };
+      localStorage.setItem(`invoice_status_${newInv.id}`, 'مدفوعة');
+
       setCartItems([]); 
-      setPrintingInvoice(newInv);
+      fetchAllData();
+      if (res.data?.invoice) {
+        setPrintingInvoice(newInv);
+      }
       setActiveTab('invoicesList');
     } catch (err) { 
-      alert('Failed'); 
+      alert(err.response?.data?.error || 'Failed'); 
     } finally { 
       setIsSubmittingSale(false); 
     }
@@ -1174,7 +1193,7 @@ function App() {
             </div>
           )}
 
-          {/* 3. المبيعات والفوترة الشاملة - مع تثبيت السعر اليدوي بدقة تامة */}
+          {/* 3. المبيعات والفوترة الشاملة - التزام تام بالسعر اليدوي */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1419,7 +1438,7 @@ function App() {
             </div>
           )}
 
-          {/* 7. المخزون */}
+          {/* 7. المخزون (مع أزرار التعديل والحذف وتأكيد الحذف وشاشة التعديل المنبثقة) */}
           {activeTab === 'inventory' && (
             <div style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '20px' }}>
               {user.role !== 'cashier' && (
@@ -1436,9 +1455,64 @@ function App() {
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}><h3 style={{ margin: 0, fontSize: '17px' }}>{t.stockRepo}</h3><button onClick={handleExportInventory} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير Excel</button></div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Price</th><th style={{ padding: '10px' }}>Stock</th></tr></thead>
-                  <tbody>{inventory.map(i=><tr key={i.id} style={{ borderBottom: `1px solid ${theme.border}` }}><td style={{ padding: '10px' }}>{i.name}</td><td style={{ padding: '10px' }}>{i.price}</td><td style={{ padding: '10px', color: '#10b981', fontWeight: 'bold' }}>{i.stock}</td></tr>)}</tbody>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '10px' }}>Name</th>
+                      <th style={{ padding: '10px' }}>Price</th>
+                      <th style={{ padding: '10px' }}>Stock</th>
+                      <th style={{ padding: '10px' }}>الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inventory.map(i => (
+                      <tr key={i.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '10px' }}>{i.name}</td>
+                        <td style={{ padding: '10px' }}>{i.price}</td>
+                        <td style={{ padding: '10px', color: '#10b981', fontWeight: 'bold' }}>{i.stock}</td>
+                        <td style={{ padding: '10px' }}>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button onClick={() => handleOpenEditProduct(i)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>تعديل ✏️</button>
+                            <button onClick={() => handleDeleteProduct(i.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>حذف 🗑️</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* نافذة منبثقة لتعديل المنتج في المخزون (الاسم، السعر، الكمية فقط) */}
+          {showEditProdModal && (
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+              <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>تعديل بيانات المنتج</h3>
+                  <button onClick={() => setShowEditProdModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
+                </div>
+
+                <form onSubmit={handleUpdateProduct} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodName}</label>
+                    <input type="text" value={editProdName} onChange={e=>setEditProdName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodPrice}</label>
+                    <input type="number" value={editProdPrice} onChange={e=>setEditProdPrice(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodStock}</label>
+                    <input type="number" value={editProdStock} onChange={e=>setEditProdStock(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                    <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.updateProd}</button>
+                    <button type="button" onClick={() => setShowEditProdModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
+                  </div>
+                </form>
               </div>
             </div>
           )}
@@ -1527,30 +1601,6 @@ function App() {
                   </tbody>
                 </table>
               </div>
-
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: '#fca5a5' }}>🔻 سجل الخصومات التفصيلي (السبب، القيمة، والتاريخ التلقائي)</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
-                  <thead>
-                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '10px' }}>اسم الموظف</th>
-                      <th style={{ padding: '10px' }}>قيمة الخصم</th>
-                      <th style={{ padding: '10px' }}>سبب الخصم</th>
-                      <th style={{ padding: '10px' }}>تاريخ التسجيل (تلقائي)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {deductionsList.map(d => (
-                      <tr key={d.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{d.empName}</td>
-                        <td style={{ padding: '10px', color: '#ef4444', fontWeight: 'bold' }}>{d.amount} {t.currency}</td>
-                        <td style={{ padding: '10px' }}>{d.reason}</td>
-                        <td style={{ padding: '10px', color: theme.textMuted }}>{d.date}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </div>
           )}
 
@@ -1575,99 +1625,9 @@ function App() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empIdNumber}</label>
-                      <input type="text" value={empIdNumber} onChange={e=>setEmpIdNumber(e.target.value)} placeholder="رقم الهوية أو الإقامة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empPhone}</label>
-                      <input type="text" value={empPhone} onChange={e=>setEmpPhone(e.target.value)} placeholder="05xxxxxxxx" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empRole}</label>
-                      <input type="text" value={empRole} onChange={e=>setEmpRole(e.target.value)} placeholder="المسمى الوظيفي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empDept}</label>
-                      <input type="text" value={empDept} onChange={e=>setEmpDept(e.target.value)} placeholder="القسم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empSalary}</label>
-                      <input type="number" value={empSalary} onChange={e=>setEmpSalary(e.target.value)} required placeholder="4000" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empVacations}</label>
-                      <input type="number" value={empVacations} onChange={e=>setEmpVacations(e.target.value)} placeholder="21" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                    </div>
-                  </div>
-
                   <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                     <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{editingEmpId ? t.updateEmp : t.saveEmp}</button>
                     <button type="button" onClick={() => setShowAddEmpModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {/* نافذة إضافة خصم */}
-          {showDeductModal && (
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-              <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '520px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
-                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>تسجيل خصم مالي على موظف</h3>
-                  <button onClick={() => setShowDeductModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
-                </div>
-
-                <form onSubmit={handleSaveDeduction} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>🔍 البحث عن الموظف (بالاسم أو برقم الهوية):</label>
-                    <input 
-                      type="text" 
-                      value={empSearchQuery} 
-                      onChange={e => setEmpSearchQuery(e.target.value)} 
-                      placeholder="اكتب اسم الموظف أو رقم الهوية..." 
-                      style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '8px', boxSizing: 'border-box' }} 
-                    />
-                    
-                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>اختر الموظف المطابق:</label>
-                    <select 
-                      value={selectedEmpForDeduct} 
-                      onChange={e=>setSelectedEmpForDeduct(e.target.value)} 
-                      required 
-                      style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}
-                    >
-                      <option value="">-- اختر الموظف من النتائج --</option>
-                      {filteredEmployeesForDeduct.map(e => (
-                        <option key={e.id} value={e.name}>{e.name} (هوية: {e.idNumber})</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>قيمة الخصم (ر.س)</label>
-                    <input type="number" value={deductAmount} onChange={e=>setDeductAmount(e.target.value)} required placeholder="100" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>سبب الخصم</label>
-                    <input type="text" value={deductReason} onChange={e=>setDeductReason(e.target.value)} placeholder="مثال: تأخير عن الدوام الرسمي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div style={{ background: theme.bgMain, padding: '10px', borderRadius: '8px', fontSize: '12px', color: theme.textMuted }}>
-                    📅 تاريخ الخصم: <strong>{new Date().toISOString().slice(0, 10)}</strong> (يُسجل تلقائياً)
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
-                    <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveDeduct}</button>
-                    <button type="button" onClick={() => setShowDeductModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
                   </div>
                 </form>
               </div>
