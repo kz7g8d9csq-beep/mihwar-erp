@@ -314,7 +314,7 @@ function App() {
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
-  const [newProdBoxSize, setNewProdBoxSize] = useState(12); // عدد الحبات في الكرتون
+  const [newProdBoxSize, setNewProdBoxSize] = useState(12);
   const [inventorySearchQuery, setInventorySearchQuery] = useState('');
   const [editingProdId, setEditingProdId] = useState(null);
   const [showEditProdModal, setShowEditProdModal] = useState(false);
@@ -360,30 +360,37 @@ function App() {
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
   const [reportSearchQuery, setReportSearchQuery] = useState('');
   
-  // المبيعات والفوترة
+  // المبيعات والفوترة (إضافة طرق الدفع، ونوع الوحدة حبة / كرتون)
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
   const [itemQty, setItemQty] = useState(1);
+  const [itemUnitType, setItemUnitType] = useState('حبة'); // 'حبة' أو 'كرتون'
   const [itemPrice, setItemPrice] = useState('');
   const [invoiceStatus, setInvoiceStatus] = useState('مدفوعة');
+  const [paymentMethod, setPaymentMethod] = useState('نقد'); // نقد، شبكة، حوالة
   const [dueDateInput, setDueDateInput] = useState('');
   const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
+
+  // نافذة تأكيد طريقة السداد في سجل الفواتير
+  const [showPayConfirmModal, setShowPayConfirmModal] = useState(false);
+  const [payTargetInvoiceId, setPayTargetInvoiceId] = useState(null);
+  const [payConfirmMethod, setPayConfirmMethod] = useState('نقد');
 
   // نقطة البيع (POS)
   const [posCustomerSearch, setPosCustomerSearch] = useState('');
   const [posSelectedCustomerId, setPosSelectedCustomerId] = useState('');
 
-  // المشتريات (تحديث تكلفة الحبة والكرتون ونوع الوحدة)
+  // المشتريات
   const [purchaseProductSearch, setPurchaseProductSearch] = useState('');
   const [purchaseInvoices, setPurchaseInvoices] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedPurchaseProdId, setSelectedPurchaseProdId] = useState('');
-  const [purchaseUnitType, setPurchaseUnitType] = useState('حبة'); // 'حبة' أو 'كرتون'
+  const [purchaseUnitType, setPurchaseUnitType] = useState('حبة');
   const [purchaseQty, setPurchaseQty] = useState(10);
-  const [purchasePieceCost, setPurchasePieceCost] = useState(''); // تكلفة الحبة
-  const [purchaseBoxCost, setPurchaseBoxCost] = useState(''); // تكلفة الكرتون
+  const [purchasePieceCost, setPurchasePieceCost] = useState('');
+  const [purchaseBoxCost, setPurchaseBoxCost] = useState('');
 
   // الموارد البشرية
   const [employees, setEmployees] = useState(() => {
@@ -478,10 +485,12 @@ function App() {
         const enhanced = res.data.map(inv => {
           const savedStatus = localStorage.getItem(`invoice_status_${inv.id}`);
           const savedDueDate = localStorage.getItem(`invoice_duedate_${inv.id}`);
+          const savedMethod = localStorage.getItem(`invoice_method_${inv.id}`);
           const savedItemsStr = localStorage.getItem(`invoice_items_${inv.id}`);
           return {
             ...inv,
             paymentStatus: savedStatus || inv.paymentStatus || 'مدفوعة',
+            paymentMethod: savedMethod || inv.paymentMethod || 'نقد',
             dueDate: savedDueDate || inv.dueDate || '',
             items: savedItemsStr ? JSON.parse(savedItemsStr) : inv.items
           };
@@ -658,39 +667,62 @@ function App() {
     try { await API.delete(`/api/suppliers/${suppId}`); fetchSuppliers(); } catch (err) { setSuppliers(suppliers.filter(s => s.id !== suppId)); }
   };
 
-  // الفواتير
-  const handleMarkInvoiceAsPaid = (invoiceId) => {
-    if (!window.confirm('هل أنت متأكد من تأكيد سداد هذا المبلغ وتحويل الفاتورة إلى (مدفوعة)؟')) return;
+  // تأكيد طريقة السداد في سجل الفواتير
+  const handleOpenPayConfirm = (invoiceId) => {
+    setPayTargetInvoiceId(invoiceId);
+    setPayConfirmMethod('نقد');
+    setShowPayConfirmModal(true);
+  };
+
+  const handleExecutePayment = () => {
+    if (!payTargetInvoiceId) return;
     const updated = invoices.map(inv => {
-      if (inv.id === invoiceId) {
+      if (inv.id === payTargetInvoiceId) {
         localStorage.setItem(`invoice_status_${inv.id}`, 'مدفوعة');
+        localStorage.setItem(`invoice_method_${inv.id}`, payConfirmMethod);
         localStorage.removeItem(`invoice_duedate_${inv.id}`);
-        return { ...inv, paymentStatus: 'مدفوعة', dueDate: '' };
+        return { ...inv, paymentStatus: 'مدفوعة', paymentMethod: payConfirmMethod, dueDate: '' };
       }
       return inv;
     });
     setInvoices(updated);
+    setShowPayConfirmModal(false);
+    alert(`✅ تم تأكيد السداد بطريقة (${payConfirmMethod}) وتحويل الفاتورة إلى مدفوعة!`);
   };
 
-  // المبيعات والتسعير
+  // المبيعات والتسعير (مع حساب الحبة والكرتون وربطهما بالمخزن)
   const handleAddItemToSalesCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
     if (!product) return;
     const qty = Number(itemQty);
     if (qty <= 0) return;
-    const price = itemPrice !== '' && !isNaN(Number(itemPrice)) ? Number(itemPrice) : product.price;
 
-    const existing = cartItems.find(it => it.productId === product.id && it.unitPrice === price);
-    const reqQ = (existing ? existing.quantity : 0) + qty;
-    if (reqQ > product.stock) { alert('Stock limit exceeded'); return; }
+    const boxSize = Number(product.boxSize || 12);
+    const totalPieces = itemUnitType === 'كرتون' ? qty * boxSize : qty;
 
-    if (existing) {
-      setCartItems(cartItems.map(it => (it.productId === product.id && it.unitPrice === price) ? { ...it, quantity: reqQ, subtotal: Number((reqQ * price).toFixed(2)) } : it));
-    } else {
-      setCartItems([...cartItems, { productId: product.id, name: product.name, quantity: qty, unitPrice: price, subtotal: Number((qty * price).toFixed(2)) }]);
+    if (totalPieces > product.stock) {
+      alert(`الرصيد المتاح بالمخزن (${product.stock} حبة) غير كافٍ للكمية المطلوبة (${totalPieces} حبة)!`);
+      return;
     }
-    setSelectedProductId(''); setItemQty(1); setItemPrice('');
+
+    const price = itemPrice !== '' && !isNaN(Number(itemPrice)) ? Number(itemPrice) : (itemUnitType === 'كرتون' ? product.price * boxSize : product.price);
+
+    setCartItems([...cartItems, {
+      productId: product.id,
+      name: product.name,
+      unitType: itemUnitType,
+      boxSize: boxSize,
+      piecesCount: totalPieces,
+      quantity: qty,
+      unitPrice: price,
+      subtotal: Number((qty * price).toFixed(2))
+    }]);
+
+    setSelectedProductId('');
+    setItemQty(1);
+    setItemUnitType('حبة');
+    setItemPrice('');
   };
 
   const handleRemoveSalesCartItem = (idx) => {
@@ -705,22 +737,51 @@ function App() {
       const tax = sub * 0.15;
       const tot = sub + tax;
 
+      const matchedCust = customers.find(c => c.id === Number(selectedCustomerId));
+
+      // حساب تاريخ الاستحقاق التلقائي من فترة سماح العميل إذا كانت الفاتورة آجلة
+      let computedDueDate = dueDateInput;
+      if (invoiceStatus === 'غير مدفوعة' && !computedDueDate && matchedCust?.gracePeriod) {
+        const d = new Date();
+        d.setDate(d.getDate() + Number(matchedCust.gracePeriod));
+        computedDueDate = d.toISOString().slice(0, 10);
+      }
+
       const newInv = {
         id: Date.now(),
         invoiceNo: Math.floor(100000 + Math.random() * 900000),
         createdAt: new Date().toISOString(),
-        customer: customers.find(c => c.id === Number(selectedCustomerId)) || null,
-        items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
+        customer: matchedCust || null,
+        items: cartItems.map(it => ({
+          product: { name: it.name },
+          unitType: it.unitType,
+          quantity: it.quantity,
+          unitPrice: it.unitPrice,
+          subtotal: it.subtotal
+        })),
         subtotal: sub.toFixed(2),
         taxAmount: tax.toFixed(2),
         totalAmount: tot.toFixed(2),
         paymentStatus: invoiceStatus,
-        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : ''
+        paymentMethod: invoiceStatus === 'مدفوعة' ? paymentMethod : 'آجل',
+        dueDate: invoiceStatus === 'غير مدفوعة' ? computedDueDate : ''
       };
 
+      // خصم رصيد المخزون الفعلي بالقطع
+      const updatedInv = inventory.map(prod => {
+        const cartMatches = cartItems.filter(c => c.productId === prod.id);
+        if (cartMatches.length) {
+          const deductedPieces = cartMatches.reduce((acc, curr) => acc + curr.piecesCount, 0);
+          return { ...prod, stock: Math.max(0, prod.stock - deductedPieces) };
+        }
+        return prod;
+      });
+      setInventory(updatedInv);
+
       localStorage.setItem(`invoice_status_${newInv.id}`, invoiceStatus);
-      if (invoiceStatus === 'غير مدفوعة' && dueDateInput) {
-        localStorage.setItem(`invoice_duedate_${newInv.id}`, dueDateInput);
+      localStorage.setItem(`invoice_method_${newInv.id}`, newInv.paymentMethod);
+      if (newInv.dueDate) {
+        localStorage.setItem(`invoice_duedate_${newInv.id}`, newInv.dueDate);
       }
       localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
 
@@ -732,9 +793,9 @@ function App() {
 
       API.post('/api/sales', { 
         customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
-        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
+        items: cartItems.map(it => ({ productId: it.productId, quantity: it.piecesCount, unitPrice: it.unitPrice })),
         status: invoiceStatus,
-        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : null
+        dueDate: newInv.dueDate || null
       }).catch(() => {});
     } catch (err) { 
       alert('Failed'); 
@@ -756,15 +817,27 @@ function App() {
         invoiceNo: Math.floor(100000 + Math.random() * 900000),
         createdAt: new Date().toISOString(),
         customer: customers.find(c => c.id === Number(posSelectedCustomerId)) || null,
-        items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
+        items: cartItems.map(it => ({ product: { name: it.name }, unitType: 'حبة', quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
         subtotal: sub.toFixed(2),
         taxAmount: tax.toFixed(2),
         totalAmount: tot.toFixed(2),
         paymentStatus: 'مدفوعة',
+        paymentMethod: 'نقد',
         dueDate: ''
       };
 
+      // خصم رصيد المخزن
+      const updatedInv = inventory.map(prod => {
+        const cartMatch = cartItems.find(c => c.productId === prod.id);
+        if (cartMatch) {
+          return { ...prod, stock: Math.max(0, prod.stock - cartMatch.quantity) };
+        }
+        return prod;
+      });
+      setInventory(updatedInv);
+
       localStorage.setItem(`invoice_status_${newInv.id}`, 'مدفوعة');
+      localStorage.setItem(`invoice_method_${newInv.id}`, 'نقد');
       localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
 
       setInvoices([newInv, ...invoices]);
@@ -784,7 +857,6 @@ function App() {
     }
   };
 
-  // معالجة المشتريات بدقة: احتساب تكلفة الحبة أو الكرتون وزيادة المخزون بالقطع
   const handleSavePurchase = async () => {
     if (!selectedPurchaseProdId) return;
     const qty = Number(purchaseQty);
@@ -793,9 +865,7 @@ function App() {
     const prod = inventory.find(p => p.id === Number(selectedPurchaseProdId));
     const boxSize = Number(prod?.boxSize || 12);
     
-    // حساب التكلفة والكمية بالقطع
     const pieceCost = purchasePieceCost !== '' ? Number(purchasePieceCost) : (purchaseBoxCost !== '' ? Number(purchaseBoxCost) / boxSize : 0);
-    const boxCost = purchaseBoxCost !== '' ? Number(purchaseBoxCost) : pieceCost * boxSize;
     const addedPieces = purchaseUnitType === 'كرتون' ? qty * boxSize : qty;
 
     try {
@@ -937,8 +1007,8 @@ function App() {
   const handleExportSales = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
-    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
-    const rows = filteredReports.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
+    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'طريقة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Payment Method', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
+    const rows = filteredReports.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.paymentMethod || 'نقد', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -1107,23 +1177,6 @@ function App() {
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.purchasesTotal}</p><h2 style={{ color: '#f59e0b', margin: '8px 0 0 0', fontSize: '22px' }}>{totalPurchasesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.netProfit}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
               </div>
-              <div style={{ background: lowStockItems.length > 0 ? '#7f1d1d22' : theme.cardBg, borderRadius: '16px', border: `1px solid ${lowStockItems.length > 0 ? '#7f1d1d' : theme.border}`, padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                <div>
-                  <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#fca5a5' : theme.textDark }}>
-                    {lowStockItems.length > 0 ? `⚠️ تنبيه: يوجد ${lowStockItems.length} صنف وصل للحد الأدنى للمخزون (${lowStockThreshold} قطع أو أقل)` : t.lowStockClean}
-                  </h3>
-                  {lowStockItems.length > 0 && (
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
-                      {lowStockItems.map(item => (<span key={item.id} style={{ background: '#7f1d1d', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>{item.name} (المتبقي: {item.stock})</span>))}
-                    </div>
-                  )}
-                </div>
-                <div style={{ background: theme.bgMain, padding: '12px 18px', borderRadius: '10px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 'bold' }}>تحديد الحد الأدنى:</span>
-                  <input type="number" value={lowStockThreshold} onChange={e => { const val = Number(e.target.value); setLowStockThreshold(val); localStorage.setItem('mihwar_low_stock_threshold', val); }} style={{ width: '65px', padding: '6px', borderRadius: '6px', border: '1px solid #d97706', background: theme.cardBg, color: theme.textDark, textAlign: 'center', fontWeight: 'bold', fontSize: '14px', outline: 'none' }} />
-                  <span style={{ fontSize: '12px', color: theme.textMuted }}>قطعة</span>
-                </div>
-              </div>
             </div>
           )}
 
@@ -1185,7 +1238,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 3: Sales */}
+          {/* TAB 3: Sales (محدّث بطرق الدفع، وخيار الكمية حبة أو كرتون) */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1195,15 +1248,33 @@ function App() {
                   <input type="text" value={salesCustomerSearch} onChange={e => setSalesCustomerSearch(e.target.value)} placeholder="اكتب اسم المنشأة أو العميل للبحث السريع..." style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '8px', boxSizing: 'border-box', fontSize: '13px' }} />
                   <select value={selectedCustomerId} onChange={e=>setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
                     <option value="">-- عميل نقدي عام (افتراضي) --</option>
-                    {filteredCustomersForSales.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                    {filteredCustomersForSales.map(c=><option key={c.id} value={c.id}>{c.name} {c.address ? `(${c.address})` : ''}</option>)}
                   </select>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '10px', marginBottom: '15px', alignItems: 'end' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr auto', gap: '8px', marginBottom: '15px', alignItems: 'end' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>اختيار المنتج</label>
-                    <select value={selectedProductId} onChange={e => { setSelectedProductId(e.target.value); const p = inventory.find(x => x.id === Number(e.target.value)); if (p) setItemPrice(p.price); }} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
+                    <select value={selectedProductId} onChange={e => { 
+                      setSelectedProductId(e.target.value); 
+                      const p = inventory.find(x => x.id === Number(e.target.value)); 
+                      if (p) setItemPrice(itemUnitType === 'كرتون' ? p.price * (p.boxSize || 12) : p.price);
+                    }} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
                       <option value="">-- اختر المنتج --</option>
                       {inventory.map(p=><option key={p.id} value={p.id}>{p.name} (متوفر: {p.stock})</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>الوحدة</label>
+                    <select value={itemUnitType} onChange={e => {
+                      setItemUnitType(e.target.value);
+                      const p = inventory.find(x => x.id === Number(selectedProductId));
+                      if (p) {
+                        const boxSize = Number(p.boxSize || 12);
+                        setItemPrice(e.target.value === 'كرتون' ? p.price * boxSize : p.price);
+                      }
+                    }} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
+                      <option value="حبة">حبة (قطعة)</option>
+                      <option value="كرتون">كرتون (جملة)</option>
                     </select>
                   </div>
                   <div>
@@ -1224,27 +1295,40 @@ function App() {
                   <span style={{ fontSize: '13px', fontWeight: 'bold' }}>حالة الدفع:</span>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="payStatus" checked={invoiceStatus === 'مدفوعة'} onChange={() => setInvoiceStatus('مدفوعة')} /> مدفوعة</label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="payStatus" checked={invoiceStatus === 'غير مدفوعة'} onChange={() => setInvoiceStatus('غير مدفوعة')} /> غير مدفوعة (أجل)</label>
+
+                  {invoiceStatus === 'مدفوعة' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#10b981' }}>طريقة الدفع:</span>
+                      <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #10b981', background: theme.cardBg, color: theme.textDark, fontSize: '12px', outline: 'none' }}>
+                        <option value="نقد">نقد</option>
+                        <option value="شبكة">شبكة</option>
+                        <option value="حوالة">حوالة بنكية</option>
+                      </select>
+                    </div>
+                  )}
+
                   {invoiceStatus === 'غير مدفوعة' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 'auto' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f43f5e' }}>مدة الاستحقاق:</span>
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f43f5e' }}>تاريخ الاستحقاق:</span>
                       <input type="text" value={dueDateInput} onChange={e => setDueDateInput(e.target.value)} placeholder="مثال: 2026/10/01" style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #f43f5e', background: theme.cardBg, color: theme.textDark, fontSize: '12px', outline: 'none' }} />
                     </div>
                   )}
                 </div>
                 <h3 style={{ margin: '0 0 10px 0', fontSize: '15px' }}>🛒 محتويات الفاتورة الحالية</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '20px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '8px' }}>المنتج</th><th style={{ padding: '8px' }}>الكمية</th><th style={{ padding: '8px' }}>السعر</th><th style={{ padding: '8px' }}>المجموع</th><th></th></tr></thead>
+                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '8px' }}>المنتج</th><th style={{ padding: '8px' }}>الوحدة</th><th style={{ padding: '8px' }}>الكمية</th><th style={{ padding: '8px' }}>السعر</th><th style={{ padding: '8px' }}>المجموع</th><th></th></tr></thead>
                   <tbody>
                     {cartItems.map((it, idx) => (
                       <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
                         <td style={{ padding: '8px' }}>{it.name}</td>
+                        <td style={{ padding: '8px', textAlign: 'center' }}>{it.unitType}</td>
                         <td style={{ padding: '8px', textAlign: 'center' }}>{it.quantity}</td>
                         <td style={{ padding: '8px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
                         <td style={{ padding: '8px', color: '#10b981', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
                         <td style={{ padding: '8px' }}><button onClick={() => handleRemoveSalesCartItem(idx)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>✖</button></td>
                       </tr>
                     ))}
-                    {!cartItems.length && (<tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لم يتم إضافة أي صنف للفاتورة بعد.</td></tr>)}
+                    {!cartItems.length && (<tr><td colSpan="6" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لم يتم إضافة أي صنف للفاتورة بعد.</td></tr>)}
                   </tbody>
                 </table>
                 <button onClick={handleSaveSalesInvoice} disabled={!cartItems.length || isSubmittingSale} style={{ width: '100%', background: '#10b981', color: '#fff', padding: '14px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>إتمام الدفع وإصدار الفاتورة 💳</button>
@@ -1277,7 +1361,7 @@ function App() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                    <th style={{ padding: '12px' }}>رقم الفاتورة</th><th style={{ padding: '12px' }}>العميل</th><th style={{ padding: '12px' }}>المبلغ الإجمالي</th><th style={{ padding: '12px' }}>حالة الدفع</th><th style={{ padding: '12px' }}>الإجراءات</th>
+                    <th style={{ padding: '12px' }}>رقم الفاتورة</th><th style={{ padding: '12px' }}>العميل</th><th style={{ padding: '12px' }}>المبلغ الإجمالي</th><th style={{ padding: '12px' }}>حالة الدفع</th><th style={{ padding: '12px' }}>طريقة الدفع</th><th style={{ padding: '12px' }}>الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1292,10 +1376,11 @@ function App() {
                           <span style={{ background: isUnpaid ? '#7f1d1d' : '#065f46', color: isUnpaid ? '#fca5a5' : '#6ee7b7', padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px' }}>{inv.paymentStatus || 'مدفوعة'}</span>
                           {isUnpaid && inv.dueDate && <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>الاستحقاق: {inv.dueDate}</div>}
                         </td>
+                        <td style={{ padding: '12px', fontWeight: 'bold', color: '#38bdf8' }}>{inv.paymentMethod || 'نقد'}</td>
                         <td style={{ padding: '12px' }}>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             <button onClick={() => setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>معاينة وطباعة 👁️</button>
-                            {isUnpaid && (<button onClick={() => handleMarkInvoiceAsPaid(inv.id)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>تم الدفع ✓</button>)}
+                            {isUnpaid && (<button onClick={() => handleOpenPayConfirm(inv.id)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>تم الدفع ✓</button>)}
                           </div>
                         </td>
                       </tr>
@@ -1306,7 +1391,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 5: Purchases (تحديث تحديد تكلفة الحبة والكرتون ونوع الوحدة) */}
+          {/* TAB 5: Purchases */}
           {activeTab === 'purchases' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '650px', margin: 'auto' }}>
               <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>تسجيل فاتورة شراء وتوريد بضاعة</h2>
@@ -1376,7 +1461,7 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>دليل العملاء</h3>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="text" value={customerSearchQuery} onChange={e => setCustomerSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الهوية، العنوان..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} />
+                    <input type="text" value={customerSearchQuery} onChange={e => setCustomerSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الهوية أو الهاتف..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} />
                     <button onClick={handleExportCustomers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
                   </div>
                 </div>
@@ -1805,6 +1890,32 @@ function App() {
         </div>
       )}
 
+      {/* نافذة تأكيد طريقة السداد في سجل الفواتير */}
+      {showPayConfirmModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3100, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '420px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '900', color: '#10b981' }}>تأكيد سداد الفاتورة</h3>
+              <button onClick={() => setShowPayConfirmModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>اختر طريقة الدفع المعتمدة للسداد:</label>
+                <select value={payConfirmMethod} onChange={e => setPayConfirmMethod(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
+                  <option value="نقد">نقد</option>
+                  <option value="شبكة">شبكة</option>
+                  <option value="حوالة">حوالة بنكية</option>
+                </select>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                <button type="button" onClick={handleExecutePayment} style={{ flex: 1, background: '#10b981', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تأكيد السداد ✓</button>
+                <button type="button" onClick={() => setShowPayConfirmModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إلغاء</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Invoice Print Modal */}
       {printingInvoice && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
@@ -1827,6 +1938,7 @@ function App() {
                   <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#d97706' }}>{t.taxInvoiceTitle}</h3>
                   <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>رقم الفاتورة:</strong> INV-{printingInvoice.invoiceNo}</p>
                   <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>الحالة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#f43f5e' : '#10b981', fontWeight: 'bold' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
+                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>طريقة الدفع:</strong> <span style={{ color: '#0284c7', fontWeight: 'bold' }}>{printingInvoice.paymentMethod || 'نقد'}</span></p>
                   {printingInvoice.dueDate && (<p style={{ margin: '2px 0', fontSize: '12px', color: '#f43f5e' }}><strong>مدة الاستحقاق:</strong> {printingInvoice.dueDate}</p>)}
                   <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
                 </div>
@@ -1836,13 +1948,14 @@ function App() {
                 <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#0f172a' }}>بيانات العميل:</h4>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
-                <p style={{ margin: '3px 0' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
+                <p style={{ margin: '3px 0' }}><strong>العنوان:</strong> {printingInvoice.customer?.address || 'غير محدد'}</p>
               </div>
 
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#0f172a', color: '#fff' }}>
                     <th style={{ padding: '10px', textAlign: 'right' }}>{t.itemDesc}</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>الوحدة</th>
                     <th style={{ padding: '10px', textAlign: 'center' }}>{t.itemQuantity}</th>
                     <th style={{ padding: '10px', textAlign: 'center' }}>{t.unitPriceCol}</th>
                     <th style={{ padding: '10px', textAlign: 'left' }}>{t.totalCol}</th>
@@ -1852,6 +1965,7 @@ function App() {
                   {(printingInvoice.items || []).map((it, idx) => (
                     <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
                       <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || it.name || 'خدمة عامة'}</td>
+                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitType || 'حبة'}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
                       <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
