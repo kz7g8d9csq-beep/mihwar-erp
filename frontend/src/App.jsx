@@ -567,6 +567,25 @@ function App() {
     alert('✅ تم تسجیل الخصم بنجاح وتحديث بيانات الموظف!');
   };
 
+  // دالة إعفاء الخصم المضافة
+  const handleRemoveDeduction = (deductId, empName, amount) => {
+    if (!window.confirm('⚠️ هل أنت متأكد من إعفاء هذا الخصم؟')) return;
+    
+    const updatedDeductions = deductionsList.filter(d => d.id !== deductId);
+    setDeductionsList(updatedDeductions);
+    localStorage.setItem('mihwar_hr_deductions', JSON.stringify(updatedDeductions));
+
+    const updatedEmps = employees.map(emp => {
+      if (emp.name === empName) {
+        return { ...emp, deductions: Math.max(0, Number(emp.deductions || 0) - Number(amount)) };
+      }
+      return emp;
+    });
+    setEmployees(updatedEmps);
+    localStorage.setItem('mihwar_hr_employees', JSON.stringify(updatedEmps));
+    alert('✅ تم إعفاء الخصم بنجاح واستعادة الرصيد للموظف!');
+  };
+
   // المخزون
   const handleOpenEditProduct = (prod) => {
     setEditingProdId(prod.id); setEditProdName(prod.name || ''); setEditProdPrice(prod.price || ''); setEditProdStock(prod.stock !== undefined ? prod.stock : 0); setShowEditProdModal(true);
@@ -1312,7 +1331,7 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>دليل العملاء</h3>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="text" value={customerSearchQuery} onChange={e => setCustomerSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الهوية أو الهاتف..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} />
+                    <input type="text" value={customerSearchQuery} onChange={e => setCustomerSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الهوية..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} />
                     <button onClick={handleExportCustomers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
                   </div>
                 </div>
@@ -1495,7 +1514,7 @@ function App() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
                   <thead>
                     <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '10px' }}>اسم الموظف</th><th style={{ padding: '10px' }}>قيمة الخصم</th><th style={{ padding: '10px' }}>سبب الخصم</th><th style={{ padding: '10px' }}>تاريخ التسجيل (تلقائي)</th>
+                      <th style={{ padding: '10px' }}>اسم الموظف</th><th style={{ padding: '10px' }}>قيمة الخصم</th><th style={{ padding: '10px' }}>سبب الخصم</th><th style={{ padding: '10px' }}>تاريخ التسجيل (تلقائي)</th><th style={{ padding: '10px' }}>الإجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1505,6 +1524,9 @@ function App() {
                         <td style={{ padding: '10px', color: '#ef4444', fontWeight: 'bold' }}>{d.amount} {t.currency}</td>
                         <td style={{ padding: '10px' }}>{d.reason}</td>
                         <td style={{ padding: '10px', color: theme.textMuted }}>{d.date}</td>
+                        <td style={{ padding: '10px' }}>
+                          <button onClick={() => handleRemoveDeduction(d.id, d.empName, d.amount)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>إعفاء الخصم ↩️</button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
