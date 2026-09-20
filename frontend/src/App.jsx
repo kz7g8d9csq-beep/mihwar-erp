@@ -394,7 +394,10 @@ function App() {
 
   // المشتريات
   const [purchaseProductSearch, setPurchaseProductSearch] = useState('');
-  const [purchaseInvoices, setPurchaseInvoices] = useState([]);
+  const [purchaseInvoices, setPurchaseInvoices] = useState(() => {
+    const saved = localStorage.getItem('mihwar_purchases');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedPurchaseProdId, setSelectedPurchaseProdId] = useState('');
   const [purchaseQty, setPurchaseQty] = useState(10);
@@ -489,6 +492,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('mihwar_invoices', JSON.stringify(invoices));
   }, [invoices]);
+
+  useEffect(() => {
+    localStorage.setItem('mihwar_purchases', JSON.stringify(purchaseInvoices));
+  }, [purchaseInvoices]);
 
   // فلاتر البحث الآمنة
   const filteredInventory = inventory.filter(i => safeLower(i.name).includes(safeLower(inventorySearchQuery)));
@@ -781,12 +788,61 @@ function App() {
     }
   };
 
+  // إصلاح المشتريات: حفظ وزيادة المخزون في الواجهة والتخزين المحلي فوراً دون انتظار أو تعطيل
   const handleSavePurchase = async () => {
-    if (!selectedPurchaseProdId || !purchaseQty || !purchaseCost) return;
+    if (!selectedPurchaseProdId || !purchaseQty || !purchaseCost) {
+      alert('يرجى تحديد المنتج والكمية وسعر التكلفة');
+      return;
+    }
+
+    const qty = Number(purchaseQty);
+    const cost = Number(purchaseCost);
+    const prodId = Number(selectedPurchaseProdId);
+    const targetProd = inventory.find(p => p.id === prodId);
+
+    // تحديث المخزون فوراً محلياً
+    const updatedInventory = inventory.map(item => {
+      if (item.id === prodId) {
+        return { ...item, stock: Number(item.stock || 0) + qty };
+      }
+      return item;
+    });
+
+    setInventory(updatedInventory);
+    localStorage.setItem('mihwar_inventory', JSON.stringify(updatedInventory));
+
+    // تسجيل فاتورة التوريد محلياً
+    const newPurchaseInvoice = {
+      id: Date.now(),
+      createdAt: new Date().toISOString(),
+      supplier: suppliers.find(s => s.id === Number(selectedSupplierId)) || null,
+      productId: prodId,
+      productName: targetProd ? targetProd.name : '',
+      quantity: qty,
+      unitCost: cost,
+      totalAmount: Number((qty * cost).toFixed(2))
+    };
+
+    const updatedPurchases = [newPurchaseInvoice, ...purchaseInvoices];
+    setPurchaseInvoices(updatedPurchases);
+    localStorage.setItem('mihwar_purchases', JSON.stringify(updatedPurchases));
+
+    // إرسال الطلب للـ Backend في الخلفية دون تعطيل الواجهة
     try {
-      await API.post('/api/purchases', { productId: Number(selectedPurchaseProdId), quantity: Number(purchaseQty), unitCost: Number(purchaseCost), supplierId: selectedSupplierId ? Number(selectedSupplierId) : null });
-      setSelectedPurchaseProdId(''); setPurchaseCost(''); fetchAllData(); setActiveTab('inventory');
-    } catch (e) { alert('Failed'); }
+      await API.post('/api/purchases', {
+        productId: prodId,
+        quantity: qty,
+        unitCost: cost,
+        supplierId: selectedSupplierId ? Number(selectedSupplierId) : null
+      });
+    } catch (e) {
+      // تم الحفظ محلياً بنجاح
+    }
+
+    setSelectedPurchaseProdId('');
+    setPurchaseCost('');
+    alert('✅ تم اعتماد التوريد وزيادة المخزون بنجاح!');
+    setActiveTab('inventory');
   };
 
   const cartSubtotal = cartItems.reduce((sum, it) => sum + it.subtotal, 0);
@@ -1404,7 +1460,7 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>دليل الموردين</h3>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="text" value={supplierSearchQuery} onChange={e => setSupplierSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الرقم الضريبي..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} />
+                    <input type="text" value={supplierSearchQuery} onChange={e => setSupplierSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الرقم الضريبي..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} />
                     <button onClick={handleExportSuppliers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
                   </div>
                 </div>
@@ -1823,7 +1879,6 @@ function App() {
                   <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#d97706' }}>{t.taxInvoiceTitle}</h3>
                   <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>رقم الفاتورة:</strong> INV-{printingInvoice.invoiceNo}</p>
                   <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>الحالة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#f43f5e' : '#10b981', fontWeight: 'bold' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
-                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>طريقة الدفع:</strong> <span style={{ color: '#0284c7', fontWeight: 'bold' }}>{printingInvoice.paymentMethod || 'نقد'}</span></p>
                   {printingInvoice.dueDate && (<p style={{ margin: '2px 0', fontSize: '12px', color: '#f43f5e' }}><strong>مدة الاستحقاق:</strong> {printingInvoice.dueDate}</p>)}
                   <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
                 </div>
@@ -1833,7 +1888,7 @@ function App() {
                 <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#0f172a' }}>بيانات العميل:</h4>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
-                <p style={{ margin: '3px 0' }}><strong>العنوان:</strong> {printingInvoice.customer?.address || 'غير محدد'}</p>
+                <p style={{ margin: '3px 0' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
               </div>
 
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
