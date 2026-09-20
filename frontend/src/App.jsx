@@ -309,8 +309,11 @@ function App() {
   });
   const [tempLogoInput, setTempLogoInput] = useState(companyLogo);
 
-  // حالات المخزون
-  const [inventory, setInventory] = useState([]);
+  // حالات المخزون مع التخزين المحلي لضمان عدم الضياع
+  const [inventory, setInventory] = useState(() => {
+    const saved = localStorage.getItem('mihwar_inventory');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [newProdName, setNewProdName] = useState('');
   const [newProdCode, setNewProdCode] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
@@ -325,8 +328,14 @@ function App() {
   const [editProdStock, setEditProdStock] = useState('');
   const [editProdBoxSize, setEditProdBoxSize] = useState(12);
 
-  // حالات العملاء
-  const [customers, setCustomers] = useState([]);
+  // حالات العملاء مع التخزين المحلي المستقر
+  const [customers, setCustomers] = useState(() => {
+    const saved = localStorage.getItem('mihwar_customers');
+    return saved ? JSON.parse(saved) : [
+      { id: 1, name: 'شركة الرائد لقطع غيار السيارات', nationalId: '25559451496', phone: '0562453535', address: 'شارع الملك فهد، حي البوادي، جدة', gracePeriod: 30 },
+      { id: 2, name: 'مؤسسة النور التجارية', nationalId: '3001234567', phone: '0501122334', address: 'شارع فلسطين، جدة', gracePeriod: 15 }
+    ];
+  });
   const [custName, setCustName] = useState('');
   const [custNationalId, setCustNationalId] = useState('');
   const [custPhone, setCustPhone] = useState('');
@@ -341,8 +350,13 @@ function App() {
   const [editCustAddress, setEditCustAddress] = useState('');
   const [editCustGracePeriod, setEditCustGracePeriod] = useState(30);
 
-  // حالات الموردين
-  const [suppliers, setSuppliers] = useState([]);
+  // حالات الموردين مع التخزين المحلي المستقر
+  const [suppliers, setSuppliers] = useState(() => {
+    const saved = localStorage.getItem('mihwar_suppliers');
+    return saved ? JSON.parse(saved) : [
+      { id: 1, name: 'مصنع الأنابيب المتقدمة', taxNumber: '3009988776', phone: '0551234567', address: 'المنطقة الصناعية الثالثة، جدة', gracePeriod: 45 }
+    ];
+  });
   const [suppName, setSuppName] = useState('');
   const [suppTaxNumber, setSuppTaxNumber] = useState('');
   const [suppPhone, setSuppPhone] = useState('');
@@ -376,7 +390,7 @@ function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
-  // نقطة البيع السريعة (POS)
+  // نقطة البيع (POS)
   const [posCustomerSearch, setPosCustomerSearch] = useState('');
   const [posSelectedCustomerId, setPosSelectedCustomerId] = useState('');
 
@@ -469,6 +483,25 @@ function App() {
     }
   }, [user]);
 
+  // حفظ التحديثات في التخزين المحلي لضمان عدم ضياعها عند تحديث الصفحة
+  useEffect(() => {
+    if (customers.length > 0) {
+      localStorage.setItem('mihwar_customers', JSON.stringify(customers));
+    }
+  }, [customers]);
+
+  useEffect(() => {
+    if (suppliers.length > 0) {
+      localStorage.setItem('mihwar_suppliers', JSON.stringify(suppliers));
+    }
+  }, [suppliers]);
+
+  useEffect(() => {
+    if (inventory.length > 0) {
+      localStorage.setItem('mihwar_inventory', JSON.stringify(inventory));
+    }
+  }, [inventory]);
+
   const fetchAllData = () => {
     fetchInventory();
     fetchCustomers();
@@ -477,9 +510,44 @@ function App() {
     fetchPurchases();
   };
 
-  const fetchInventory = async () => { try { const res = await API.get('/api/inventory'); if (res.data) setInventory(res.data); } catch (e) {} };
-  const fetchCustomers = async () => { try { const res = await API.get('/api/customers'); if (res.data) setCustomers(res.data); } catch (e) {} };
-  const fetchSuppliers = async () => { try { const res = await API.get('/api/suppliers'); if (res.data) setSuppliers(res.data); } catch (e) {} };
+  const fetchInventory = async () => { 
+    try { 
+      const res = await API.get('/api/inventory'); 
+      if (res.data && res.data.length > 0) {
+        setInventory(res.data);
+        localStorage.setItem('mihwar_inventory', JSON.stringify(res.data));
+      }
+    } catch (e) {
+      const saved = localStorage.getItem('mihwar_inventory');
+      if (saved) setInventory(JSON.parse(saved));
+    } 
+  };
+
+  const fetchCustomers = async () => { 
+    try { 
+      const res = await API.get('/api/customers'); 
+      if (res.data && res.data.length > 0) {
+        setCustomers(res.data);
+        localStorage.setItem('mihwar_customers', JSON.stringify(res.data));
+      }
+    } catch (e) {
+      const saved = localStorage.getItem('mihwar_customers');
+      if (saved) setCustomers(JSON.parse(saved));
+    } 
+  };
+
+  const fetchSuppliers = async () => { 
+    try { 
+      const res = await API.get('/api/suppliers'); 
+      if (res.data && res.data.length > 0) {
+        setSuppliers(res.data);
+        localStorage.setItem('mihwar_suppliers', JSON.stringify(res.data));
+      }
+    } catch (e) {
+      const saved = localStorage.getItem('mihwar_suppliers');
+      if (saved) setSuppliers(JSON.parse(saved));
+    } 
+  };
   
   const fetchInvoices = async () => { 
     try { 
@@ -505,7 +573,7 @@ function App() {
 
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
 
-  // فلاتر البحث
+  // فلاتر البحث الآمنة
   const filteredInventory = inventory.filter(i => safeLower(i.name).includes(safeLower(inventorySearchQuery)) || safeLower(i.itemCode).includes(safeLower(inventorySearchQuery)));
   const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)) || safeLower(c.address).includes(safeLower(customerSearchQuery)));
   const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)) || safeLower(s.address).includes(safeLower(supplierSearchQuery)));
@@ -530,7 +598,7 @@ function App() {
       setEmployees(updated);
       localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
     } else {
-      const newEmp = { id: Date.now(), name: empName.trim(), idNumber: empIdNumber.trim() || '-', empNo: empNumber.trim() || String(employees.length + 1), role: empRole.trim() || 'موظف', dept: empDept.trim() || 'عام', phone: empPhone.trim() || '-', salary: Number(empSalary) || 4000, deductions: 0, vacations: Number(empVacations) || 21, insurance: empInsurance.trim() || 'تأمين أساسي', status: empStatus || 'نشط', iqamaEnd: '2027-05-12', healthEnd: '2027-03-01', contractEnd: '2028-04-10' };
+      const newEmp = { id: Date.now(), name: empName.trim(), idNumber: empIdNumber.trim() || '-', empNo: empNumber.trim() || String(employees.length + 1), role: empRole.trim() || 'موظف', dept: empDept.trim() || 'عام', phone: empPhone.trim() || '-', salary: Number(empSalary) || 4000, deductions: 0, vacations: Number(empVacations) || 21, insurance: empInsurance.trim() || 'تأمين أساسي', status: empStatus || 'نشط', iqamaEnd: empIqamaEnd || '2027-05-12', healthEnd: empHealthEnd || '2027-03-01', contractEnd: empContractEnd || '2028-04-10' };
       const updated = [newEmp, ...employees];
       setEmployees(updated);
       localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
@@ -626,7 +694,7 @@ function App() {
     try { await API.delete(`/api/inventory/${prodId}`); fetchInventory(); } catch (err) { setInventory(inventory.filter(item => item.id !== prodId)); }
   };
 
-  // العملاء
+  // العملاء (تم إصلاح حفظ وتحديث العنوان وفترة السماح لتثبيتها محلياً وتحديث الصفحة)
   const handleOpenEditCustomer = (cust) => {
     setEditingCustId(cust.id); setEditCustName(cust.name || ''); setEditCustNationalId(cust.nationalId || ''); setEditCustPhone(cust.phone || ''); setEditCustAddress(cust.address || ''); setEditCustGracePeriod(cust.gracePeriod || 30); setShowEditCustModal(true);
   };
@@ -636,19 +704,25 @@ function App() {
     if (!editCustName.trim()) return;
     try {
       await API.put(`/api/customers/${editingCustId}`, { name: editCustName.trim(), nationalId: editCustNationalId.trim() || null, phone: editCustPhone.trim() || null, address: editCustAddress.trim() || null, gracePeriod: Number(editCustGracePeriod) || 30 });
-      setShowEditCustModal(false); setEditingCustId(null); fetchCustomers();
-    } catch (err) {
-      setCustomers(customers.map(c => c.id === editingCustId ? { ...c, name: editCustName.trim(), nationalId: editCustNationalId.trim(), phone: editCustPhone.trim(), address: editCustAddress.trim(), gracePeriod: Number(editCustGracePeriod) || 30 } : c));
-      setShowEditCustModal(false); setEditingCustId(null);
-    }
+    } catch (err) {}
+    
+    const updatedCusts = customers.map(c => c.id === editingCustId ? { ...c, name: editCustName.trim(), nationalId: editCustNationalId.trim(), phone: editCustPhone.trim(), address: editCustAddress.trim(), gracePeriod: Number(editCustGracePeriod) || 30 } : c);
+    setCustomers(updatedCusts);
+    localStorage.setItem('mihwar_customers', JSON.stringify(updatedCusts));
+    setShowEditCustModal(false); 
+    setEditingCustId(null);
+    alert('✅ تم تحديث بيانات العميل بنجاح!');
   };
 
   const handleDeleteCustomer = async (custId) => {
     if (!window.confirm('⚠️ هل أنت متأكد من رغبتك في حذف هذا العميل؟')) return;
-    try { await API.delete(`/api/customers/${custId}`); fetchCustomers(); } catch (err) { setCustomers(customers.filter(c => c.id !== custId)); }
+    try { await API.delete(`/api/customers/${custId}`); } catch (err) {}
+    const updated = customers.filter(c => c.id !== custId);
+    setCustomers(updated);
+    localStorage.setItem('mihwar_customers', JSON.stringify(updated));
   };
 
-  // الموردين
+  // الموردين (تم إصلاح حفظ وتحديث الموقع وفترة السماح لتثبيتها محلياً وتحديث الصفحة)
   const handleOpenEditSupplier = (supp) => {
     setEditingSuppId(supp.id); setEditSuppName(supp.name || ''); setEditSuppTaxNumber(supp.taxNumber || ''); setEditSuppPhone(supp.phone || ''); setEditSuppAddress(supp.address || ''); setEditSuppGracePeriod(supp.gracePeriod || 30); setShowEditSuppModal(true);
   };
@@ -658,16 +732,22 @@ function App() {
     if (!editSuppName.trim()) return;
     try {
       await API.put(`/api/suppliers/${editingSuppId}`, { name: editSuppName.trim(), taxNumber: editSuppTaxNumber.trim() || null, phone: editSuppPhone.trim() || null, address: editSuppAddress.trim() || null, gracePeriod: Number(editSuppGracePeriod) || 30 });
-      setShowEditSuppModal(false); setEditingSuppId(null); fetchSuppliers();
-    } catch (err) {
-      setSuppliers(suppliers.map(s => s.id === editingSuppId ? { ...s, name: editSuppName.trim(), taxNumber: editSuppTaxNumber.trim(), phone: editSuppPhone.trim(), address: editSuppAddress.trim(), gracePeriod: Number(editSuppGracePeriod) || 30 } : s));
-      setShowEditSuppModal(false); setEditingSuppId(null);
-    }
+    } catch (err) {}
+
+    const updatedSupps = suppliers.map(s => s.id === editingSuppId ? { ...s, name: editSuppName.trim(), taxNumber: editSuppTaxNumber.trim(), phone: editSuppPhone.trim(), address: editSuppAddress.trim(), gracePeriod: Number(editSuppGracePeriod) || 30 } : s);
+    setSuppliers(updatedSupps);
+    localStorage.setItem('mihwar_suppliers', JSON.stringify(updatedSupps));
+    setShowEditSuppModal(false); 
+    setEditingSuppId(null);
+    alert('✅ تم تحديث بيانات المورد بنجاح!');
   };
 
   const handleDeleteSupplier = async (suppId) => {
     if (!window.confirm('⚠️ هل أنت متأكد من رغبتك في حذف هذا المورد؟')) return;
-    try { await API.delete(`/api/suppliers/${suppId}`); fetchSuppliers(); } catch (err) { setSuppliers(suppliers.filter(s => s.id !== suppId)); }
+    try { await API.delete(`/api/suppliers/${suppId}`); } catch (err) {}
+    const updated = suppliers.filter(s => s.id !== suppId);
+    setSuppliers(updated);
+    localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
   };
 
   // تأكيد طريقة السداد في سجل الفواتير
@@ -781,6 +861,7 @@ function App() {
         return prod;
       });
       setInventory(updatedInv);
+      localStorage.setItem('mihwar_inventory', JSON.stringify(updatedInv));
 
       localStorage.setItem(`invoice_status_${newInv.id}`, invoiceStatus);
       localStorage.setItem(`invoice_method_${newInv.id}`, newInv.paymentMethod);
@@ -808,7 +889,6 @@ function App() {
     }
   };
 
-  // نقطة البيع السريعة (POS) مع حفظ العنوان ورقم الصنف
   const handleSavePosInvoice = async () => {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
@@ -848,6 +928,7 @@ function App() {
         return prod;
       });
       setInventory(updatedInv);
+      localStorage.setItem('mihwar_inventory', JSON.stringify(updatedInv));
 
       localStorage.setItem(`invoice_status_${newInv.id}`, 'مدفوعة');
       localStorage.setItem(`invoice_method_${newInv.id}`, 'نقد');
@@ -884,6 +965,7 @@ function App() {
     try {
       const updatedInv = inventory.map(item => item.id === Number(selectedPurchaseProdId) ? { ...item, stock: item.stock + addedPieces } : item);
       setInventory(updatedInv);
+      localStorage.setItem('mihwar_inventory', JSON.stringify(updatedInv));
 
       await API.post('/api/purchases', { 
         productId: Number(selectedPurchaseProdId), 
@@ -939,55 +1021,61 @@ function App() {
   const handleAddCustomer = async (e) => {
     e.preventDefault();
     if (!custName.trim()) return;
+    const newCust = { 
+      id: Date.now(), 
+      name: custName.trim(), 
+      nationalId: custNationalId.trim() || null, 
+      phone: custPhone.trim() || null,
+      address: custAddress.trim() || null,
+      gracePeriod: Number(custGracePeriod) || 30
+    };
+    const updated = [newCust, ...customers];
+    setCustomers(updated);
+    localStorage.setItem('mihwar_customers', JSON.stringify(updated));
+    setCustName(''); setCustNationalId(''); setCustPhone(''); setCustAddress(''); setCustGracePeriod(30);
     try {
-      await API.post('/api/customers', { 
-        name: custName.trim(), 
-        nationalId: custNationalId.trim() || null, 
-        phone: custPhone.trim() || null,
-        address: custAddress.trim() || null,
-        gracePeriod: Number(custGracePeriod) || 30
-      });
-      setCustName(''); setCustNationalId(''); setCustPhone(''); setCustAddress(''); setCustGracePeriod(30); fetchCustomers();
-    } catch (e) { 
-      setCustomers([...customers, { id: Date.now(), name: custName.trim(), nationalId: custNationalId.trim(), phone: custPhone.trim(), address: custAddress.trim(), gracePeriod: Number(custGracePeriod) || 30 }]);
-      setCustName(''); setCustNationalId(''); setCustPhone(''); setCustAddress(''); setCustGracePeriod(30);
-    }
+      await API.post('/api/customers', { name: newCust.name, nationalId: newCust.nationalId, phone: newCust.phone, address: newCust.address, gracePeriod: newCust.gracePeriod });
+    } catch (e) {}
   };
 
   const handleAddSupplier = async (e) => {
     e.preventDefault();
     if (!suppName.trim()) return;
+    const newSupp = { 
+      id: Date.now(), 
+      name: suppName.trim(), 
+      taxNumber: suppTaxNumber.trim() || null, 
+      phone: suppPhone.trim() || null,
+      address: suppAddress.trim() || null,
+      gracePeriod: Number(suppGracePeriod) || 30
+    };
+    const updated = [newSupp, ...suppliers];
+    setSuppliers(updated);
+    localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
+    setSuppName(''); setSuppTaxNumber(''); setSuppPhone(''); setSuppAddress(''); setSuppGracePeriod(30);
     try {
-      await API.post('/api/suppliers', { 
-        name: suppName.trim(), 
-        taxNumber: suppTaxNumber.trim() || null, 
-        phone: suppPhone.trim() || null,
-        address: suppAddress.trim() || null,
-        gracePeriod: Number(suppGracePeriod) || 30
-      });
-      setSuppName(''); setSuppTaxNumber(''); setSuppPhone(''); setSuppAddress(''); setSuppGracePeriod(30); fetchSuppliers();
-    } catch (e) { 
-      setSuppliers([...suppliers, { id: Date.now(), name: suppName.trim(), taxNumber: suppTaxNumber.trim(), phone: suppPhone.trim(), address: suppAddress.trim(), gracePeriod: Number(suppGracePeriod) || 30 }]);
-      setSuppName(''); setSuppTaxNumber(''); setSuppPhone(''); setSuppAddress(''); setSuppGracePeriod(30);
-    }
+      await API.post('/api/suppliers', { name: newSupp.name, taxNumber: newSupp.taxNumber, phone: newSupp.phone, address: newSupp.address, gracePeriod: newSupp.gracePeriod });
+    } catch (e) {}
   };
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!newProdName || !newProdPrice) return;
+    const newProd = { 
+      id: Date.now(), 
+      name: newProdName, 
+      itemCode: newProdCode || `SKU-${Date.now()}`,
+      price: Number(newProdPrice), 
+      stock: Number(newProdStock || 0), 
+      boxSize: Number(newProdBoxSize) || 12 
+    };
+    const updated = [newProd, ...inventory];
+    setInventory(updated);
+    localStorage.setItem('mihwar_inventory', JSON.stringify(updated));
+    setNewProdName(''); setNewProdCode(''); setNewProdPrice(''); setNewProdStock(''); setNewProdBoxSize(12);
     try {
-      await API.post('/api/inventory', { 
-        name: newProdName, 
-        itemCode: newProdCode || `SKU-${Date.now()}`,
-        price: newProdPrice, 
-        stock: newProdStock || 0, 
-        boxSize: Number(newProdBoxSize) || 12 
-      });
-      setNewProdName(''); setNewProdCode(''); setNewProdPrice(''); setNewProdStock(''); setNewProdBoxSize(12); fetchInventory();
-    } catch (e) { 
-      setInventory([...inventory, { id: Date.now(), name: newProdName, itemCode: newProdCode || `SKU-${Date.now()}`, price: Number(newProdPrice), stock: Number(newProdStock || 0), boxSize: Number(newProdBoxSize) || 12 }]);
-      setNewProdName(''); setNewProdCode(''); setNewProdPrice(''); setNewProdStock(''); setNewProdBoxSize(12);
-    }
+      await API.post('/api/inventory', { name: newProd.name, itemCode: newProd.itemCode, price: newProd.price, stock: newProd.stock, boxSize: newProd.boxSize });
+    } catch (e) {}
   };
 
   const handleSaveCompanyLogo = (e) => {
@@ -1034,8 +1122,8 @@ function App() {
   const handleExportInventory = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
-    const headers = isAr ? ['اسم المنتج', 'رقم الصنف', 'الرصيد الفعلي', 'سعر البيع'] : ['Product Name', 'Item Code', 'Available Stock', 'Sale Price'];
-    const rows = filteredInventory.map(i => [i.name, i.itemCode || '-', i.stock, Number(i.price).toFixed(2)]);
+    const headers = isAr ? ['رقم الصنف', 'اسم المنتج', 'الرصيد الفعلي', 'سعر البيع'] : ['Item Code', 'Product Name', 'Available Stock', 'Sale Price'];
+    const rows = filteredInventory.map(i => [i.itemCode || '-', i.name, i.stock, Number(i.price).toFixed(2)]);
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -1196,10 +1284,27 @@ function App() {
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.purchasesTotal}</p><h2 style={{ color: '#f59e0b', margin: '8px 0 0 0', fontSize: '22px' }}>{totalPurchasesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.netProfit}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
               </div>
+              <div style={{ background: lowStockItems.length > 0 ? '#7f1d1d22' : theme.cardBg, borderRadius: '16px', border: `1px solid ${lowStockItems.length > 0 ? '#7f1d1d' : theme.border}`, padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#fca5a5' : theme.textDark }}>
+                    {lowStockItems.length > 0 ? `⚠️ تنبيه: يوجد ${lowStockItems.length} صنف وصل للحد الأدنى للمخزون (${lowStockThreshold} قطع أو أقل)` : t.lowStockClean}
+                  </h3>
+                  {lowStockItems.length > 0 && (
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
+                      {lowStockItems.map(item => (<span key={item.id} style={{ background: '#7f1d1d', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>{item.name} (المتبقي: {item.stock})</span>))}
+                    </div>
+                  )}
+                </div>
+                <div style={{ background: theme.bgMain, padding: '12px 18px', borderRadius: '10px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 'bold' }}>تحديد الحد الأدنى:</span>
+                  <input type="number" value={lowStockThreshold} onChange={e => { const val = Number(e.target.value); setLowStockThreshold(val); localStorage.setItem('mihwar_low_stock_threshold', val); }} style={{ width: '65px', padding: '6px', borderRadius: '6px', border: '1px solid #d97706', background: theme.cardBg, color: theme.textDark, textAlign: 'center', fontWeight: 'bold', fontSize: '14px', outline: 'none' }} />
+                  <span style={{ fontSize: '12px', color: theme.textMuted }}>قطعة</span>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* TAB 2: POS (مع حفظ رقم الصنف في السلة) */}
+          {/* TAB 2: POS */}
           {activeTab === 'pos' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '20px' }}>
@@ -1221,15 +1326,11 @@ function App() {
                       if (newQ > prod.stock) newQ = prod.stock;
                       if (newQ === 0) setCartItems(cartItems.filter(i => i.productId !== prod.id));
                       else if (cartItem) setCartItems(cartItems.map(i => i.productId === prod.id ? { ...i, quantity: newQ, subtotal: Number((newQ * prod.price).toFixed(2)) } : i));
-                      else setCartItems([...cartItems, { productId: prod.id, name: prod.name, itemCode: prod.itemCode || `SKU-${prod.id}`, unitType: 'حبة', quantity: newQ, unitPrice: prod.price, subtotal: Number((newQ * prod.price).toFixed(2)) }]);
+                      else setCartItems([...cartItems, { productId: prod.id, name: prod.name, quantity: newQ, unitPrice: prod.price, subtotal: Number((newQ * prod.price).toFixed(2)) }]);
                     };
                     return (
                       <div key={prod.id} style={{ background: theme.bgMain, border: `1px solid ${qty > 0 ? '#d97706' : theme.border}`, borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '8px' }}>
-                        <div>
-                          <span style={{ fontSize: '10px', color: '#d97706', display: 'block' }}>{prod.itemCode || `SKU-${prod.id}`}</span>
-                          <h4 style={{ margin: '0 0 4px 0', fontSize: '13px' }}>{prod.name}</h4>
-                          <span style={{ color: '#d97706', fontWeight: 'bold', fontSize: '12px' }}>{prod.price} {t.currency}</span>
-                        </div>
+                        <div><h4 style={{ margin: '0 0 4px 0', fontSize: '13px' }}>{prod.name}</h4><span style={{ color: '#d97706', fontWeight: 'bold', fontSize: '12px' }}>{prod.price} {t.currency}</span></div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme.cardBg, borderRadius: '6px', padding: '2px', border: `1px solid ${theme.border}` }}>
                           <button onClick={() => updateQty(qty - 1)} style={{ background: '#ef4444', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>-</button>
                           <input type="number" min="0" max={prod.stock} value={qty} onChange={(e) => updateQty(Number(e.target.value))} style={{ width: '45px', textAlign: 'center', border: 'none', background: 'transparent', fontWeight: 'bold', fontSize: '13px', color: theme.textDark, outline: 'none' }} />
@@ -1339,7 +1440,7 @@ function App() {
 
                   {invoiceStatus === 'غير مدفوعة' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 'auto' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f43f5e' }}>تاريخ الاستحقاق:</span>
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f43f5e' }}>مدة الاستحقاق:</span>
                       <input type="text" value={dueDateInput} onChange={e => setDueDateInput(e.target.value)} placeholder="مثال: 2026/10/01" style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #f43f5e', background: theme.cardBg, color: theme.textDark, fontSize: '12px', outline: 'none' }} />
                     </div>
                   )}
@@ -1471,7 +1572,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 6: Customers */}
+          {/* TAB 6: Customers (مع إصلاح حفظ التحديثات والتخزين المحلي) */}
           {activeTab === 'customers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1519,7 +1620,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 7: Suppliers */}
+          {/* TAB 7: Suppliers (مع إصلاح حفظ التحديثات والتخزين المحلي) */}
           {activeTab === 'suppliers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1540,7 +1641,7 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>دليل الموردين</h3>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="text" value={supplierSearchQuery} onChange={e => setSupplierSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الرقم الضريبي..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} />
+                    <input type="text" value={supplierSearchQuery} onChange={e => setSupplierSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الموقع..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} />
                     <button onClick={handleExportSuppliers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
                   </div>
                 </div>
@@ -1669,6 +1770,7 @@ function App() {
                         <td style={{ padding: '12px', fontSize: '11px' }}>إقامة: {emp.iqamaEnd} <br/>صحي: {emp.healthEnd} <br/>عقد: {emp.contractEnd}</td>
                         <td style={{ padding: '12px' }}>
                           <div style={{ display: 'flex', gap: '6px' }}>
+                            <button onClick={() => handleOpenWaiverModal(emp.name)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>إعفاء خصم ↩️</button>
                             <button onClick={() => handleOpenEditEmp(emp)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>تعديل ✏️</button>
                             <button onClick={() => handleDeleteEmployee(emp.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>حذف 🗑️</button>
                           </div>
@@ -1695,7 +1797,7 @@ function App() {
                         <td style={{ padding: '10px' }}>{d.reason}</td>
                         <td style={{ padding: '10px', color: theme.textMuted }}>{d.date}</td>
                         <td style={{ padding: '10px' }}>
-                          <button onClick={() => handleRemoveDeduction(d.id, d.empName, d.amount)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>إعفاء الخصم ↩️</button>
+                          <button onClick={() => handleOpenWaiverModal(d.empName)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>إعفاء الخصم ↩️</button>
                         </td>
                       </tr>
                     ))}
@@ -1945,7 +2047,7 @@ function App() {
         </div>
       )}
 
-      {/* Invoice Print Modal (مع إظهار العنوان الكامل ورقم الصنف) */}
+      {/* Invoice Print Modal */}
       {printingInvoice && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
           <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -1977,13 +2079,12 @@ function App() {
                 <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#0f172a' }}>بيانات العميل:</h4>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
-                <p style={{ margin: '3px 0' }}><strong>العنوان بالكامل:</strong> {printingInvoice.customer?.address || 'المملكة العربية السعودية'}</p>
+                <p style={{ margin: '3px 0' }}><strong>العنوان:</strong> {printingInvoice.customer?.address || 'غير محدد'}</p>
               </div>
 
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#0f172a', color: '#fff' }}>
-                    <th style={{ padding: '10px', textAlign: 'right' }}>رقم الصنف</th>
                     <th style={{ padding: '10px', textAlign: 'right' }}>{t.itemDesc}</th>
                     <th style={{ padding: '10px', textAlign: 'center' }}>الوحدة</th>
                     <th style={{ padding: '10px', textAlign: 'center' }}>{t.itemQuantity}</th>
@@ -1994,7 +2095,6 @@ function App() {
                 <tbody>
                   {(printingInvoice.items || []).map((it, idx) => (
                     <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '10px', textAlign: 'right', color: '#d97706', fontWeight: 'bold' }}>{it.itemCode || it.product?.itemCode || '-'}</td>
                       <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || it.name || 'خدمة عامة'}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitType || 'حبة'}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity}</td>
