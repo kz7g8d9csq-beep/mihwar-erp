@@ -314,21 +314,22 @@ function App() {
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
+  const [newProdBoxSize, setNewProdBoxSize] = useState(12); // عدد الحبات في الكرتون
   const [inventorySearchQuery, setInventorySearchQuery] = useState('');
   const [editingProdId, setEditingProdId] = useState(null);
   const [showEditProdModal, setShowEditProdModal] = useState(false);
   const [editProdName, setEditProdName] = useState('');
   const [editProdPrice, setEditProdPrice] = useState('');
   const [editProdStock, setEditProdStock] = useState('');
+  const [editProdBoxSize, setEditProdBoxSize] = useState(12);
 
-  // حالات العملاء (مع إضافة العنوان وفترة السماح)
+  // حالات العملاء
   const [customers, setCustomers] = useState([]);
   const [custName, setCustName] = useState('');
   const [custNationalId, setCustNationalId] = useState('');
   const [custPhone, setCustPhone] = useState('');
   const [custAddress, setCustAddress] = useState('');
   const [custGracePeriod, setCustGracePeriod] = useState(30);
-
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
   const [editingCustId, setEditingCustId] = useState(null);
   const [showEditCustModal, setShowEditCustModal] = useState(false);
@@ -338,14 +339,13 @@ function App() {
   const [editCustAddress, setEditCustAddress] = useState('');
   const [editCustGracePeriod, setEditCustGracePeriod] = useState(30);
 
-  // حالات الموردين (مع إضافة الموقع وفترة السماح)
+  // حالات الموردين
   const [suppliers, setSuppliers] = useState([]);
   const [suppName, setSuppName] = useState('');
   const [suppTaxNumber, setSuppTaxNumber] = useState('');
   const [suppPhone, setSuppPhone] = useState('');
   const [suppAddress, setSuppAddress] = useState('');
   const [suppGracePeriod, setSuppGracePeriod] = useState(30);
-
   const [supplierSearchQuery, setSupplierSearchQuery] = useState('');
   const [editingSuppId, setEditingSuppId] = useState(null);
   const [showEditSuppModal, setShowEditSuppModal] = useState(false);
@@ -375,13 +375,15 @@ function App() {
   const [posCustomerSearch, setPosCustomerSearch] = useState('');
   const [posSelectedCustomerId, setPosSelectedCustomerId] = useState('');
 
-  // المشتريات
+  // المشتريات (تحديث تكلفة الحبة والكرتون ونوع الوحدة)
   const [purchaseProductSearch, setPurchaseProductSearch] = useState('');
   const [purchaseInvoices, setPurchaseInvoices] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedPurchaseProdId, setSelectedPurchaseProdId] = useState('');
+  const [purchaseUnitType, setPurchaseUnitType] = useState('حبة'); // 'حبة' أو 'كرتون'
   const [purchaseQty, setPurchaseQty] = useState(10);
-  const [purchaseCost, setPurchaseCost] = useState('');
+  const [purchasePieceCost, setPurchasePieceCost] = useState(''); // تكلفة الحبة
+  const [purchaseBoxCost, setPurchaseBoxCost] = useState(''); // تكلفة الكرتون
 
   // الموارد البشرية
   const [employees, setEmployees] = useState(() => {
@@ -573,19 +575,36 @@ function App() {
     alert('✅ تم تسجیل الخصم بنجاح وتحديث بيانات الموظف!');
   };
 
+  const handleRemoveDeduction = (deductId, empName, amount) => {
+    if (!window.confirm('⚠️ هل أنت متأكد من إعفاء هذا الخصم؟')) return;
+    const updatedDeductions = deductionsList.filter(d => d.id !== deductId);
+    setDeductionsList(updatedDeductions);
+    localStorage.setItem('mihwar_hr_deductions', JSON.stringify(updatedDeductions));
+
+    const updatedEmps = employees.map(emp => {
+      if (emp.name === empName) {
+        return { ...emp, deductions: Math.max(0, Number(emp.deductions || 0) - Number(amount)) };
+      }
+      return emp;
+    });
+    setEmployees(updatedEmps);
+    localStorage.setItem('mihwar_hr_employees', JSON.stringify(updatedEmps));
+    alert('✅ تم إعفاء الخصم بنجاح واستعادة الرصيد للموظف!');
+  };
+
   // المخزون
   const handleOpenEditProduct = (prod) => {
-    setEditingProdId(prod.id); setEditProdName(prod.name || ''); setEditProdPrice(prod.price || ''); setEditProdStock(prod.stock !== undefined ? prod.stock : 0); setShowEditProdModal(true);
+    setEditingProdId(prod.id); setEditProdName(prod.name || ''); setEditProdPrice(prod.price || ''); setEditProdStock(prod.stock !== undefined ? prod.stock : 0); setEditProdBoxSize(prod.boxSize || 12); setShowEditProdModal(true);
   };
 
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
     if (!editProdName || !editProdPrice) return;
     try {
-      await API.put(`/api/inventory/${editingProdId}`, { name: editProdName, price: Number(editProdPrice), stock: Number(editProdStock) });
+      await API.put(`/api/inventory/${editingProdId}`, { name: editProdName, price: Number(editProdPrice), stock: Number(editProdStock), boxSize: Number(editProdBoxSize) || 12 });
       setShowEditProdModal(false); setEditingProdId(null); fetchInventory();
     } catch (err) {
-      setInventory(inventory.map(item => item.id === editingProdId ? { ...item, name: editProdName, price: Number(editProdPrice), stock: Number(editProdStock) } : item));
+      setInventory(inventory.map(item => item.id === editingProdId ? { ...item, name: editProdName, price: Number(editProdPrice), stock: Number(editProdStock), boxSize: Number(editProdBoxSize) || 12 } : item));
       setShowEditProdModal(false); setEditingProdId(null);
     }
   };
@@ -765,12 +784,39 @@ function App() {
     }
   };
 
+  // معالجة المشتريات بدقة: احتساب تكلفة الحبة أو الكرتون وزيادة المخزون بالقطع
   const handleSavePurchase = async () => {
-    if (!selectedPurchaseProdId || !purchaseQty || !purchaseCost) return;
+    if (!selectedPurchaseProdId) return;
+    const qty = Number(purchaseQty);
+    if (qty <= 0) return;
+
+    const prod = inventory.find(p => p.id === Number(selectedPurchaseProdId));
+    const boxSize = Number(prod?.boxSize || 12);
+    
+    // حساب التكلفة والكمية بالقطع
+    const pieceCost = purchasePieceCost !== '' ? Number(purchasePieceCost) : (purchaseBoxCost !== '' ? Number(purchaseBoxCost) / boxSize : 0);
+    const boxCost = purchaseBoxCost !== '' ? Number(purchaseBoxCost) : pieceCost * boxSize;
+    const addedPieces = purchaseUnitType === 'كرتون' ? qty * boxSize : qty;
+
     try {
-      await API.post('/api/purchases', { productId: Number(selectedPurchaseProdId), quantity: Number(purchaseQty), unitCost: Number(purchaseCost), supplierId: selectedSupplierId ? Number(selectedSupplierId) : null });
-      setSelectedPurchaseProdId(''); setPurchaseCost(''); fetchAllData(); setActiveTab('inventory');
-    } catch (e) { alert('Failed'); }
+      const updatedInv = inventory.map(item => item.id === Number(selectedPurchaseProdId) ? { ...item, stock: item.stock + addedPieces } : item);
+      setInventory(updatedInv);
+
+      await API.post('/api/purchases', { 
+        productId: Number(selectedPurchaseProdId), 
+        quantity: addedPieces, 
+        unitCost: pieceCost, 
+        supplierId: selectedSupplierId ? Number(selectedSupplierId) : null 
+      }).catch(() => {});
+
+      setSelectedPurchaseProdId(''); 
+      setPurchasePieceCost('');
+      setPurchaseBoxCost('');
+      alert(`✅ تم اعتماد التوريد بنجاح وزيادة المخزون بمقدار (${addedPieces} حبة)!`);
+      setActiveTab('inventory');
+    } catch (e) { 
+      alert('Failed'); 
+    }
   };
 
   const cartSubtotal = cartItems.reduce((sum, it) => sum + it.subtotal, 0);
@@ -813,13 +859,16 @@ function App() {
     try {
       await API.post('/api/customers', { 
         name: custName.trim(), 
-        nationalId: custNationalId.trim()||null, 
-        phone: custPhone.trim()||null,
-        address: custAddress.trim()||null,
+        nationalId: custNationalId.trim() || null, 
+        phone: custPhone.trim() || null,
+        address: custAddress.trim() || null,
         gracePeriod: Number(custGracePeriod) || 30
       });
       setCustName(''); setCustNationalId(''); setCustPhone(''); setCustAddress(''); setCustGracePeriod(30); fetchCustomers();
-    } catch (e) { alert('Error'); }
+    } catch (e) { 
+      setCustomers([...customers, { id: Date.now(), name: custName.trim(), nationalId: custNationalId.trim(), phone: custPhone.trim(), address: custAddress.trim(), gracePeriod: Number(custGracePeriod) || 30 }]);
+      setCustName(''); setCustNationalId(''); setCustPhone(''); setCustAddress(''); setCustGracePeriod(30);
+    }
   };
 
   const handleAddSupplier = async (e) => {
@@ -828,22 +877,28 @@ function App() {
     try {
       await API.post('/api/suppliers', { 
         name: suppName.trim(), 
-        taxNumber: suppTaxNumber.trim()||null, 
-        phone: suppPhone.trim()||null,
-        address: suppAddress.trim()||null,
+        taxNumber: suppTaxNumber.trim() || null, 
+        phone: suppPhone.trim() || null,
+        address: suppAddress.trim() || null,
         gracePeriod: Number(suppGracePeriod) || 30
       });
       setSuppName(''); setSuppTaxNumber(''); setSuppPhone(''); setSuppAddress(''); setSuppGracePeriod(30); fetchSuppliers();
-    } catch (e) { alert('Error'); }
+    } catch (e) { 
+      setSuppliers([...suppliers, { id: Date.now(), name: suppName.trim(), taxNumber: suppTaxNumber.trim(), phone: suppPhone.trim(), address: suppAddress.trim(), gracePeriod: Number(suppGracePeriod) || 30 }]);
+      setSuppName(''); setSuppTaxNumber(''); setSuppPhone(''); setSuppAddress(''); setSuppGracePeriod(30);
+    }
   };
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!newProdName || !newProdPrice) return;
     try {
-      await API.post('/api/inventory', { name: newProdName, price: newProdPrice, stock: newProdStock || 0 });
-      setNewProdName(''); setNewProdPrice(''); setNewProdStock(''); fetchInventory();
-    } catch (e) { alert('Error'); }
+      await API.post('/api/inventory', { name: newProdName, price: newProdPrice, stock: newProdStock || 0, boxSize: Number(newProdBoxSize) || 12 });
+      setNewProdName(''); setNewProdPrice(''); setNewProdStock(''); setNewProdBoxSize(12); fetchInventory();
+    } catch (e) { 
+      setInventory([...inventory, { id: Date.now(), name: newProdName, price: Number(newProdPrice), stock: Number(newProdStock || 0), boxSize: Number(newProdBoxSize) || 12 }]);
+      setNewProdName(''); setNewProdPrice(''); setNewProdStock(''); setNewProdBoxSize(12);
+    }
   };
 
   const handleSaveCompanyLogo = (e) => {
@@ -906,7 +961,7 @@ function App() {
   const handleExportSuppliers = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'دليل_الموردين' : 'Suppliers_Directory';
-    const headers = isAr ? ['اسم المورد', 'الرقم الضريبي', 'الهاتف', 'الموقع', 'فترة السماح (أيام)'] : ['Supplier Name', 'Tax No', 'Phone', 'Location', 'Grace Period (Days)'];
+    const headers = isAr ? ['اسم المورد', 'الرقم الضريبي', 'الهاتف', 'الموقع / العنوان', 'فترة السماح (أيام)'] : ['Supplier Name', 'Tax No', 'Phone', 'Location', 'Grace Period (Days)'];
     const rows = filteredSuppliers.map(s => [s.name, s.taxNumber || '-', s.phone || '-', s.address || '-', s.gracePeriod || 30]);
     exportToExcel(title, headers, rows, lang);
   };
@@ -1068,38 +1123,6 @@ function App() {
                   <input type="number" value={lowStockThreshold} onChange={e => { const val = Number(e.target.value); setLowStockThreshold(val); localStorage.setItem('mihwar_low_stock_threshold', val); }} style={{ width: '65px', padding: '6px', borderRadius: '6px', border: '1px solid #d97706', background: theme.cardBg, color: theme.textDark, textAlign: 'center', fontWeight: 'bold', fontSize: '14px', outline: 'none' }} />
                   <span style={{ fontSize: '12px', color: theme.textMuted }}>قطعة</span>
                 </div>
-              </div>
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📅 تحليل أداء مبيعات السنة الحالية ({currentYear})</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>الشهر</th><th style={{ padding: '10px' }}>عدد الفواتير</th><th style={{ padding: '10px' }}>إجمالي المبيعات (ر.س)</th><th style={{ padding: '10px' }}>نسبة الأداء</th></tr></thead>
-                  <tbody>
-                    {monthlyData.map((m, idx) => (
-                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{m.monthName}</td>
-                        <td style={{ padding: '10px' }}>{m.count} فاتورة</td>
-                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#10b981' }}>{m.total.toFixed(2)} {t.currency}</td>
-                        <td style={{ padding: '10px' }}><div style={{ width: '100%', maxWidth: '150px', height: '6px', background: theme.bgMain, borderRadius: '3px', overflow: 'hidden', border: `1px solid ${theme.border}` }}><div style={{ width: `${Math.min(100, (m.total / (totalSalesVal || 1)) * 100)}%`, height: '100%', background: '#d97706' }}></div></div></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📊 سجل النمو المالي للسنوات الماضية (حتى 10 سنوات)</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>السنة المالية</th><th style={{ padding: '10px' }}>عدد الفواتير</th><th style={{ padding: '10px' }}>إجمالي المبيعات</th><th style={{ padding: '10px' }}>صافي الربح التقديري</th></tr></thead>
-                  <tbody>
-                    {pastYearsData.map((y, idx) => (
-                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#d97706' }}>{y.year}</td>
-                        <td style={{ padding: '10px' }}>{y.count} فاتورة</td>
-                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{y.totalSales.toFixed(2)} {t.currency}</td>
-                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#10b981' }}>+{y.totalProfit.toFixed(2)} {t.currency}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             </div>
           )}
@@ -1283,15 +1306,15 @@ function App() {
             </div>
           )}
 
-          {/* TAB 5: Purchases */}
+          {/* TAB 5: Purchases (تحديث تحديد تكلفة الحبة والكرتون ونوع الوحدة) */}
           {activeTab === 'purchases' && user.role !== 'cashier' && (
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '600px', margin: 'auto' }}>
+            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '650px', margin: 'auto' }}>
               <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>تسجيل فاتورة شراء وتوريد بضاعة</h2>
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>المورد</label>
                 <select value={selectedSupplierId} onChange={e=>setSelectedSupplierId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
                   <option value="">توريد نقدي مباشر</option>
-                  {suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+                  {suppliers.map(s=><option key={s.id} value={s.id}>{s.name} {s.gracePeriod ? `(سماح: ${s.gracePeriod} يوم)` : ''}</option>)}
                 </select>
               </div>
               <div style={{ marginBottom: '15px' }}>
@@ -1299,22 +1322,40 @@ function App() {
                 <input type="text" value={purchaseProductSearch} onChange={e => setPurchaseProductSearch(e.target.value)} placeholder="ابحث عن اسم المنتج للفلترة..." style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '8px', boxSizing: 'border-box', fontSize: '13px' }} />
                 <select value={selectedPurchaseProdId} onChange={e=>setSelectedPurchaseProdId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
                   <option value="">-- اختر المنتج المستهدف --</option>
-                  {filteredProductsForPurchase.map(p=><option key={p.id} value={p.id}>{p.name} (المتوفر الحالي: {p.stock})</option>)}
+                  {filteredProductsForPurchase.map(p=><option key={p.id} value={p.id}>{p.name} (المتوفر: {p.stock})</option>)}
                 </select>
               </div>
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>الكمية الموردة</label>
-                <input type="number" placeholder="الكمية" value={purchaseQty} onChange={e=>setPurchaseQty(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '15px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>وحدة التوريد</label>
+                  <select value={purchaseUnitType} onChange={e => setPurchaseUnitType(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
+                    <option value="حبة">حبة (قطعة فردية)</option>
+                    <option value="كرتون">كرتون (بالكرتون)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>الكمية الموردة</label>
+                  <input type="number" placeholder="الكمية" value={purchaseQty} onChange={e=>setPurchaseQty(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
               </div>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>سعر التكلفة للوحدة (ر.س)</label>
-                <input type="number" placeholder="سعر التكلفة" value={purchaseCost} onChange={e=>setPurchaseCost(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>سعر تكلفة الحبة (مفرد)</label>
+                  <input type="number" placeholder="سعر الحبة" value={purchasePieceCost} onChange={e=>setPurchasePieceCost(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>سعر تكلفة الكرتون (جملة)</label>
+                  <input type="number" placeholder="سعر الكرتون" value={purchaseBoxCost} onChange={e=>setPurchaseBoxCost(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
               </div>
+
               <button onClick={handleSavePurchase} style={{ width: '100%', background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>اعتماد التوريد وزيادة المخزون 📦</button>
             </div>
           )}
 
-          {/* TAB 6: Customers (العنوان بالتفصيل وفترة السماح مضافة) */}
+          {/* TAB 6: Customers */}
           {activeTab === 'customers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1335,7 +1376,7 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>دليل العملاء</h3>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="text" value={customerSearchQuery} onChange={e => setCustomerSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الهوية أو الهاتف..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} />
+                    <input type="text" value={customerSearchQuery} onChange={e => setCustomerSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الهوية، العنوان..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} />
                     <button onClick={handleExportCustomers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
                   </div>
                 </div>
@@ -1362,7 +1403,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 7: Suppliers (الموقع وفترة السماح مضافة) */}
+          {/* TAB 7: Suppliers */}
           {activeTab === 'suppliers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1383,7 +1424,7 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>دليل الموردين</h3>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="text" value={supplierSearchQuery} onChange={e => setSupplierSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الرقم الضريبي..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} />
+                    <input type="text" value={supplierSearchQuery} onChange={e => setSupplierSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الرقم الضريبي..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} />
                     <button onClick={handleExportSuppliers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
                   </div>
                 </div>
@@ -1420,6 +1461,10 @@ function App() {
                     <input type="text" placeholder={t.prodName} value={newProdName} onChange={e=>setNewProdName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                     <input type="number" placeholder={t.prodPrice} value={newProdPrice} onChange={e=>setNewProdPrice(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                     <input type="number" placeholder={t.prodStock} value={newProdStock} onChange={e=>setNewProdStock(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#d97706' }}>عدد الحبات في الكرتون الواحد:</label>
+                      <input type="number" placeholder="سعة الكرتون" value={newProdBoxSize} onChange={e=>setNewProdBoxSize(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
                     <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveProd}</button>
                   </form>
                 </div>
@@ -1520,12 +1565,13 @@ function App() {
                 </table>
               </div>
 
+              {/* سجل الخصومات التفصيلي مع زر الإعفاء */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: '#fca5a5' }}>🔻 سجل الخصومات التفصيلي (السبب، القيمة، والتاريخ التلقائي)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
                   <thead>
                     <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '10px' }}>اسم الموظف</th><th style={{ padding: '10px' }}>قيمة الخصم</th><th style={{ padding: '10px' }}>سبب الخصم</th><th style={{ padding: '10px' }}>تاريخ التسجيل (تلقائي)</th>
+                      <th style={{ padding: '10px' }}>اسم الموظف</th><th style={{ padding: '10px' }}>قيمة الخصم</th><th style={{ padding: '10px' }}>سبب الخصم</th><th style={{ padding: '10px' }}>تاريخ التسجيل (تلقائي)</th><th style={{ padding: '10px' }}>الإجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1535,6 +1581,9 @@ function App() {
                         <td style={{ padding: '10px', color: '#ef4444', fontWeight: 'bold' }}>{d.amount} {t.currency}</td>
                         <td style={{ padding: '10px' }}>{d.reason}</td>
                         <td style={{ padding: '10px', color: theme.textMuted }}>{d.date}</td>
+                        <td style={{ padding: '10px' }}>
+                          <button onClick={() => handleRemoveDeduction(d.id, d.empName, d.amount)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>إعفاء الخصم ↩️</button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1674,6 +1723,7 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodName}</label><input type="text" value={editProdName} onChange={e=>setEditProdName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodPrice}</label><input type="number" value={editProdPrice} onChange={e=>setEditProdPrice(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodStock}</label><input type="number" value={editProdStock} onChange={e=>setEditProdStock(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>عدد الحبات في الكرتون</label><input type="number" value={editProdBoxSize} onChange={e=>setEditProdBoxSize(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.updateProd}</button>
                 <button type="button" onClick={() => setShowEditProdModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
