@@ -106,6 +106,7 @@ const dict = {
     adminSecretLabel: '🔑 كلمة المرور الإدارية الخاصة بمدير النظام:',
     adminSecretPlaceholder: 'أدخل كلمة سر الإدارة المعتمدة',
     enterAppBtn: 'ابدأ العمل الآن 🚀',
+
     hrTitle: 'الموارد البشرية والرواتب والخصومات',
     hrSub: 'إدارة الموظفين، الرواتب، الأجازات، وسجل الخصومات بالتاريخ التلقائي.',
     addEmpBtn: 'إضافة موظف جديد +',
@@ -128,6 +129,7 @@ const dict = {
     updateEmp: 'تحديث بيانات الموظف',
     saveDeduct: 'تسجيل الخصم',
     closeModal: 'إغلاق',
+
     invValue: 'قيمة المخزون الإجمالية',
     salesTotal: 'إجمالي المبيعات (شامل الضريبة)',
     purchasesTotal: 'إجمالي المشتريات (شامل الضريبة)',
@@ -190,6 +192,7 @@ const dict = {
     adminSecretLabel: '🔑 Master Admin Secret Key:',
     adminSecretPlaceholder: 'Enter master admin secret password',
     enterAppBtn: 'Get Started 🚀',
+
     hrTitle: 'Human Resources, Payroll & Deductions',
     hrSub: 'Manage employees, salaries, vacations, deductions with auto date.',
     addEmpBtn: 'Add New Employee +',
@@ -212,6 +215,7 @@ const dict = {
     updateEmp: 'Update Employee',
     saveDeduct: 'Save Deduction',
     closeModal: 'Cancel',
+
     invValue: 'Total Inventory Valuation',
     salesTotal: 'Gross Sales',
     purchasesTotal: 'Gross Purchases',
@@ -305,15 +309,15 @@ function App() {
   const [businessName, setBusinessName] = useState('نظام محور');
 
   const [companyLogo, setCompanyLogo] = useState(() => {
-    return localStorage.getItem('mihwar_company_logo'] || '';
+    return localStorage.getItem('mihwar_company_logo') || '';
   });
   const [tempLogoInput, setTempLogoInput] = useState(companyLogo);
 
+  // حالات المخزون
   const [inventory, setInventory] = useState([]);
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
-
   const [inventorySearchQuery, setInventorySearchQuery] = useState('');
   const [editingProdId, setEditingProdId] = useState(null);
   const [showEditProdModal, setShowEditProdModal] = useState(false);
@@ -321,6 +325,7 @@ function App() {
   const [editProdPrice, setEditProdPrice] = useState('');
   const [editProdStock, setEditProdStock] = useState('');
 
+  // حالات العملاء
   const [customers, setCustomers] = useState([]);
   const [custName, setCustName] = useState('');
   const [custNationalId, setCustNationalId] = useState('');
@@ -332,6 +337,7 @@ function App() {
   const [editCustNationalId, setEditCustNationalId] = useState('');
   const [editCustPhone, setEditCustPhone] = useState('');
 
+  // حالات الموردين
   const [suppliers, setSuppliers] = useState([]);
   const [suppName, setSuppName] = useState('');
   const [suppTaxNumber, setSuppTaxNumber] = useState('');
@@ -343,10 +349,12 @@ function App() {
   const [editSuppTaxNumber, setEditSuppTaxNumber] = useState('');
   const [editSuppPhone, setEditSuppPhone] = useState('');
 
+  // الفواتير والتقارير
   const [invoices, setInvoices] = useState([]);
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
   const [reportSearchQuery, setReportSearchQuery] = useState('');
   
+  // المبيعات والفوترة
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -357,9 +365,11 @@ function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
+  // نقطة البيع (POS)
   const [posCustomerSearch, setPosCustomerSearch] = useState('');
   const [posSelectedCustomerId, setPosSelectedCustomerId] = useState('');
 
+  // المشتريات
   const [purchaseProductSearch, setPurchaseProductSearch] = useState('');
   const [purchaseInvoices, setPurchaseInvoices] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
@@ -367,7 +377,7 @@ function App() {
   const [purchaseQty, setPurchaseQty] = useState(10);
   const [purchaseCost, setPurchaseCost] = useState('');
 
-  // حالات الموارد البشرية والخصومات المحدثة
+  // الموارد البشرية
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
@@ -397,8 +407,10 @@ function App() {
   const [empVacations, setEmpVacations] = useState('');
   const [empInsurance, setEmpInsurance] = useState('');
   const [empStatus, setEmpStatus] = useState('نشط');
+  const [empIqamaEnd, setEmpIqamaEnd] = useState('');
+  const [empHealthEnd, setEmpHealthEnd] = useState('');
+  const [empContractEnd, setEmpContractEnd] = useState('');
 
-  // متغيرات نافذة الخصم الجديدة مع محرك البحث (الاسم أو رقم الهوية)
   const [hrDeductSearchQuery, setHrDeductSearchQuery] = useState('');
   const [hrSelectedEmployeeName, setHrSelectedEmployeeName] = useState('');
   const [hrDeductAmount, setHrDeductAmount] = useState('');
@@ -458,12 +470,12 @@ function App() {
         const enhanced = res.data.map(inv => {
           const savedStatus = localStorage.getItem(`invoice_status_${inv.id}`);
           const savedDueDate = localStorage.getItem(`invoice_duedate_${inv.id}`);
-          const savedItems = localStorage.getItem(`invoice_items_${inv.id}`);
+          const savedItemsStr = localStorage.getItem(`invoice_items_${inv.id}`);
           return {
             ...inv,
             paymentStatus: savedStatus || inv.paymentStatus || 'مدفوعة',
             dueDate: savedDueDate || inv.dueDate || '',
-            items: savedItems ? JSON.parse(savedItems) : inv.items
+            items: savedItemsStr ? JSON.parse(savedItemsStr) : inv.items
           };
         });
         setInvoices(enhanced);
@@ -473,7 +485,7 @@ function App() {
 
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
 
-  // فلاتر البحث الآمنة
+  // فلاتر البحث
   const filteredInventory = inventory.filter(i => safeLower(i.name).includes(safeLower(inventorySearchQuery)));
   const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)));
   const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)));
@@ -482,49 +494,61 @@ function App() {
   const filteredCustomersForSales = customers.filter(c => safeLower(c.name).includes(safeLower(salesCustomerSearch)) || safeLower(c.nationalId).includes(safeLower(salesCustomerSearch)) || safeLower(c.phone).includes(safeLower(salesCustomerSearch)));
   const filteredCustomersForPos = customers.filter(c => safeLower(c.name).includes(safeLower(posCustomerSearch)) || safeLower(c.nationalId).includes(safeLower(posCustomerSearch)) || safeLower(c.phone).includes(safeLower(posCustomerSearch)));
   const filteredProductsForPurchase = inventory.filter(p => safeLower(p.name).includes(safeLower(purchaseProductSearch)));
+  const filteredEmployeesForHrDeduct = employees.filter(emp => safeLower(emp.name).includes(safeLower(hrDeductSearchQuery)) || safeLower(emp.idNumber).includes(safeLower(hrDeductSearchQuery)));
 
-  // فلترة الموظفين للبحث برقم الهوية أو الاسم في نافذة الخصم الجديدة
-  const filteredEmployeesForHrDeduct = employees.filter(emp => 
-    safeLower(emp.name).includes(safeLower(hrDeductSearchQuery)) || 
-    safeLower(emp.idNumber).includes(safeLower(hrDeductSearchQuery))
-  );
-
-  // دوال حفظ وتعديل الموارد البشرية والخصومات
-  const handleSaveEmployeeHR = (e) => {
+  // الموارد البشرية
+  const handleSaveEmployee = (e) => {
     e.preventDefault();
     if (!empName.trim()) return;
     if (editingEmpId) {
       const updated = employees.map(emp => {
         if (emp.id === editingEmpId) {
-          return { ...emp, name: empName.trim(), idNumber: empIdNumber.trim() || emp.idNumber, empNo: empNumber.trim() || emp.empNo, role: empRole.trim() || emp.role, dept: empDept.trim() || emp.dept, phone: empPhone.trim() || emp.phone, salary: empSalary !== '' ? Number(empSalary) : emp.salary, vacations: empVacations !== '' ? Number(empVacations) : emp.vacations, status: empStatus || emp.status };
+          return { ...emp, name: empName.trim(), idNumber: empIdNumber.trim() || emp.idNumber, empNo: empNumber.trim() || emp.empNo, role: empRole.trim() || emp.role, dept: empDept.trim() || emp.dept, phone: empPhone.trim() || emp.phone, salary: empSalary !== '' ? Number(empSalary) : emp.salary, vacations: empVacations !== '' ? Number(empVacations) : emp.vacations, insurance: empInsurance.trim() || emp.insurance, status: empStatus || emp.status, iqamaEnd: empIqamaEnd || emp.iqamaEnd, healthEnd: empHealthEnd || emp.healthEnd, contractEnd: empContractEnd || emp.contractEnd };
         }
         return emp;
       });
       setEmployees(updated);
       localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
     } else {
-      const newEmp = {
-        id: Date.now(), name: empName.trim(), idNumber: empIdNumber.trim() || '-', empNo: empNumber.trim() || String(employees.length + 1), role: empRole.trim() || 'موظف', dept: empDept.trim() || 'عام', phone: empPhone.trim() || '-', salary: Number(empSalary) || 4000, deductions: 0, vacations: Number(empVacations) || 21, insurance: empInsurance.trim() || 'تأمين أساسي', status: empStatus || 'نشط', iqamaEnd: '2027-05-12', healthEnd: '2027-03-01', contractEnd: '2028-04-10'
-      };
+      const newEmp = { id: Date.now(), name: empName.trim(), idNumber: empIdNumber.trim() || '-', empNo: empNumber.trim() || String(employees.length + 1), role: empRole.trim() || 'موظف', dept: empDept.trim() || 'عام', phone: empPhone.trim() || '-', salary: Number(empSalary) || 4000, deductions: 0, vacations: Number(empVacations) || 21, insurance: empInsurance.trim() || 'تأمين أساسي', status: empStatus || 'نشط', iqamaEnd: empIqamaEnd || '2027-05-12', healthEnd: empHealthEnd || '2027-03-01', contractEnd: empContractEnd || '2028-04-10' };
       const updated = [newEmp, ...employees];
       setEmployees(updated);
       localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
     }
-    setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpVacations(''); setEmpInsurance('');
+    setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpVacations(''); setEmpInsurance(''); setEmpIqamaEnd(''); setEmpHealthEnd(''); setEmpContractEnd('');
     setEditingEmpId(null);
     setShowAddEmpModal(false);
+  };
+
+  const handleOpenEditEmp = (emp) => {
+    setEditingEmpId(emp.id);
+    setEmpName(emp.name || '');
+    setEmpIdNumber(emp.idNumber || '');
+    setEmpNumber(emp.empNo || '');
+    setEmpRole(emp.role || '');
+    setEmpDept(emp.dept || '');
+    setEmpPhone(emp.phone || '');
+    setEmpSalary(emp.salary || '');
+    setEmpVacations(emp.vacations || '');
+    setEmpInsurance(emp.insurance || '');
+    setEmpStatus(emp.status || 'نشط');
+    setEmpIqamaEnd(emp.iqamaEnd || '');
+    setEmpHealthEnd(emp.healthEnd || '');
+    setEmpContractEnd(emp.contractEnd || '');
+    setShowAddEmpModal(true);
+  };
+
+  const handleDeleteEmployee = (id) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا الموظف؟')) return;
+    const updated = employees.filter(e => e.id !== id);
+    setEmployees(updated);
+    localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
   };
 
   const handleSaveHrDeduction = (e) => {
     e.preventDefault();
     if (!hrSelectedEmployeeName || !hrDeductAmount) return;
-    const newDeduct = {
-      id: Date.now(),
-      empName: hrSelectedEmployeeName,
-      amount: Number(hrDeductAmount),
-      reason: hrDeductReason.trim() || 'بدون سبب مذكور',
-      date: new Date().toISOString().slice(0, 10)
-    };
+    const newDeduct = { id: Date.now(), empName: hrSelectedEmployeeName, amount: Number(hrDeductAmount), reason: hrDeductReason.trim() || 'بدون سبب مذكور', date: new Date().toISOString().slice(0, 10) };
     const updatedList = [newDeduct, ...deductionsList];
     setDeductionsList(updatedList);
     localStorage.setItem('mihwar_hr_deductions', JSON.stringify(updatedList));
@@ -543,12 +567,9 @@ function App() {
     alert('✅ تم تسجیل الخصم بنجاح وتحديث بيانات الموظف!');
   };
 
+  // المخزون
   const handleOpenEditProduct = (prod) => {
-    setEditingProdId(prod.id);
-    setEditProdName(prod.name || '');
-    setEditProdPrice(prod.price || '');
-    setEditProdStock(prod.stock !== undefined ? prod.stock : 0);
-    setShowEditProdModal(true);
+    setEditingProdId(prod.id); setEditProdName(prod.name || ''); setEditProdPrice(prod.price || ''); setEditProdStock(prod.stock !== undefined ? prod.stock : 0); setShowEditProdModal(true);
   };
 
   const handleUpdateProduct = async (e) => {
@@ -565,20 +586,12 @@ function App() {
 
   const handleDeleteProduct = async (prodId) => {
     if (!window.confirm('⚠️ هل أنت متأكد من رغبتك في حذف هذا المنتج من المخزون؟')) return;
-    try {
-      await API.delete(`/api/inventory/${prodId}`);
-      fetchInventory();
-    } catch (err) {
-      setInventory(inventory.filter(item => item.id !== prodId));
-    }
+    try { await API.delete(`/api/inventory/${prodId}`); fetchInventory(); } catch (err) { setInventory(inventory.filter(item => item.id !== prodId)); }
   };
 
+  // العملاء
   const handleOpenEditCustomer = (cust) => {
-    setEditingCustId(cust.id);
-    setEditCustName(cust.name || '');
-    setEditCustNationalId(cust.nationalId || '');
-    setEditCustPhone(cust.phone || '');
-    setShowEditCustModal(true);
+    setEditingCustId(cust.id); setEditCustName(cust.name || ''); setEditCustNationalId(cust.nationalId || ''); setEditCustPhone(cust.phone || ''); setShowEditCustModal(true);
   };
 
   const handleUpdateCustomer = async (e) => {
@@ -595,20 +608,12 @@ function App() {
 
   const handleDeleteCustomer = async (custId) => {
     if (!window.confirm('⚠️ هل أنت متأكد من رغبتك في حذف هذا العميل؟')) return;
-    try {
-      await API.delete(`/api/customers/${custId}`);
-      fetchCustomers();
-    } catch (err) {
-      setCustomers(customers.filter(c => c.id !== custId));
-    }
+    try { await API.delete(`/api/customers/${custId}`); fetchCustomers(); } catch (err) { setCustomers(customers.filter(c => c.id !== custId)); }
   };
 
+  // الموردين
   const handleOpenEditSupplier = (supp) => {
-    setEditingSuppId(supp.id);
-    setEditSuppName(supp.name || '');
-    setEditSuppTaxNumber(supp.taxNumber || '');
-    setEditSuppPhone(supp.phone || '');
-    setShowEditSuppModal(true);
+    setEditingSuppId(supp.id); setEditSuppName(supp.name || ''); setEditSuppTaxNumber(supp.taxNumber || ''); setEditSuppPhone(supp.phone || ''); setShowEditSuppModal(true);
   };
 
   const handleUpdateSupplier = async (e) => {
@@ -625,14 +630,10 @@ function App() {
 
   const handleDeleteSupplier = async (suppId) => {
     if (!window.confirm('⚠️ هل أنت متأكد من رغبتك في حذف هذا المورد؟')) return;
-    try {
-      await API.delete(`/api/suppliers/${suppId}`);
-      fetchSuppliers();
-    } catch (err) {
-      setSuppliers(suppliers.filter(s => s.id !== suppId));
-    }
+    try { await API.delete(`/api/suppliers/${suppId}`); fetchSuppliers(); } catch (err) { setSuppliers(suppliers.filter(s => s.id !== suppId)); }
   };
 
+  // الفواتير
   const handleMarkInvoiceAsPaid = (invoiceId) => {
     if (!window.confirm('هل أنت متأكد من تأكيد سداد هذا المبلغ وتحويل الفاتورة إلى (مدفوعة)؟')) return;
     const updated = invoices.map(inv => {
@@ -646,7 +647,7 @@ function App() {
     setInvoices(updated);
   };
 
-  // المبيعات والفوترة: الالتزام بالسعر المخصص
+  // المبيعات والتسعير
   const handleAddItemToSalesCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
@@ -703,6 +704,13 @@ function App() {
       setDueDateInput('');
       setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
+
+      API.post('/api/sales', { 
+        customerId: selectedCustomerId ? Number(selectedCustomerId) : null, 
+        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
+        status: invoiceStatus,
+        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : null
+      }).catch(() => {});
     } catch (err) { 
       alert('Failed'); 
     } finally { 
@@ -738,6 +746,12 @@ function App() {
       setCartItems([]); 
       setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
+
+      API.post('/api/sales', { 
+        customerId: posSelectedCustomerId ? Number(posSelectedCustomerId) : null, 
+        items: cartItems.map(it => ({ productId: it.productId, quantity: it.quantity, unitPrice: it.unitPrice })),
+        status: 'مدفوعة'
+      }).catch(() => {});
     } catch (err) { 
       alert('Failed'); 
     } finally { 
@@ -792,8 +806,7 @@ function App() {
     if (!custName.trim()) return;
     try {
       await API.post('/api/customers', { name: custName.trim(), nationalId: custNationalId.trim()||null, phone: custPhone.trim()||null });
-      setCustName(''); setCustNationalId(''); setCustPhone('');
-      fetchCustomers();
+      setCustName(''); setCustNationalId(''); setCustPhone(''); fetchCustomers();
     } catch (e) { alert('Error'); }
   };
 
@@ -802,8 +815,7 @@ function App() {
     if (!suppName.trim()) return;
     try {
       await API.post('/api/suppliers', { name: suppName.trim(), taxNumber: suppTaxNumber.trim()||null, phone: suppPhone.trim()||null });
-      setSuppName(''); setSuppTaxNumber(''); setSuppPhone('');
-      fetchSuppliers();
+      setSuppName(''); setSuppTaxNumber(''); setSuppPhone(''); fetchSuppliers();
     } catch (e) { alert('Error'); }
   };
 
@@ -812,8 +824,7 @@ function App() {
     if (!newProdName || !newProdPrice) return;
     try {
       await API.post('/api/inventory', { name: newProdName, price: newProdPrice, stock: newProdStock || 0 });
-      setNewProdName(''); setNewProdPrice(''); setNewProdStock('');
-      fetchInventory();
+      setNewProdName(''); setNewProdPrice(''); setNewProdStock(''); fetchInventory();
     } catch (e) { alert('Error'); }
   };
 
@@ -848,6 +859,38 @@ function App() {
 
   const handleLogout = () => {
     setUser(null); localStorage.clear(); delete API.defaults.headers.common['Authorization']; setShowLanding(true); setAuthView('login');
+  };
+
+  const handleExportSales = () => {
+    const isAr = lang === 'ar';
+    const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
+    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
+    const rows = filteredReports.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
+    exportToExcel(title, headers, rows, lang);
+  };
+
+  const handleExportInventory = () => {
+    const isAr = lang === 'ar';
+    const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
+    const headers = isAr ? ['اسم المنتج', 'الرصيد الفعلي', 'سعر البيع'] : ['Product Name', 'Available Stock', 'Sale Price'];
+    const rows = filteredInventory.map(i => [i.name, i.stock, Number(i.price).toFixed(2)]);
+    exportToExcel(title, headers, rows, lang);
+  };
+
+  const handleExportCustomers = () => {
+    const isAr = lang === 'ar';
+    const title = isAr ? 'دليل_العملاء' : 'Clients_Directory';
+    const headers = isAr ? ['الاسم', 'الهوية', 'الهاتف'] : ['Name', 'ID', 'Phone'];
+    const rows = filteredCustomers.map(c => [c.name, c.nationalId || '-', c.phone || '-']);
+    exportToExcel(title, headers, rows, lang);
+  };
+
+  const handleExportSuppliers = () => {
+    const isAr = lang === 'ar';
+    const title = isAr ? 'دليل_الموردين' : 'Suppliers_Directory';
+    const headers = isAr ? ['اسم المورد', 'الرقم الضريبي', 'الهاتف'] : ['Supplier Name', 'Tax No', 'Phone'];
+    const rows = filteredSuppliers.map(s => [s.name, s.taxNumber || '-', s.phone || '-']);
+    exportToExcel(title, headers, rows, lang);
   };
 
   if (!user && showLanding) {
@@ -921,7 +964,6 @@ function App() {
 
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark, display: 'flex' }}>
-      
       <style>{`
         @media print {
           body * { visibility: hidden !important; }
@@ -1270,7 +1312,7 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>دليل العملاء</h3>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="text" value={customerSearchQuery} onChange={e => setCustomerSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الهوية..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} />
+                    <input type="text" value={customerSearchQuery} onChange={e => setCustomerSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الهوية أو الهاتف..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} />
                     <button onClick={handleExportCustomers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
                   </div>
                 </div>
@@ -1395,7 +1437,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 10: HR (الموارد البشرية مع تعديل نافذة الخصم ومحرك البحث بالهوية أو الاسم) */}
+          {/* TAB 10: HR */}
           {activeTab === 'hr' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -1404,7 +1446,7 @@ function App() {
                   <p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{t.hrSub}</p>
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={() => { setEditingEmpId(null); setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpVacations(''); setShowAddEmpModal(true); }} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 18px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
+                  <button onClick={() => { setEditingEmpId(null); setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpVacations(''); setEmpInsurance(''); setEmpIqamaEnd(''); setEmpHealthEnd(''); setEmpContractEnd(''); setShowAddEmpModal(true); }} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 18px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
                     {t.addEmpBtn}
                   </button>
                   <button onClick={() => setShowDeductModal(true)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '12px 18px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
@@ -1442,6 +1484,27 @@ function App() {
                             <button onClick={() => handleDeleteEmployee(emp.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>حذف 🗑️</button>
                           </div>
                         </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: '#fca5a5' }}>🔻 سجل الخصومات التفصيلي (السبب، القيمة، والتاريخ التلقائي)</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '10px' }}>اسم الموظف</th><th style={{ padding: '10px' }}>قيمة الخصم</th><th style={{ padding: '10px' }}>سبب الخصم</th><th style={{ padding: '10px' }}>تاريخ التسجيل (تلقائي)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deductionsList.map(d => (
+                      <tr key={d.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{d.empName}</td>
+                        <td style={{ padding: '10px', color: '#ef4444', fontWeight: 'bold' }}>{d.amount} {t.currency}</td>
+                        <td style={{ padding: '10px' }}>{d.reason}</td>
+                        <td style={{ padding: '10px', color: theme.textMuted }}>{d.date}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1494,6 +1557,7 @@ function App() {
                   <button onClick={()=>setIsDark(true)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: isDark?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🌙 الداكن</button>
                 </div>
               </div>
+
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
                 <h3 style={{ margin: '0 0 5px 0', fontSize: '17px' }}>{t.companyLogoTitle}</h3>
                 <p style={{ fontSize: '12px', color: theme.textMuted, margin: '0 0 12px 0' }}>{t.companyLogoDesc}</p>
@@ -1503,6 +1567,7 @@ function App() {
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '10px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveLogoBtn}</button>
                 </form>
               </div>
+
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
                 <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{t.securityTitle}</h3>
                 <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1517,7 +1582,9 @@ function App() {
         </main>
       </div>
 
-      {/* ALL MODALS */}
+      {/* =======================
+          ALL POPUPS & MODALS 
+      ======================== */}
 
       {/* Edit Customer Modal */}
       {showEditCustModal && (
@@ -1587,10 +1654,10 @@ function App() {
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>{editingEmpId ? 'تعديل بيانات الموظف' : 'إضافة موظف جديد'}</h3>
+              <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '900' }}>{editingEmpId ? 'تعديل بيانات الموظف' : 'إضافة موظف جديد'}</h3>
               <button onClick={() => setShowAddEmpModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
             </div>
-            <form onSubmit={handleSaveEmployeeHR} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <form onSubmit={handleSaveEmployee} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
                 <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empName}</label><input type="text" value={empName} onChange={e=>setEmpName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
                 <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empNumber}</label><input type="text" value={empNumber} onChange={e=>setEmpNumber(e.target.value)} placeholder="مثال: 22" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
@@ -1616,7 +1683,7 @@ function App() {
         </div>
       )}
 
-      {/* Add Deduction Modal (قسم الموارد البشرية مع محرك البحث برقم الهوية أو الاسم) */}
+      {/* Add Deduction Modal */}
       {showDeductModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '520px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -1626,9 +1693,9 @@ function App() {
             </div>
             <form onSubmit={handleSaveHrDeduction} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>🔍 محرك البحث (برقم الهوية أو اسم الموظف):</label>
-                <input type="text" value={hrDeductSearchQuery} onChange={e => setHrDeductSearchQuery(e.target.value)} placeholder="اكتب اسم الموظف أو رقم الهوية للبحث الفوري..." style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '8px', boxSizing: 'border-box' }} />
-                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>اختر الموظف المستهدف:</label>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>🔍 محرك البحث (بالهوية أو الاسم):</label>
+                <input type="text" value={hrDeductSearchQuery} onChange={e => setHrDeductSearchQuery(e.target.value)} placeholder="اكتب اسم الموظف أو رقم الهوية..." style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '8px', boxSizing: 'border-box' }} />
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>اختر الموظف:</label>
                 <select value={hrSelectedEmployeeName} onChange={e=>setHrSelectedEmployeeName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
                   <option value="">-- اختر الموظف من القائمة --</option>
                   {filteredEmployeesForHrDeduct.map(e => (<option key={e.id} value={e.name}>{e.name} (هوية: {e.idNumber})</option>))}
@@ -1643,7 +1710,7 @@ function App() {
                 <input type="text" value={hrDeductReason} onChange={e=>setHrDeductReason(e.target.value)} placeholder="مثال: تأخير عن الدوام الرسمي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
               </div>
               <div style={{ background: theme.bgMain, padding: '10px', borderRadius: '8px', fontSize: '12px', color: theme.textMuted }}>
-                📅 تاريخ الخصم: <strong>{new Date().toISOString().slice(0, 10)}</strong> (يُسجل تلقائياً)
+                📅 تاريخ الخصم: <strong>{new Date().toISOString().slice(0, 10)}</strong>
               </div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveDeduct}</button>
@@ -1664,6 +1731,7 @@ function App() {
               </div>
               <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.closeModal}</button>
             </div>
+
             <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
                 <div>
@@ -1679,12 +1747,14 @@ function App() {
                   <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
                 </div>
               </div>
+
               <div style={{ background: '#f8fafc', padding: '12px 15px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', border: '1px solid #e2e8f0' }}>
                 <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#0f172a' }}>بيانات العميل:</h4>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
               </div>
+
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#0f172a', color: '#fff' }}>
@@ -1705,6 +1775,7 @@ function App() {
                   ))}
                 </tbody>
               </table>
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '15px' }}>
                 <img src={generateZatcaQR(printingInvoice, businessName)} alt="ZATCA QR" style={{ width: '100px', height: '100px' }} />
                 <div style={{ textAlign: 'left', fontSize: '14px', minWidth: '220px' }}>
@@ -1713,6 +1784,7 @@ function App() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '1px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#d97706' }}><strong>{t.totalDue}</strong><strong>{printingInvoice.totalAmount} {t.currency}</strong></div>
                 </div>
               </div>
+
               <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>{t.invoiceFooterNote}</div>
             </div>
           </div>
@@ -1722,4 +1794,4 @@ function App() {
   );
 }
 
-App;
+export default App;
