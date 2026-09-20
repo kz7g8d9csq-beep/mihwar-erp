@@ -313,11 +313,11 @@ function App() {
   });
   const [tempLogoInput, setTempLogoInput] = useState(companyLogo);
 
+  // حالات المخزون
   const [inventory, setInventory] = useState([]);
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
-
   const [inventorySearchQuery, setInventorySearchQuery] = useState('');
   const [editingProdId, setEditingProdId] = useState(null);
   const [showEditProdModal, setShowEditProdModal] = useState(false);
@@ -325,6 +325,7 @@ function App() {
   const [editProdPrice, setEditProdPrice] = useState('');
   const [editProdStock, setEditProdStock] = useState('');
 
+  // حالات العملاء
   const [customers, setCustomers] = useState([]);
   const [custName, setCustName] = useState('');
   const [custNationalId, setCustNationalId] = useState('');
@@ -336,6 +337,7 @@ function App() {
   const [editCustNationalId, setEditCustNationalId] = useState('');
   const [editCustPhone, setEditCustPhone] = useState('');
 
+  // حالات الموردين
   const [suppliers, setSuppliers] = useState([]);
   const [suppName, setSuppName] = useState('');
   const [suppTaxNumber, setSuppTaxNumber] = useState('');
@@ -347,10 +349,12 @@ function App() {
   const [editSuppTaxNumber, setEditSuppTaxNumber] = useState('');
   const [editSuppPhone, setEditSuppPhone] = useState('');
 
+  // الفواتير والتقارير
   const [invoices, setInvoices] = useState([]);
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
   const [reportSearchQuery, setReportSearchQuery] = useState('');
   
+  // المبيعات والفوترة
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -361,9 +365,11 @@ function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
+  // نقطة البيع (POS)
   const [posCustomerSearch, setPosCustomerSearch] = useState('');
   const [posSelectedCustomerId, setPosSelectedCustomerId] = useState('');
 
+  // المشتريات
   const [purchaseProductSearch, setPurchaseProductSearch] = useState('');
   const [purchaseInvoices, setPurchaseInvoices] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
@@ -371,6 +377,7 @@ function App() {
   const [purchaseQty, setPurchaseQty] = useState(10);
   const [purchaseCost, setPurchaseCost] = useState('');
 
+  // الموارد البشرية
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
@@ -478,6 +485,7 @@ function App() {
 
   const fetchPurchases = async () => { try { const res = await API.get('/api/purchases'); if (res.data) setPurchaseInvoices(res.data); } catch (e) {} };
 
+  // فلاتر البحث
   const filteredInventory = inventory.filter(i => safeLower(i.name).includes(safeLower(inventorySearchQuery)));
   const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)));
   const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)));
@@ -488,6 +496,7 @@ function App() {
   const filteredProductsForPurchase = inventory.filter(p => safeLower(p.name).includes(safeLower(purchaseProductSearch)));
   const filteredEmployeesForHrDeduct = employees.filter(emp => safeLower(emp.name).includes(safeLower(hrDeductSearchQuery)) || safeLower(emp.idNumber).includes(safeLower(hrDeductSearchQuery)));
 
+  // الموارد البشرية
   const handleSaveEmployee = (e) => {
     e.preventDefault();
     if (!empName.trim()) return;
@@ -555,26 +564,10 @@ function App() {
 
     setHrDeductSearchQuery(''); setHrSelectedEmployeeName(''); setHrDeductAmount(''); setHrDeductReason('');
     setShowDeductModal(false);
-    alert('✅ تم تسجيل الخصم بنجاح وتحديث بيانات الموظف!');
+    alert('✅ تم تسجیل الخصم بنجاح وتحديث بيانات الموظف!');
   };
 
-  const handleRemoveDeduction = (deductId, empName, amount) => {
-    if (!window.confirm('⚠️ هل أنت متأكد من إعفاء وإلغاء هذا الخصم عن الموظف؟')) return;
-    
-    const updatedDeductions = deductionsList.filter(d => d.id !== deductId);
-    setDeductionsList(updatedDeductions);
-    localStorage.setItem('mihwar_hr_deductions', JSON.stringify(updatedDeductions));
-
-    const updatedEmps = employees.map(emp => {
-      if (emp.name === empName) {
-        return { ...emp, deductions: Math.max(0, Number(emp.deductions || 0) - Number(amount)) };
-      }
-      return emp;
-    });
-    setEmployees(updatedEmps);
-    localStorage.setItem('mihwar_hr_employees', JSON.stringify(updatedEmps));
-  };
-
+  // المخزون
   const handleOpenEditProduct = (prod) => {
     setEditingProdId(prod.id); setEditProdName(prod.name || ''); setEditProdPrice(prod.price || ''); setEditProdStock(prod.stock !== undefined ? prod.stock : 0); setShowEditProdModal(true);
   };
@@ -596,6 +589,7 @@ function App() {
     try { await API.delete(`/api/inventory/${prodId}`); fetchInventory(); } catch (err) { setInventory(inventory.filter(item => item.id !== prodId)); }
   };
 
+  // العملاء
   const handleOpenEditCustomer = (cust) => {
     setEditingCustId(cust.id); setEditCustName(cust.name || ''); setEditCustNationalId(cust.nationalId || ''); setEditCustPhone(cust.phone || ''); setShowEditCustModal(true);
   };
@@ -617,6 +611,7 @@ function App() {
     try { await API.delete(`/api/customers/${custId}`); fetchCustomers(); } catch (err) { setCustomers(customers.filter(c => c.id !== custId)); }
   };
 
+  // الموردين
   const handleOpenEditSupplier = (supp) => {
     setEditingSuppId(supp.id); setEditSuppName(supp.name || ''); setEditSuppTaxNumber(supp.taxNumber || ''); setEditSuppPhone(supp.phone || ''); setShowEditSuppModal(true);
   };
@@ -638,6 +633,7 @@ function App() {
     try { await API.delete(`/api/suppliers/${suppId}`); fetchSuppliers(); } catch (err) { setSuppliers(suppliers.filter(s => s.id !== suppId)); }
   };
 
+  // الفواتير
   const handleMarkInvoiceAsPaid = (invoiceId) => {
     if (!window.confirm('هل أنت متأكد من تأكيد سداد هذا المبلغ وتحويل الفاتورة إلى (مدفوعة)؟')) return;
     const updated = invoices.map(inv => {
@@ -651,6 +647,7 @@ function App() {
     setInvoices(updated);
   };
 
+  // المبيعات والتسعير
   const handleAddItemToSalesCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
@@ -862,6 +859,38 @@ function App() {
 
   const handleLogout = () => {
     setUser(null); localStorage.clear(); delete API.defaults.headers.common['Authorization']; setShowLanding(true); setAuthView('login');
+  };
+
+  const handleExportSales = () => {
+    const isAr = lang === 'ar';
+    const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
+    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
+    const rows = filteredReports.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
+    exportToExcel(title, headers, rows, lang);
+  };
+
+  const handleExportInventory = () => {
+    const isAr = lang === 'ar';
+    const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
+    const headers = isAr ? ['اسم المنتج', 'الرصيد الفعلي', 'سعر البيع'] : ['Product Name', 'Available Stock', 'Sale Price'];
+    const rows = filteredInventory.map(i => [i.name, i.stock, Number(i.price).toFixed(2)]);
+    exportToExcel(title, headers, rows, lang);
+  };
+
+  const handleExportCustomers = () => {
+    const isAr = lang === 'ar';
+    const title = isAr ? 'دليل_العملاء' : 'Clients_Directory';
+    const headers = isAr ? ['الاسم', 'الهوية', 'الهاتف'] : ['Name', 'ID', 'Phone'];
+    const rows = filteredCustomers.map(c => [c.name, c.nationalId || '-', c.phone || '-']);
+    exportToExcel(title, headers, rows, lang);
+  };
+
+  const handleExportSuppliers = () => {
+    const isAr = lang === 'ar';
+    const title = isAr ? 'دليل_الموردين' : 'Suppliers_Directory';
+    const headers = isAr ? ['اسم المورد', 'الرقم الضريبي', 'الهاتف'] : ['Supplier Name', 'Tax No', 'Phone'];
+    const rows = filteredSuppliers.map(s => [s.name, s.taxNumber || '-', s.phone || '-']);
+    exportToExcel(title, headers, rows, lang);
   };
 
   if (!user && showLanding) {
@@ -1374,7 +1403,11 @@ function App() {
                   </div>
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Price</th><th style={{ padding: '10px' }}>Stock</th><th style={{ padding: '10px' }}>الإجراءات</th></tr></thead>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Price</th><th style={{ padding: '10px' }}>Stock</th><th style={{ padding: '10px' }}>الإجراءات</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {filteredInventory.map(i => (
                       <tr key={i.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
@@ -1462,7 +1495,7 @@ function App() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
                   <thead>
                     <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '10px' }}>اسم الموظف</th><th style={{ padding: '10px' }}>قيمة الخصم</th><th style={{ padding: '10px' }}>سبب الخصم</th><th style={{ padding: '10px' }}>تاريخ التسجيل (تلقائي)</th><th style={{ padding: '10px' }}>الإجراءات</th>
+                      <th style={{ padding: '10px' }}>اسم الموظف</th><th style={{ padding: '10px' }}>قيمة الخصم</th><th style={{ padding: '10px' }}>سبب الخصم</th><th style={{ padding: '10px' }}>تاريخ التسجيل (تلقائي)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1472,9 +1505,6 @@ function App() {
                         <td style={{ padding: '10px', color: '#ef4444', fontWeight: 'bold' }}>{d.amount} {t.currency}</td>
                         <td style={{ padding: '10px' }}>{d.reason}</td>
                         <td style={{ padding: '10px', color: theme.textMuted }}>{d.date}</td>
-                        <td style={{ padding: '10px' }}>
-                          <button onClick={() => handleRemoveDeduction(d.id, d.empName, d.amount)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>إعفاء الخصم ↩️</button>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1624,7 +1654,7 @@ function App() {
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>{editingEmpId ? 'تعديل بيانات الموظف' : 'إضافة موظف جديد'}</h3>
+              <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '900' }}>{editingEmpId ? 'تعديل بيانات الموظف' : 'إضافة موظف جديد'}</h3>
               <button onClick={() => setShowAddEmpModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
             </div>
             <form onSubmit={handleSaveEmployee} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -1664,7 +1694,7 @@ function App() {
             <form onSubmit={handleSaveHrDeduction} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>🔍 محرك البحث (بالهوية أو الاسم):</label>
-                <input type="text" value={hrDeductSearchQuery} onChange={e => setHrDeductSearchQuery(e.target.value)} placeholder="اكتب اسم الموظف أو رقم الهوية للبحث الفوري..." style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '8px', boxSizing: 'border-box' }} />
+                <input type="text" value={hrDeductSearchQuery} onChange={e => setHrDeductSearchQuery(e.target.value)} placeholder="اكتب اسم الموظف أو رقم الهوية..." style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '8px', boxSizing: 'border-box' }} />
                 <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>اختر الموظف:</label>
                 <select value={hrSelectedEmployeeName} onChange={e=>setHrSelectedEmployeeName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
                   <option value="">-- اختر الموظف من القائمة --</option>
@@ -1701,6 +1731,7 @@ function App() {
               </div>
               <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.closeModal}</button>
             </div>
+
             <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
                 <div>
@@ -1716,12 +1747,14 @@ function App() {
                   <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
                 </div>
               </div>
+
               <div style={{ background: '#f8fafc', padding: '12px 15px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', border: '1px solid #e2e8f0' }}>
                 <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#0f172a' }}>بيانات العميل:</h4>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
               </div>
+
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#0f172a', color: '#fff' }}>
@@ -1742,6 +1775,7 @@ function App() {
                   ))}
                 </tbody>
               </table>
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '15px' }}>
                 <img src={generateZatcaQR(printingInvoice, businessName)} alt="ZATCA QR" style={{ width: '100px', height: '100px' }} />
                 <div style={{ textAlign: 'left', fontSize: '14px', minWidth: '220px' }}>
@@ -1750,6 +1784,7 @@ function App() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '1px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#d97706' }}><strong>{t.totalDue}</strong><strong>{printingInvoice.totalAmount} {t.currency}</strong></div>
                 </div>
               </div>
+
               <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>{t.invoiceFooterNote}</div>
             </div>
           </div>
