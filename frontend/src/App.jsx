@@ -390,7 +390,7 @@ function App() {
   const [payTargetInvoiceId, setPayTargetInvoiceId] = useState(null);
   const [payConfirmMethod, setPayConfirmMethod] = useState('نقد');
 
-  // المشتريات (محدث مع إدخال يدوي لعدد القطع بالكرتون وعند اختيار جرام/كيلو)
+  // المشتريات (محدث مع فصل الجرام والكيلو عن وحدة التوريد الأساسية كرتون وقطعة)
   const [purchaseProductSearch, setPurchaseProductSearch] = useState('');
   const [purchaseInvoices, setPurchaseInvoices] = useState(() => {
     const saved = localStorage.getItem('mihwar_purchases');
@@ -398,10 +398,11 @@ function App() {
   });
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedPurchaseProdId, setSelectedPurchaseProdId] = useState('');
-  const [purchaseUnitType, setPurchaseUnitType] = useState('قطعة'); // قطعة، كرتون، جرام، كيلوجرام
+  const [purchaseUnitType, setPurchaseUnitType] = useState('قطعة'); // كرتون أو قطعة فقط
   const [purchaseQty, setPurchaseQty] = useState(10);
   const [piecesPerCartonInput, setPiecesPerCartonInput] = useState(12); // يدوي عند اختيار كرتون
-  const [weightInputValue, setWeightInputValue] = useState(''); // يدوي عند اختيار جرام أو كيلو (مثل: 10 جرام أو 16 كيلو)
+  const [unitGramOrKilo, setUnitGramOrKilo] = useState('لا يوجد'); // جرام أو كيلوجرام أو لا يوجد
+  const [weightInputValue, setWeightInputValue] = useState(''); // إدخال يدوي للوزن (مثل 10 جرام أو 16 كيلو)
   const [purchasePieceCost, setPurchasePieceCost] = useState('');
   const [purchaseBoxCost, setPurchaseBoxCost] = useState('');
 
@@ -803,7 +804,7 @@ function App() {
     }
   };
 
-  // المشتريات: مع حساب القطع عند اختيار كرتون بناءً على الإدخال اليدوي لعدد القطع بالكرتون، أو الوزن (جرام/كيلو)
+  // المشتريات: وحدة التوريد (كرتون وقطعة) وفصل (جرام وكيليوجرام) كخيار مستقل يدوي
   const handleSavePurchase = async () => {
     if (!selectedPurchaseProdId || !purchaseQty) {
       alert('يرجى اختيار المنتج والكمية الموردة');
@@ -818,9 +819,6 @@ function App() {
     if (purchaseUnitType === 'كرتون') {
       const pPerCarton = Number(piecesPerCartonInput) || 12;
       addedPieces = qty * pPerCarton;
-    } else if (purchaseUnitType === 'جرام' || purchaseUnitType === 'كيلوجرام') {
-      // إذا كان بالوزن، نعتبر الكمية كقطع أو نسجلها كما هي حسب الرصيد
-      addedPieces = qty;
     }
 
     const updatedInventory = inventory.map(item => {
@@ -844,7 +842,9 @@ function App() {
       productName: targetProd ? targetProd.name : '',
       unitType: purchaseUnitType,
       quantity: qty,
-      weightNote: (purchaseUnitType === 'جرام' || purchaseUnitType === 'كيلوجرام') ? weightInputValue : '',
+      piecesPerCarton: purchaseUnitType === 'كرتون' ? piecesPerCartonInput : null,
+      weightOption: unitGramOrKilo,
+      weightNote: unitGramOrKilo !== 'لا يوجد' ? weightInputValue : '',
       pieceCost: pCost,
       boxCost: bCost,
       totalAmount: Number((purchaseUnitType === 'كرتون' ? qty * bCost : qty * pCost).toFixed(2))
@@ -867,7 +867,8 @@ function App() {
     setPurchasePieceCost('');
     setPurchaseBoxCost('');
     setWeightInputValue('');
-    alert(`✅ تم اعتماد التوريد وزيادة المخزون بنجاح بمقدار (${addedPieces} وحدة)!`);
+    setUnitGramOrKilo('لا يوجد');
+    alert(`✅ تم اعتماد التوريد وزيادة المخزون تلقائياً بنجاح بمقدار (${addedPieces} وحدة)!`);
     setActiveTab('inventory');
   };
 
@@ -979,7 +980,7 @@ function App() {
   const handleExportInventory = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
-    const headers = isAr ? ['اسم المنتج', 'المخزون بالحبة', 'المخزون بالكرتون', 'سعر البيع'] : ['Product Name', 'Stock (Pieces)', 'Stock (Cartons)', 'Sale Price'];
+    const headers = isAr ? ['اسم المنتج', 'الرصيد بالحبة', 'الرصيد بالكرتون', 'سعر البيع'] : ['Product Name', 'Stock (Pieces)', 'Stock (Cartons)', 'Sale Price'];
     const rows = filteredInventory.map(i => {
       const boxSize = Number(i.boxSize || 12);
       const cartons = (i.stock / boxSize).toFixed(1);
@@ -1133,7 +1134,7 @@ function App() {
 
         <main style={{ padding: '30px', flex: 1, boxSizing: 'border-box' }}>
           
-          {/* TAB 1: Dashboard (محفوظ وثابت) */}
+          {/* TAB 1: Dashboard */}
           {activeTab === 'dashboard' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -1197,7 +1198,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 2: POS (محفوظ وثابت) */}
+          {/* TAB 2: POS */}
           {activeTab === 'pos' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '20px' }}>
@@ -1280,7 +1281,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 3: Sales (محفوظ وثابت تماماً كما طلبت) */}
+          {/* TAB 3: Sales */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1421,7 +1422,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 5: Purchases (محدث بطلبك: إدخال يدوي لعدد القطع بالكرتون وعند اختيار جرام أو كيلو إدخال الوزن يدوياً)[cite: 6] */}
+          {/* TAB 5: Purchases (محدث بفصل كرتون/قطعة عن خيار جرام/كيلو المستقل) */}
           {activeTab === 'purchases' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '650px', margin: 'auto' }}>
               <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>تسجيل فاتورة شراء وتوريد بضاعة</h2>
@@ -1441,14 +1442,13 @@ function App() {
                 </select>
               </div>
 
+              {/* وحدة التوريد: كرتون أو قطعة فقط */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '15px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>وحدة التوريد</label>
                   <select value={purchaseUnitType} onChange={e=>setPurchaseUnitType(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
                     <option value="قطعة">قطعة</option>
                     <option value="كرتون">كرتون</option>
-                    <option value="جرام">جرام</option>
-                    <option value="كيلوجرام">كيلوجرام</option>
                   </select>
                 </div>
                 <div>
@@ -1457,7 +1457,7 @@ function App() {
                 </div>
               </div>
 
-              {/* إذا تم اختيار كرتون يظهر خيار إدخال عدد القطع بداخل الكرتون يدوياً */}
+              {/* إذا تم اختيار كرتون يظهر حقل إدخال يدوي لعدد القطع بالكرتون */}
               {purchaseUnitType === 'كرتون' && (
                 <div style={{ marginBottom: '15px', background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px', color: '#d97706' }}>كم قطعة بداخل الكرتون؟ (إدخال يدوي):</label>
@@ -1465,13 +1465,23 @@ function App() {
                 </div>
               )}
 
-              {/* إذا تم اختيار جرام أو كيلوجرام يظهر خيار إدخال الوزن يدوياً (مثل: 10 جرام أو 16 كيلو) */}
-              {(purchaseUnitType === 'جرام' || purchaseUnitType === 'كيلوجرام') && (
-                <div style={{ marginBottom: '15px', background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px', color: '#10b981' }}>أدخل الوزن أو النسبة يدوياً (مثال: 10 جرام أو 16 كيلو):</label>
-                  <input type="text" placeholder="اكتب هنا يدوياً..." value={weightInputValue} onChange={e=>setWeightInputValue(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
+              {/* خيار مستقل تماماً للجرام أو الكيلوجرام */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '15px', background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px', color: '#10b981' }}>إضافة وحدة وزن (اختياري):</label>
+                  <select value={unitGramOrKilo} onChange={e=>setUnitGramOrKilo(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
+                    <option value="لا يوجد">-- بدون وزن --</option>
+                    <option value="جرام">جرام</option>
+                    <option value="كيلوجرام">كيلوجرام</option>
+                  </select>
                 </div>
-              )}
+                {unitGramOrKilo !== 'لا يوجد' && (
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px', color: '#10b981' }}>اكتب الوزن (مثال: 10 جرام أو 16 كيلو):</label>
+                    <input type="text" placeholder="اكتب هنا يدوياً..." value={weightInputValue} onChange={e=>setWeightInputValue(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                )}
+              </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
                 <div>
@@ -1572,7 +1582,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 8: Inventory (يعرض المخزون بالحبة وبالكرتون)[cite: 7] */}
+          {/* TAB 8: Inventory */}
           {activeTab === 'inventory' && (
             <div style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '20px' }}>
               {user.role !== 'cashier' && (
