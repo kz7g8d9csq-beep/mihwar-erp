@@ -349,7 +349,7 @@ function App() {
   const [editCustAddress, setEditCustAddress] = useState('');
   const [editCustGracePeriod, setEditCustGracePeriod] = useState('');
 
-  // الموردين (مع إضافة العنوان وفترة السماح يدويًا وتعديل يدوي)
+  // الموردين (مع العنوان وفترة السماح يدوياً وتعديل يدوي)
   const [suppliers, setSuppliers] = useState(() => {
     const saved = localStorage.getItem('mihwar_suppliers');
     return saved ? JSON.parse(saved) : [
@@ -654,42 +654,6 @@ function App() {
     localStorage.setItem('mihwar_customers', JSON.stringify(updated));
   };
 
-  // تعديل مورد يدويًا
-  const handleOpenEditSupplier = (supp) => {
-    setEditingSuppId(supp.id);
-    setEditSuppName(supp.name || '');
-    setEditSuppTaxNumber(supp.taxNumber || '');
-    setEditSuppPhone(supp.phone || '');
-    setEditSuppAddress(supp.address || '');
-    setEditSuppGracePeriod(supp.gracePeriod || '');
-    setShowEditSuppModal(true);
-  };
-
-  const handleUpdateSupplier = (e) => {
-    e.preventDefault();
-    if (!editSuppName.trim()) return;
-    const updated = suppliers.map(s => s.id === editingSuppId ? {
-      ...s,
-      name: editSuppName.trim(),
-      taxNumber: editSuppTaxNumber.trim(),
-      phone: editSuppPhone.trim(),
-      address: editSuppAddress.trim(),
-      gracePeriod: editSuppGracePeriod.trim()
-    } : s);
-    setSuppliers(updated);
-    localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
-    setShowEditSuppModal(false);
-    setEditingSuppId(null);
-    alert('✅ تم تحديث بيانات المورد بنجاح!');
-  };
-
-  const handleDeleteSupplier = (suppId) => {
-    if (!window.confirm('⚠️ هل أنت متأكد من حذف هذا المورد؟')) return;
-    const updated = suppliers.filter(s => s.id !== suppId);
-    setSuppliers(updated);
-    localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
-  };
-
   const handleOpenPayConfirm = (invoiceId) => {
     setPayTargetInvoiceId(invoiceId);
     setPayConfirmMethod('نقد');
@@ -988,7 +952,6 @@ function App() {
     setCustName(''); setCustNationalId(''); setCustPhone(''); setCustAddress(''); setCustGracePeriod('');
   };
 
-  // فتح حساب مورد جديد يدويًا مع العنوان وفترة السماح
   const handleAddSupplier = (e) => {
     e.preventDefault();
     if (!suppName.trim()) return;
@@ -1083,7 +1046,6 @@ function App() {
     exportToExcel(title, headers, rows, lang);
   };
 
-  // تصدير دليل الموردين مع العنوان وفترة السماح تلقائياً
   const handleExportSuppliers = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'دليل_الموردين' : 'Suppliers_Directory';
@@ -1342,7 +1304,7 @@ function App() {
                 </div>
                 <div>
                   <div style={{ borderTop: '1px dashed #334155', paddingTop: '10px', margin: '15px 0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold' }}><span>الإجمالي المستحق:</span><span style={{ color: '#38bdf8' }}>{cartGrandTotalCalc.toFixed(2)} {t.currency}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold' }}><span>الإجمالي المستحق:</span><span style={{ color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span></div>
                   </div>
                   <button onClick={() => setShowPosPayModal(true)} disabled={!cartItems.length} style={{ width: '100%', background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إتمام الدفع وإصدار الفاتورة 💳</button>
                 </div>
@@ -1681,7 +1643,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 8: Suppliers (محدث بإضافة العنوان وفترة السماح يدوياً وفي الإكسل وتعديل المورد) */}
+          {/* TAB 8: Suppliers (محدث بإضافة خانتي العنوان وفترة السماح يدوياً وفي الإكسل وتعديل المورد) */}
           {activeTab === 'suppliers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1966,7 +1928,7 @@ function App() {
         </div>
       )}
 
-      {/* Edit Supplier Modal (مع إضافة خانتي العنوان وفترة السماح للتعديل اليدوي) */}
+      {/* Edit Supplier Modal */}
       {showEditSuppModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -2241,4 +2203,4 @@ function App() {
   );
 }
 
-App;
+export default App;
