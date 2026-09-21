@@ -370,7 +370,7 @@ function App() {
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
-  const [itemUnitType, setItemUnitType] = useState('قطعة واحدة');
+  const [salesUnitType, setSalesUnitType] = useState('قطعة');
   const [itemQty, setItemQty] = useState(1);
   const [itemPrice, setItemPrice] = useState('');
   const [invoiceStatus, setInvoiceStatus] = useState('مدفوعة');
@@ -390,7 +390,7 @@ function App() {
   const [payTargetInvoiceId, setPayTargetInvoiceId] = useState(null);
   const [payConfirmMethod, setPayConfirmMethod] = useState('نقد');
 
-  // المشتريات (محدث مع فصل الجرام والكيلو عن وحدة التوريد الأساسية كرتون وقطعة)
+  // المشتريات
   const [purchaseProductSearch, setPurchaseProductSearch] = useState('');
   const [purchaseInvoices, setPurchaseInvoices] = useState(() => {
     const saved = localStorage.getItem('mihwar_purchases');
@@ -398,11 +398,11 @@ function App() {
   });
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedPurchaseProdId, setSelectedPurchaseProdId] = useState('');
-  const [purchaseUnitType, setPurchaseUnitType] = useState('قطعة'); // كرتون أو قطعة فقط
+  const [purchaseUnitType, setPurchaseUnitType] = useState('قطعة');
   const [purchaseQty, setPurchaseQty] = useState(10);
-  const [piecesPerCartonInput, setPiecesPerCartonInput] = useState(12); // يدوي عند اختيار كرتون
-  const [unitGramOrKilo, setUnitGramOrKilo] = useState('لا يوجد'); // جرام أو كيلوجرام أو لا يوجد
-  const [weightInputValue, setWeightInputValue] = useState(''); // إدخال يدوي للوزن (مثل 10 جرام أو 16 كيلو)
+  const [piecesPerCartonInput, setPiecesPerCartonInput] = useState(12);
+  const [unitGramOrKilo, setUnitGramOrKilo] = useState('لا يوجد');
+  const [weightInputValue, setWeightInputValue] = useState('');
   const [purchasePieceCost, setPurchasePieceCost] = useState('');
   const [purchaseBoxCost, setPurchaseBoxCost] = useState('');
 
@@ -679,16 +679,23 @@ function App() {
     if (qty <= 0) return;
     const price = itemPrice !== '' && !isNaN(Number(itemPrice)) ? Number(itemPrice) : product.price;
 
-    const existing = cartItems.find(it => it.productId === product.id && it.unitPrice === price && it.unitType === itemUnitType);
+    const existing = cartItems.find(it => it.productId === product.id && it.unitPrice === price && it.unitType === salesUnitType);
     const reqQ = (existing ? existing.quantity : 0) + qty;
-    if (reqQ > product.stock) { alert('الكمية المطلوبة تتجاوز الرصيد المتوفر في المخزون!'); return; }
+    
+    const multiplier = salesUnitType === 'كرتون' ? (product.boxSize || 12) : 1;
+    const totalPiecesReq = reqQ * multiplier;
+
+    if (totalPiecesReq > product.stock) { 
+      alert('الكمية المطلوبة تتجاوز الرصيد المتوفر في المخزون!'); 
+      return; 
+    }
 
     if (existing) {
-      setCartItems(cartItems.map(it => (it.productId === product.id && it.unitPrice === price && it.unitType === itemUnitType) ? { ...it, quantity: reqQ, subtotal: Number((reqQ * price).toFixed(2)) } : it));
+      setCartItems(cartItems.map(it => (it.productId === product.id && it.unitPrice === price && it.unitType === salesUnitType) ? { ...it, quantity: reqQ, subtotal: Number((reqQ * price).toFixed(2)) } : it));
     } else {
-      setCartItems([...cartItems, { productId: product.id, name: product.name, unitType: itemUnitType, quantity: qty, unitPrice: price, subtotal: Number((qty * price).toFixed(2)) }]);
+      setCartItems([...cartItems, { productId: product.id, name: product.name, unitType: salesUnitType, quantity: qty, unitPrice: price, subtotal: Number((qty * price).toFixed(2)) }]);
     }
-    setSelectedProductId(''); setItemQty(1); setItemPrice(''); setItemUnitType('قطعة واحدة');
+    setSelectedProductId(''); setItemQty(1); setItemPrice(''); setSalesUnitType('قطعة');
   };
 
   const handleRemoveSalesCartItem = (idx) => {
@@ -706,11 +713,11 @@ function App() {
       const updatedInventory = inventory.map(prod => {
         const matchingItems = cartItems.filter(item => item.productId === prod.id);
         if (matchingItems.length > 0) {
-          const totalSold = matchingItems.reduce((sum, item) => {
+          const totalSoldPieces = matchingItems.reduce((sum, item) => {
             const multiplier = item.unitType === 'كرتون' ? (prod.boxSize || 12) : 1;
             return sum + (item.quantity * multiplier);
           }, 0);
-          return { ...prod, stock: Math.max(0, prod.stock - totalSold) };
+          return { ...prod, stock: Math.max(0, prod.stock - totalSoldPieces) };
         }
         return prod;
       });
@@ -804,7 +811,7 @@ function App() {
     }
   };
 
-  // المشتريات: وحدة التوريد (كرتون وقطعة) وفصل (جرام وكيليوجرام) كخيار مستقل يدوي
+  // المشتريات: وحدة التوريد تحتوي فقط على كرتون أو قطعة، مع خانة مستقلة للجرام والكيلو كما طلبت
   const handleSavePurchase = async () => {
     if (!selectedPurchaseProdId || !purchaseQty) {
       alert('يرجى اختيار المنتج والكمية الموردة');
@@ -868,7 +875,7 @@ function App() {
     setPurchaseBoxCost('');
     setWeightInputValue('');
     setUnitGramOrKilo('لا يوجد');
-    alert(`✅ تم اعتماد التوريد وزيادة المخزون تلقائياً بنجاح بمقدار (${addedPieces} وحدة)!`);
+    alert(`✅ تم اعتماد التوريد وزيادة المخزون بنجاح بمقدار (${addedPieces} وحدة)!`);
     setActiveTab('inventory');
   };
 
@@ -1422,7 +1429,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 5: Purchases (محدث بفصل كرتون/قطعة عن خيار جرام/كيلو المستقل) */}
+          {/* TAB 5: Purchases (محدث بطلبك: وحدة التوريد كرتون أو قطعة، مع خانة مستقلة للجرام والكيلو) */}
           {activeTab === 'purchases' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '650px', margin: 'auto' }}>
               <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>تسجيل فاتورة شراء وتوريد بضاعة</h2>
@@ -1442,7 +1449,6 @@ function App() {
                 </select>
               </div>
 
-              {/* وحدة التوريد: كرتون أو قطعة فقط */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '15px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>وحدة التوريد</label>
@@ -1457,7 +1463,6 @@ function App() {
                 </div>
               </div>
 
-              {/* إذا تم اختيار كرتون يظهر حقل إدخال يدوي لعدد القطع بالكرتون */}
               {purchaseUnitType === 'كرتون' && (
                 <div style={{ marginBottom: '15px', background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px', color: '#d97706' }}>كم قطعة بداخل الكرتون؟ (إدخال يدوي):</label>
@@ -1465,7 +1470,6 @@ function App() {
                 </div>
               )}
 
-              {/* خيار مستقل تماماً للجرام أو الكيلوجرام */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '15px', background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px', color: '#10b981' }}>إضافة وحدة وزن (اختياري):</label>
