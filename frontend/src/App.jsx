@@ -1373,7 +1373,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 4: Sales Invoices List */}
+          {/* TAB 4: Invoices List */}
           {activeTab === 'invoicesList' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -1415,7 +1415,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 5: Purchase Invoices List (سجل فواتير الشراء - مع زر تصدير Excel كما طلبت) */}
+          {/* TAB 5: Purchase Invoices List */}
           {activeTab === 'purchaseInvoicesList' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
