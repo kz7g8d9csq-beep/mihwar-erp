@@ -328,22 +328,26 @@ function App() {
   const [editProdPrice, setEditProdPrice] = useState('');
   const [editProdStock, setEditProdStock] = useState('');
 
-  // العملاء
+  // العملاء (مع إضافة العنوان وفترة السماح يدويًا)
   const [customers, setCustomers] = useState(() => {
     const saved = localStorage.getItem('mihwar_customers');
     return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'شركة الرائد لقطع غيار السيارات', nationalId: '25559451496', phone: '0562453535' }
+      { id: 1, name: 'شركة الرائد لقطع غيار السيارات', nationalId: '25559451496', phone: '0562453535', address: 'جدة - حي بني مالك', gracePeriod: '30 يوم' }
     ];
   });
   const [custName, setCustName] = useState('');
   const [custNationalId, setCustNationalId] = useState('');
   const [custPhone, setCustPhone] = useState('');
+  const [custAddress, setCustAddress] = useState('');
+  const [custGracePeriod, setCustGracePeriod] = useState('');
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
   const [editingCustId, setEditingCustId] = useState(null);
   const [showEditCustModal, setShowEditCustModal] = useState(false);
   const [editCustName, setEditCustName] = useState('');
   const [editCustNationalId, setEditCustNationalId] = useState('');
   const [editCustPhone, setEditCustPhone] = useState('');
+  const [editCustAddress, setEditCustAddress] = useState('');
+  const [editCustGracePeriod, setEditCustGracePeriod] = useState('');
 
   // الموردين
   const [suppliers, setSuppliers] = useState(() => {
@@ -504,7 +508,7 @@ function App() {
   }, [purchaseInvoices]);
 
   const filteredInventory = inventory.filter(i => safeLower(i.name).includes(safeLower(inventorySearchQuery)));
-  const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)));
+  const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)) || safeLower(c.address).includes(safeLower(customerSearchQuery)));
   const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)));
   const filteredInvoices = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(invoiceSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(invoiceSearchQuery)));
   const filteredPurchaseInvoices = purchaseInvoices.filter(pi => safeLower(pi.invoiceNo || pi.id).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.productName).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.supplier?.name).includes(safeLower(purchaseInvoicesListSearch)));
@@ -609,19 +613,33 @@ function App() {
     localStorage.setItem('mihwar_inventory', JSON.stringify(updated));
   };
 
+  // تعديل عميل يدويًا
   const handleOpenEditCustomer = (cust) => {
-    setEditingCustId(cust.id); setEditCustName(cust.name || ''); setEditCustNationalId(cust.nationalId || ''); setEditCustPhone(cust.phone || ''); setShowEditCustModal(true);
+    setEditingCustId(cust.id);
+    setEditCustName(cust.name || '');
+    setEditCustNationalId(cust.nationalId || '');
+    setEditCustPhone(cust.phone || '');
+    setEditCustAddress(cust.address || '');
+    setEditCustGracePeriod(cust.gracePeriod || '');
+    setShowEditCustModal(true);
   };
 
   const handleUpdateCustomer = (e) => {
     e.preventDefault();
     if (!editCustName.trim()) return;
-    const updated = customers.map(c => c.id === editingCustId ? { ...c, name: editCustName.trim(), nationalId: editCustNationalId.trim(), phone: editCustPhone.trim() } : c);
+    const updated = customers.map(c => c.id === editingCustId ? {
+      ...c,
+      name: editCustName.trim(),
+      nationalId: editCustNationalId.trim(),
+      phone: editCustPhone.trim(),
+      address: editCustAddress.trim(),
+      gracePeriod: editCustGracePeriod.trim()
+    } : c);
     setCustomers(updated);
     localStorage.setItem('mihwar_customers', JSON.stringify(updated));
     setShowEditCustModal(false);
     setEditingCustId(null);
-    alert('✅ تم تحديث العميل بنجاح!');
+    alert('✅ تم تحديث بيانات العميل بنجاح!');
   };
 
   const handleDeleteCustomer = (custId) => {
@@ -900,48 +918,22 @@ function App() {
     exportToExcel(title, headers, rows, lang);
   };
 
-  const cartSubtotal = cartItems.reduce((sum, it) => sum + it.subtotal, 0);
-  const cartTax = cartSubtotal * 0.15;
-  const cartGrandTotal = cartSubtotal + cartTax;
-
-  const inventoryVal = inventory.reduce((sum, i) => sum + (Number(i.price) * i.stock), 0);
-  const totalSalesVal = invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-  const totalPurchasesVal = purchaseInvoices.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
-  const netProfitVal = totalSalesVal - totalPurchasesVal;
-  
-  const lowStockItems = inventory.filter(i => i.stock <= lowStockThreshold);
-  const totalPayroll = employees.reduce((sum, e) => sum + Number(e.salary || 0), 0);
-
-  const currentYear = new Date().getFullYear();
-  const currentYearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === currentYear);
-  const monthlyData = Array.from({ length: 12 }, (_, i) => {
-    const monthInvs = currentYearInvoices.filter(inv => new Date(inv.createdAt).getMonth() === i);
-    const total = monthInvs.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-    const count = monthInvs.length;
-    return { monthName: new Date(currentYear, i, 1).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US', { month: 'long' }), total, count };
-  });
-
-  const pastYearsData = Array.from({ length: 10 }, (_, i) => {
-    const targetYear = currentYear - i;
-    const yearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
-    const totalSales = yearInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-    const totalProfit = yearInvoices.reduce((sum, inv) => {
-      const rev = Number(inv.subtotal || 0);
-      const cogs = (inv.items || []).reduce((s, it) => s + ((it.product?.cost || 0) * it.quantity), 0);
-      return sum + (rev - cogs);
-    }, 0);
-    const count = yearInvoices.length;
-    return { year: targetYear, totalSales, totalProfit, count };
-  }).filter(y => y.count > 0 || y.year === currentYear);
-
+  // فتح حساب عميل جديد يدويًا مع العنوان وفترة السماح
   const handleAddCustomer = (e) => {
     e.preventDefault();
     if (!custName.trim()) return;
-    const newCust = { id: Date.now(), name: custName.trim(), nationalId: custNationalId.trim(), phone: custPhone.trim() };
+    const newCust = {
+      id: Date.now(),
+      name: custName.trim(),
+      nationalId: custNationalId.trim(),
+      phone: custPhone.trim(),
+      address: custAddress.trim(),
+      gracePeriod: custGracePeriod.trim()
+    };
     const updated = [newCust, ...customers];
     setCustomers(updated);
     localStorage.setItem('mihwar_customers', JSON.stringify(updated));
-    setCustName(''); setCustNationalId(''); setCustPhone('');
+    setCustName(''); setCustNationalId(''); setCustPhone(''); setCustAddress(''); setCustGracePeriod('');
   };
 
   const handleAddSupplier = (e) => {
@@ -1017,11 +1009,18 @@ function App() {
     exportToExcel(title, headers, rows, lang);
   };
 
+  // تصدير دليل العملاء مع العنوان وفترة السماح تلقائياً
   const handleExportCustomers = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'دليل_العملاء' : 'Clients_Directory';
-    const headers = isAr ? ['الاسم', 'الهوية', 'الهاتف'] : ['Name', 'ID', 'Phone'];
-    const rows = filteredCustomers.map(c => [c.name, c.nationalId || '-', c.phone || '-']);
+    const headers = isAr ? ['الاسم', 'الهوية / السجل', 'الهاتف', 'العنوان', 'فترة السماح'] : ['Name', 'ID', 'Phone', 'Address', 'Grace Period'];
+    const rows = filteredCustomers.map(c => [
+      c.name,
+      c.nationalId || '-',
+      c.phone || '-',
+      c.address || '-',
+      c.gracePeriod || '-'
+    ]);
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -1032,6 +1031,37 @@ function App() {
     const rows = filteredSuppliers.map(s => [s.name, s.taxNumber || '-', s.phone || '-']);
     exportToExcel(title, headers, rows, lang);
   };
+
+  const cartGrandTotalCalc = cartItems.reduce((sum, it) => sum + it.subtotal, 0) * 1.15;
+  const inventoryVal = inventory.reduce((sum, i) => sum + (Number(i.price) * i.stock), 0);
+  const totalSalesVal = invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+  const totalPurchasesVal = purchaseInvoices.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
+  const netProfitVal = totalSalesVal - totalPurchasesVal;
+  
+  const lowStockItems = inventory.filter(i => i.stock <= lowStockThreshold);
+  const totalPayroll = employees.reduce((sum, e) => sum + Number(e.salary || 0), 0);
+
+  const currentYear = new Date().getFullYear();
+  const currentYearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === currentYear);
+  const monthlyData = Array.from({ length: 12 }, (_, i) => {
+    const monthInvs = currentYearInvoices.filter(inv => new Date(inv.createdAt).getMonth() === i);
+    const total = monthInvs.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const count = monthInvs.length;
+    return { monthName: new Date(currentYear, i, 1).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US', { month: 'long' }), total, count };
+  });
+
+  const pastYearsData = Array.from({ length: 10 }, (_, i) => {
+    const targetYear = currentYear - i;
+    const yearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
+    const totalSales = yearInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const totalProfit = yearInvoices.reduce((sum, inv) => {
+      const rev = Number(inv.subtotal || 0);
+      const cogs = (inv.items || []).reduce((s, it) => s + ((it.product?.cost || 0) * it.quantity), 0);
+      return sum + (rev - cogs);
+    }, 0);
+    const count = yearInvoices.length;
+    return { year: targetYear, totalSales, totalProfit, count };
+  }).filter(y => y.count > 0 || y.year === currentYear);
 
   if (!user && showLanding) {
     return (
@@ -1277,7 +1307,7 @@ function App() {
                 </div>
                 <div>
                   <div style={{ borderTop: '1px dashed #334155', paddingTop: '10px', margin: '15px 0' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold' }}><span>الإجمالي المستحق:</span><span style={{ color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold' }}><span>الإجمالي المستحق:</span><span style={{ color: '#38bdf8' }}>{cartGrandTotalCalc.toFixed(2)} {t.currency}</span></div>
                   </div>
                   <button onClick={() => setShowPosPayModal(true)} disabled={!cartItems.length} style={{ width: '100%', background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إتمام الدفع وإصدار الفاتورة 💳</button>
                 </div>
@@ -1398,12 +1428,12 @@ function App() {
                 <div>
                   <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#38bdf8' }}>ملخص الحسبة التلقائية</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#94a3b8' }}>المبلغ الخاضع للضريبة:</span><strong>{cartSubtotal.toFixed(2)} {t.currency}</strong></div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#94a3b8' }}>ضريبة القيمة المضافة (15%):</span><strong>{cartTax.toFixed(2)} {t.currency}</strong></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#94a3b8' }}>المبلغ الخاضع للضريبة:</span><strong>{cartItems.reduce((s, it) => s + it.subtotal, 0).toFixed(2)} {t.currency}</strong></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#94a3b8' }}>ضريبة القيمة المضافة (15%):</span><strong>{(cartItems.reduce((s, it) => s + it.subtotal, 0) * 0.15).toFixed(2)} {t.currency}</strong></div>
                   </div>
                 </div>
                 <div style={{ borderTop: '1px dashed #334155', paddingTop: '15px', marginTop: '20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold' }}><span>الإجمالي النهائي:</span><span style={{ color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold' }}><span>الإجمالي النهائي:</span><span style={{ color: '#38bdf8' }}>{cartGrandTotalCalc.toFixed(2)} {t.currency}</span></div>
                 </div>
               </div>
             </div>
@@ -1451,7 +1481,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 5: Purchase Invoices List (سجل فواتير الشراء - مع زر تصدير إلى Excel المضاف) */}
+          {/* TAB 5: Purchase Invoices List */}
           {activeTab === 'purchaseInvoicesList' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -1570,7 +1600,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 7: Customers */}
+          {/* TAB 7: Customers (محدث بإضافة العنوان وفترة السماح يدوياً وفي الإكسل) */}
           {activeTab === 'customers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1579,6 +1609,8 @@ function App() {
                   <input type="text" placeholder="اسم العميل / المؤسسة *" value={custName} onChange={e=>setCustName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="رقم الهوية / السجل التجاري" value={custNationalId} onChange={e=>setCustNationalId(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="رقم الهاتف" value={custPhone} onChange={e=>setCustPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <input type="text" placeholder="العنوان (مثال: جدة - حي الروضة)" value={custAddress} onChange={e=>setCustAddress(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={custGracePeriod} onChange={e=>setCustGracePeriod(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ العميل</button>
                 </form>
               </div>
@@ -1586,18 +1618,20 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>دليل العملاء</h3>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="text" value={customerSearchQuery} onChange={e => setCustomerSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الهوية أو الهاتف..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} />
+                    <input type="text" value={customerSearchQuery} onChange={e => setCustomerSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الهوية، الهاتف أو العنوان..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} />
                     <button onClick={handleExportCustomers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
                   </div>
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>الاسم</th><th style={{ padding: '10px' }}>الهوية / السجل</th><th style={{ padding: '10px' }}>الهاتف</th><th style={{ padding: '10px' }}>الإجراءات</th></tr></thead>
+                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>الاسم</th><th style={{ padding: '10px' }}>الهوية / السجل</th><th style={{ padding: '10px' }}>الهاتف</th><th style={{ padding: '10px' }}>العنوان</th><th style={{ padding: '10px' }}>فترة السماح</th><th style={{ padding: '10px' }}>الإجراءات</th></tr></thead>
                   <tbody>
                     {filteredCustomers.map(c => (
                       <tr key={c.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
                         <td style={{ padding: '10px', fontWeight: 'bold' }}>{c.name}</td>
                         <td style={{ padding: '10px' }}>{c.nationalId || '-'}</td>
                         <td style={{ padding: '10px' }}>{c.phone || '-'}</td>
+                        <td style={{ padding: '10px' }}>{c.address || '-'}</td>
+                        <td style={{ padding: '10px', color: '#38bdf8', fontWeight: 'bold' }}>{c.gracePeriod || '-'}</td>
                         <td style={{ padding: '10px' }}>
                           <div style={{ display: 'flex', gap: '6px' }}>
                             <button onClick={() => handleOpenEditCustomer(c)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>تعديل ✏️</button>
@@ -1870,7 +1904,7 @@ function App() {
           ALL POPUPS & MODALS 
       ======================== */}
 
-      {/* Edit Customer Modal */}
+      {/* Edit Customer Modal (مع العنوان وفترة السماح يدويًا) */}
       {showEditCustModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -1882,6 +1916,8 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>اسم العميل</label><input type="text" value={editCustName} onChange={e=>setEditCustName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهوية أو السجل التجاري</label><input type="text" value={editCustNationalId} onChange={e=>setEditCustNationalId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editCustPhone} onChange={e=>setEditCustPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editCustAddress} onChange={e=>setEditCustAddress(e.target.value)} placeholder="مثال: جدة - حي الروضة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editCustGracePeriod} onChange={e=>setEditCustGracePeriod(e.target.value)} placeholder="مثال: 30 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث العميل</button>
                 <button type="button" onClick={() => setShowEditCustModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
