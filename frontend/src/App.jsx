@@ -53,7 +53,7 @@ const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
             <tr>
               ${row.map(cell => {
                 const str = String(cell ?? '');
-                const isCodeOrPhone = /^\d{9,}$/.test(str) || str.startsWith('05') || str.startsWith('+') || str.startsWith('SKU');
+                const isCodeOrPhone = /^\d{9,}$/.test(str) || str.startsWith('05') || str.startsWith('+');
                 const isCurrency = /^-?\d+(\.\d+)?$/.test(str) && !isCodeOrPhone;
                 if (isCodeOrPhone) {
                   return `<td class="text-cell">${str}</td>`;
@@ -307,11 +307,11 @@ function App() {
   const [businessName, setBusinessName] = useState('نظام محور');
 
   const [companyLogo, setCompanyLogo] = useState(() => {
-    return localStorage.getItem('mihwar_company_logo') || '';
+    return localStorage.getItem('mihwar_company_logo'] || '';
   });
   const [tempLogoInput, setTempLogoInput] = useState(companyLogo);
 
-  // المخزون (مع إضافة رقم الصنف للإدخال والتعديل اليدوي)
+  // المخزون
   const [inventory, setInventory] = useState(() => {
     const saved = localStorage.getItem('mihwar_inventory');
     return saved ? JSON.parse(saved) : [
@@ -599,7 +599,6 @@ function App() {
     alert('✅ تم إعفاء الخصم بنجاح واستعادة الرصيد للموظف!');
   };
 
-  // تعديل المنتج مع دعم رقم الصنف
   const handleOpenEditProduct = (prod) => {
     setEditingProdId(prod.id);
     setEditProdName(prod.name || '');
@@ -1018,7 +1017,6 @@ function App() {
     setSuppName(''); setSuppTaxNumber(''); setSuppPhone(''); setSuppAddress(''); setSuppGracePeriod('');
   };
 
-  // إضافة منتج جديد مع رقم الصنف اليدوي
   const handleAddProduct = (e) => {
     e.preventDefault();
     if (!newProdName || !newProdPrice) return;
@@ -1077,7 +1075,6 @@ function App() {
     exportToExcel(title, headers, rows, lang);
   };
 
-  // تصدير المخزون مع رقم الصنف
   const handleExportInventory = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
@@ -1701,7 +1698,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 8: Suppliers (مع الأزرار النشطة للتعديل والحذف) */}
+          {/* TAB 8: Suppliers */}
           {activeTab === 'suppliers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1898,31 +1895,54 @@ function App() {
 
           {/* TAB 12: Reports */}
           {activeTab === 'reports' && user.role !== 'cashier' && (
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                <h2 style={{ margin: 0, fontSize: '18px' }}>{t.invRepo}</h2>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <input type="text" value={reportSearchQuery} onChange={e => setReportSearchQuery(e.target.value)} placeholder="🔍 ابحث برقم الفاتورة أو اسم العميل..." style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '240px' }} />
-                  <button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير المبيعات</button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#d97706' }}>📈 تقارير الرسوم البيانية التفاعلية للأداء المالي</h3>
+                <p style={{ fontSize: '13px', color: theme.textMuted, margin: '0 0 20px 0' }}>تحليل مرئي لحركة المبيعات والنمو المالي على مستوى الشهر والسنوات.</p>
+
+                {/* الرسم البياني الأول: السنة الحالية شهرياً */}
+                <div style={{ background: theme.bgMain, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '20px', marginBottom: '25px' }}>
+                  <h4 style={{ margin: '0 0 15px 0', fontSize: '15px', color: theme.textDark }}>📊 أداء مبيعات السنة الحالية ({currentYear}) - شهرياً</h4>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', height: '220px', paddingBottom: '10px', borderBottom: `2px solid ${theme.border}`, overflowX: 'auto' }}>
+                    {monthlyData.map((m, idx) => {
+                      const maxVal = Math.max(...monthlyData.map(x => x.total), 1);
+                      const heightPercent = Math.max(12, Math.round((m.total / maxVal) * 160));
+                      return (
+                        <div key={idx} style={{ flex: 1, minWidth: '45px', display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#10b981', marginBottom: '6px' }}>{m.total > 0 ? `${m.total.toFixed(0)}` : ''}</span>
+                          <div title={`${m.monthName}: ${m.total.toFixed(2)} ر.س`} style={{ width: '100%', height: `${heightPercent}px`, background: 'linear-gradient(180deg, #d97706 0%, #b45309 100%)', borderRadius: '6px 6px 0 0', transition: '0.3s' }}></div>
+                          <span style={{ fontSize: '11px', color: theme.textMuted, marginTop: '8px', textAlign: 'center', whiteSpace: 'nowrap' }}>{m.monthName}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
+
+                {/* الرسم البياني الثاني: عشر سنوات (تلقائية النطاق مثل 2016-2026 أو 2017-2027) */}
+                <div style={{ background: theme.bgMain, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '20px' }}>
+                  <h4 style={{ margin: '0 0 15px 0', fontSize: '15px', color: theme.textDark }}>📈 سجل النمو المالي للعشر سنوات الأخيرة ({currentYear - 9} حتى {currentYear})</h4>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '15px', height: '220px', paddingBottom: '10px', borderBottom: `2px solid ${theme.border}`, overflowX: 'auto' }}>
+                    {Array.from({ length: 10 }, (_, i) => {
+                      const targetYear = currentYear - 9 + i;
+                      const yearInvs = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
+                      const yearTotal = yearInvs.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+                      const maxYearVal = Math.max(...Array.from({ length: 10 }, (_, idx) => {
+                        const y = currentYear - 9 + idx;
+                        return invoices.filter(inv => new Date(inv.createdAt).getFullYear() === y).reduce((s, inv) => s + Number(inv.totalAmount || 0), 0);
+                      }), 1);
+                      const heightPercentYear = Math.max(12, Math.round((yearTotal / maxYearVal) * 160));
+                      return (
+                        <div key={targetYear} style={{ flex: 1, minWidth: '55px', display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#38bdf8', marginBottom: '6px' }}>{yearTotal > 0 ? `${yearTotal.toFixed(0)}` : ''}</span>
+                          <div title={`سنة ${targetYear}: ${yearTotal.toFixed(2)} ر.س`} style={{ width: '100%', height: `${heightPercentYear}px`, background: 'linear-gradient(180deg, #0284c7 0%, #0369a1 100%)', borderRadius: '6px 6px 0 0', transition: '0.3s' }}></div>
+                          <span style={{ fontSize: '12px', fontWeight: 'bold', color: theme.textDark, marginTop: '8px' }}>{targetYear}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
               </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                    <th style={{ padding: '10px' }}>No</th><th style={{ padding: '10px' }}>Client</th><th style={{ padding: '10px' }}>Total</th><th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredReports.map(inv => (
-                    <tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                      <td style={{ padding: '10px' }}>#{inv.invoiceNo}</td>
-                      <td style={{ padding: '10px' }}>{inv.customer?.name||'Cash'}</td>
-                      <td style={{ padding: '10px' }}>{inv.totalAmount}</td>
-                      <td><button onClick={()=>setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>View</button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           )}
 
@@ -2015,7 +2035,7 @@ function App() {
         </div>
       )}
 
-      {/* Edit Product Modal (مع دعم رقم الصنف للتعديل اليدوي) */}
+      {/* Edit Product Modal */}
       {showEditProdModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
