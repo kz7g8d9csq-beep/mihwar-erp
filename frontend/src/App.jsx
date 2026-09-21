@@ -349,7 +349,7 @@ function App() {
   const [editCustAddress, setEditCustAddress] = useState('');
   const [editCustGracePeriod, setEditCustGracePeriod] = useState('');
 
-  // الموردين (مع العنوان وفترة السماح يدوياً وتعديل يدوي)
+  // الموردين
   const [suppliers, setSuppliers] = useState(() => {
     const saved = localStorage.getItem('mihwar_suppliers');
     return saved ? JSON.parse(saved) : [
@@ -1643,7 +1643,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 8: Suppliers (محدث بإضافة خانتي العنوان وفترة السماح يدوياً وفي الإكسل وتعديل المورد) */}
+          {/* TAB 8: Suppliers (مع ربط أزرار التعديل والحذف بالدوال البرمجية الصحيحة) */}
           {activeTab === 'suppliers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
