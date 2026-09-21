@@ -2183,7 +2183,7 @@ function App() {
                   <tr style={{ background: '#0f172a', color: '#fff' }}>
                     <th style={{ padding: '10px', textAlign: 'right' }}>المنتج</th>
                     <th style={{ padding: '10px', textAlign: 'center' }}>وحدة التوريد</th>
-                    <th style={{ padding: '10px', textAlign: 'center' }}>الكمية</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>The الكمية</th>
                     <th style={{ padding: '10px', textAlign: 'center' }}>الوزن / ملاحظة</th>
                     <th style={{ padding: '10px', textAlign: 'left' }}>الإجمالي</th>
                   </tr>
