@@ -2088,14 +2088,13 @@ function App() {
             </div>
 
             <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px', textAlign: 'center' }}>
-                {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '120px', height: '120px', objectFit: 'contain', marginBottom: '10px', display: 'block', margin: '0 auto 10px auto' }} />) : null}
-                <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
-                <p style={{ margin: '3px 0', fontSize: '13px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
                 <div>
+                  {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '90px', height: '90px', objectFit: 'contain', marginBottom: '8px' }} />) : null}
+                  <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
+                  <p style={{ margin: '3px 0', fontSize: '12px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
+                </div>
+                <div style={{ textAlign: 'left' }}>
                   <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#d97706' }}>{t.taxInvoiceTitle}</h3>
                   <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>رقم الفاتورة:</strong> INV-{printingInvoice.invoiceNo}</p>
                   <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>الحالة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#f43f5e' : '#10b981', fontWeight: 'bold' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
@@ -2183,7 +2182,7 @@ function App() {
                   <tr style={{ background: '#0f172a', color: '#fff' }}>
                     <th style={{ padding: '10px', textAlign: 'right' }}>المنتج</th>
                     <th style={{ padding: '10px', textAlign: 'center' }}>وحدة التوريد</th>
-                    <th style={{ padding: '10px', textAlign: 'center' }}>The الكمية</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>الكمية</th>
                     <th style={{ padding: '10px', textAlign: 'center' }}>الوزن / ملاحظة</th>
                     <th style={{ padding: '10px', textAlign: 'left' }}>الإجمالي</th>
                   </tr>
