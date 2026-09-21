@@ -966,6 +966,19 @@ function App() {
     return { monthName: new Date(currentYear, i, 1).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US', { month: 'long' }), total, count };
   });
 
+  const pastYearsData = Array.from({ length: 10 }, (_, i) => {
+    const targetYear = currentYear - i;
+    const yearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
+    const totalSales = yearInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const totalProfit = yearInvoices.reduce((sum, inv) => {
+      const rev = Number(inv.subtotal || 0);
+      const cogs = (inv.items || []).reduce((s, it) => s + ((it.product?.cost || 0) * it.quantity), 0);
+      return sum + (rev - cogs);
+    }, 0);
+    const count = yearInvoices.length;
+    return { year: targetYear, totalSales, totalProfit, count };
+  }).filter(y => y.count > 0 || y.year === currentYear);
+
   const handleAddCustomer = (e) => {
     e.preventDefault();
     if (!custName.trim()) return;
@@ -2196,7 +2209,7 @@ function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr style={{ borderBottom: '1px solid #e2e8f5' }}>
+                  <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
                     <td style={{ padding: '10px', textAlign: 'right', fontWeight: 'bold' }}>{printingPurchaseInvoice.productName}</td>
                     <td style={{ padding: '10px', textAlign: 'center' }}>{printingPurchaseInvoice.unitType}</td>
                     <td style={{ padding: '10px', textAlign: 'center' }}>{printingPurchaseInvoice.quantity}</td>
