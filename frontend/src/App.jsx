@@ -95,6 +95,7 @@ const dict = {
     customers: 'العملاء',
     suppliers: 'الموردين',
     inventory: 'المخزون',
+    reports: 'التقارير',
     settings: 'الإعدادات',
     production: 'الإنتاج',
     hr: 'الموارد البشرية',
@@ -142,8 +143,8 @@ const dict = {
     invRepo: 'سجل فواتير المبيعات',
     prefTitle: '🌐 تفضيلات اللغة والمظهر',
     companyLogoTitle: '🏢 شعار المنشأة (الفاتورة)',
-    companyLogoDesc: 'اختر أو ارفع صورة شعار منشأتك (PNG) لتظهر تلقائياً في الفواتير المطبوعة',
-    logoUrlLabel: 'رفع ملف الشعار من الجهاز (PNG/JPG):',
+    companyLogoDesc: 'اختر أو ارفع صورة شعار منشأتك لتظهر تلقائياً في الفواتير المطبوعة',
+    logoUrlLabel: 'رابط صورة الشعار (URL أو رفع ملف):',
     saveLogoBtn: 'حفظ شعار المنشأة',
     securityTitle: '🔒 أمان الحساب وتغيير كلمة المرور',
     oldPass: 'كلمة المرور الحالية',
@@ -179,6 +180,7 @@ const dict = {
     customers: 'Clients',
     suppliers: 'Suppliers',
     inventory: 'Inventory',
+    reports: 'Reports',
     settings: 'Settings',
     production: 'Production',
     hr: 'HR',
@@ -226,8 +228,8 @@ const dict = {
     invRepo: 'Sales Invoices',
     prefTitle: '🌐 Language & Display',
     companyLogoTitle: '🏢 Company Logo (Invoice)',
-    companyLogoDesc: 'Upload company logo file (PNG) to appear on printed invoices',
-    logoUrlLabel: 'Upload Logo File:',
+    companyLogoDesc: 'Upload or set company logo URL to appear on printed invoices',
+    logoUrlLabel: 'Logo Image URL:',
     saveLogoBtn: 'Save Company Logo',
     securityTitle: '🔒 Account Security',
     oldPass: 'Current Password',
@@ -307,6 +309,7 @@ function App() {
   const [companyLogo, setCompanyLogo] = useState(() => {
     return localStorage.getItem('mihwar_company_logo') || '';
   });
+  const [tempLogoInput, setTempLogoInput] = useState(companyLogo);
 
   // المخزون
   const [inventory, setInventory] = useState(() => {
@@ -318,14 +321,12 @@ function App() {
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
-  const [newProdItemCode, setNewProdItemCode] = useState('');
   const [inventorySearchQuery, setInventorySearchQuery] = useState('');
   const [editingProdId, setEditingProdId] = useState(null);
   const [showEditProdModal, setShowEditProdModal] = useState(false);
   const [editProdName, setEditProdName] = useState('');
   const [editProdPrice, setEditProdPrice] = useState('');
   const [editProdStock, setEditProdStock] = useState('');
-  const [editProdItemCode, setEditProdItemCode] = useState('');
 
   // العملاء
   const [customers, setCustomers] = useState(() => {
@@ -369,12 +370,13 @@ function App() {
   const [editSuppAddress, setEditSuppAddress] = useState('');
   const [editSuppGracePeriod, setEditSuppGracePeriod] = useState('');
 
-  // الفواتير
+  // الفواتير والتقارير
   const [invoices, setInvoices] = useState(() => {
     const saved = localStorage.getItem('mihwar_invoices');
     return saved ? JSON.parse(saved) : [];
   });
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
+  const [reportSearchQuery, setReportSearchQuery] = useState('');
   
   // المبيعات والفوترة
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
@@ -511,11 +513,12 @@ function App() {
     localStorage.setItem('mihwar_purchases', JSON.stringify(purchaseInvoices));
   }, [purchaseInvoices]);
 
-  const filteredInventory = inventory.filter(i => safeLower(i.name).includes(safeLower(inventorySearchQuery)) || safeLower(i.itemCode).includes(safeLower(inventorySearchQuery)));
+  const filteredInventory = inventory.filter(i => safeLower(i.name).includes(safeLower(inventorySearchQuery)));
   const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)) || safeLower(c.address).includes(safeLower(customerSearchQuery)));
   const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)) || safeLower(s.address).includes(safeLower(supplierSearchQuery)));
   const filteredInvoices = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(invoiceSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(invoiceSearchQuery)));
   const filteredPurchaseInvoices = purchaseInvoices.filter(pi => safeLower(pi.invoiceNo || pi.id).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.productName).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.supplier?.name).includes(safeLower(purchaseInvoicesListSearch)));
+  const filteredReports = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(reportSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(reportSearchQuery)));
   const filteredCustomersForSales = customers.filter(c => safeLower(c.name).includes(safeLower(salesCustomerSearch)) || safeLower(c.nationalId).includes(safeLower(salesCustomerSearch)) || safeLower(c.phone).includes(safeLower(salesCustomerSearch)));
   const filteredCustomersForPos = customers.filter(c => safeLower(c.name).includes(safeLower(posCustomerSearch)) || safeLower(c.nationalId).includes(safeLower(posCustomerSearch)) || safeLower(c.phone).includes(safeLower(posCustomerSearch)));
   const filteredProductsForPurchase = inventory.filter(p => safeLower(p.name).includes(safeLower(purchaseProductSearch)));
@@ -595,24 +598,13 @@ function App() {
   };
 
   const handleOpenEditProduct = (prod) => {
-    setEditingProdId(prod.id);
-    setEditProdName(prod.name || '');
-    setEditProdPrice(prod.price || '');
-    setEditProdStock(prod.stock !== undefined ? prod.stock : 0);
-    setEditProdItemCode(prod.itemCode || '');
-    setShowEditProdModal(true);
+    setEditingProdId(prod.id); setEditProdName(prod.name || ''); setEditProdPrice(prod.price || ''); setEditProdStock(prod.stock !== undefined ? prod.stock : 0); setShowEditProdModal(true);
   };
 
   const handleUpdateProduct = (e) => {
     e.preventDefault();
     if (!editProdName || !editProdPrice) return;
-    const updated = inventory.map(item => item.id === editingProdId ? {
-      ...item,
-      name: editProdName,
-      price: Number(editProdPrice),
-      stock: Number(editProdStock),
-      itemCode: editProdItemCode.trim()
-    } : item);
+    const updated = inventory.map(item => item.id === editingProdId ? { ...item, name: editProdName, price: Number(editProdPrice), stock: Number(editProdStock) } : item);
     setInventory(updated);
     localStorage.setItem('mihwar_inventory', JSON.stringify(updated));
     setShowEditProdModal(false);
@@ -660,41 +652,6 @@ function App() {
     const updated = customers.filter(c => c.id !== custId);
     setCustomers(updated);
     localStorage.setItem('mihwar_customers', JSON.stringify(updated));
-  };
-
-  const handleOpenEditSupplier = (supp) => {
-    setEditingSuppId(supp.id);
-    setEditSuppName(supp.name || '');
-    setEditSuppTaxNumber(supp.taxNumber || '');
-    setEditSuppPhone(supp.phone || '');
-    setEditSuppAddress(supp.address || '');
-    setEditSuppGracePeriod(supp.gracePeriod || '');
-    setShowEditSuppModal(true);
-  };
-
-  const handleUpdateSupplier = (e) => {
-    e.preventDefault();
-    if (!editSuppName.trim()) return;
-    const updated = suppliers.map(s => s.id === editingSuppId ? {
-      ...s,
-      name: editSuppName.trim(),
-      taxNumber: editSuppTaxNumber.trim(),
-      phone: editSuppPhone.trim(),
-      address: editSuppAddress.trim(),
-      gracePeriod: editSuppGracePeriod.trim()
-    } : s);
-    setSuppliers(updated);
-    localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
-    setShowEditSuppModal(false);
-    setEditingSuppId(null);
-    alert('✅ تم تحديث بيانات المورد بنجاح!');
-  };
-
-  const handleDeleteSupplier = (suppId) => {
-    if (!window.confirm('⚠️ هل أنت متأكد من حذف هذا المورد؟')) return;
-    const updated = suppliers.filter(s => s.id !== suppId);
-    setSuppliers(updated);
-    localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
   };
 
   const handleOpenPayConfirm = (invoiceId) => {
@@ -1015,33 +972,17 @@ function App() {
   const handleAddProduct = (e) => {
     e.preventDefault();
     if (!newProdName || !newProdPrice) return;
-    const newProd = {
-      id: Date.now(),
-      name: newProdName.trim(),
-      price: Number(newProdPrice),
-      stock: Number(newProdStock || 0),
-      boxSize: 12,
-      itemCode: newProdItemCode.trim() || '-'
-    };
+    const newProd = { id: Date.now(), name: newProdName, price: Number(newProdPrice), stock: Number(newProdStock || 0), boxSize: 12 };
     const updated = [newProd, ...inventory];
     setInventory(updated);
     localStorage.setItem('mihwar_inventory', JSON.stringify(updated));
-    setNewProdName(''); setNewProdPrice(''); setNewProdStock(''); setNewProdItemCode('');
+    setNewProdName(''); setNewProdPrice(''); setNewProdStock('');
   };
 
-  // رفع ملف شعار المنشأة عبر الملفات (PNG/JPG)
-  const handleLogoFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result;
-      setCompanyLogo(base64String);
-      localStorage.setItem('mihwar_company_logo', base64String);
-      setTempLogoInput(base64String);
-      alert('✅ تم رفع وحفظ شعار المنشأة بنجاح!');
-    };
-    reader.readAsDataURL(file);
+  const handleSaveCompanyLogo = (e) => {
+    e.preventDefault();
+    setCompanyLogo(tempLogoInput);
+    localStorage.setItem('mihwar_company_logo', tempLogoInput);
   };
 
   const handleChangePassword = async (e) => {
@@ -1075,18 +1016,18 @@ function App() {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
     const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'طريقة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Payment Method', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
-    const rows = invoices.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.paymentMethod || 'نقد', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
+    const rows = filteredReports.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.paymentMethod || 'نقد', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
     exportToExcel(title, headers, rows, lang);
   };
 
   const handleExportInventory = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
-    const headers = isAr ? ['رقم الصنف', 'اسم المنتج', 'المخزون بالحبة', 'المخزون بالكرتون', 'سعر البيع'] : ['Item Code', 'Product Name', 'Stock (Pieces)', 'Stock (Cartons)', 'Sale Price'];
+    const headers = isAr ? ['اسم المنتج', 'المخزون بالحبة', 'المخزون بالكرتون', 'سعر البيع'] : ['Product Name', 'Stock (Pieces)', 'Stock (Cartons)', 'Sale Price'];
     const rows = filteredInventory.map(i => {
       const boxSize = Number(i.boxSize || 12);
       const cartons = (i.stock / boxSize).toFixed(1);
-      return [i.itemCode || '-', i.name, `${i.stock} حبة`, `${cartons} كرتون`, Number(i.price).toFixed(2)];
+      return [i.name, `${i.stock} حبة`, `${cartons} كرتون`, Number(i.price).toFixed(2)];
     });
     exportToExcel(title, headers, rows, lang);
   };
@@ -1181,6 +1122,7 @@ function App() {
     { id: 'inventory', label: t.inventory, adminOnly: false, icon: '📦' },
     { id: 'production', label: t.production, adminOnly: true, icon: '⚙️' },
     { id: 'hr', label: t.hr, adminOnly: true, icon: '👔' },
+    { id: 'reports', label: t.reports, adminOnly: true, icon: '📈' },
     { id: 'settings', label: t.settings, adminOnly: false, icon: '⚙️' }
   ];
 
@@ -1754,7 +1696,6 @@ function App() {
                 <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
                   <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>➕ إضافة منتج</h3>
                   <form onSubmit={handleAddProduct} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <input type="text" placeholder="رقم الصنف (مثال: SKU-001)" value={newProdItemCode} onChange={e=>setNewProdItemCode(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                     <input type="text" placeholder={t.prodName} value={newProdName} onChange={e=>setNewProdName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                     <input type="number" placeholder={t.prodPrice} value={newProdPrice} onChange={e=>setNewProdPrice(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                     <input type="number" placeholder={t.prodStock} value={newProdStock} onChange={e=>setNewProdStock(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
@@ -1766,18 +1707,14 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>{t.stockRepo}</h3>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="text" value={inventorySearchQuery} onChange={e => setInventorySearchQuery(e.target.value)} placeholder="🔍 ابحث برقم الصنف أو الاسم..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} />
+                    <input type="text" value={inventorySearchQuery} onChange={e => setInventorySearchQuery(e.target.value)} placeholder="🔍 ابحث باسم المنتج..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} />
                     <button onClick={handleExportInventory} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
                   </div>
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                   <thead>
                     <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '10px' }}>رقم الصنف</th>
-                      <th style={{ padding: '10px' }}>Name</th>
-                      <th style={{ padding: '10px' }}>Price</th>
-                      <th style={{ padding: '10px' }}>المخزون بالحبة وبالكرتون</th>
-                      <th style={{ padding: '10px' }}>الإجراءات</th>
+                      <th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Price</th><th style={{ padding: '10px' }}>المخزون بالحبة وبالكرتون</th><th style={{ padding: '10px' }}>الإجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1786,7 +1723,6 @@ function App() {
                       const cartons = (i.stock / boxSize).toFixed(1);
                       return (
                         <tr key={i.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                          <td style={{ padding: '10px', fontWeight: 'bold', color: '#38bdf8' }}>{i.itemCode || '-'}</td>
                           <td style={{ padding: '10px' }}>{i.name}</td>
                           <td style={{ padding: '10px' }}>{i.price}</td>
                           <td style={{ padding: '10px', color: '#10b981', fontWeight: 'bold' }}>
@@ -1896,7 +1832,37 @@ function App() {
             </div>
           )}
 
-          {/* TAB 12: Settings (محدث برفع شعار المنشأة عبر الملفات PNG) */}
+          {/* TAB 12: Reports */}
+          {activeTab === 'reports' && user.role !== 'cashier' && (
+            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                <h2 style={{ margin: 0, fontSize: '18px' }}>{t.invRepo}</h2>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input type="text" value={reportSearchQuery} onChange={e => setReportSearchQuery(e.target.value)} placeholder="🔍 ابحث برقم الفاتورة أو اسم العميل..." style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '240px' }} />
+                  <button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير المبيعات</button>
+                </div>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                    <th style={{ padding: '10px' }}>No</th><th style={{ padding: '10px' }}>Client</th><th style={{ padding: '10px' }}>Total</th><th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredReports.map(inv => (
+                    <tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                      <td style={{ padding: '10px' }}>#{inv.invoiceNo}</td>
+                      <td style={{ padding: '10px' }}>{inv.customer?.name||'Cash'}</td>
+                      <td style={{ padding: '10px' }}>{inv.totalAmount}</td>
+                      <td><button onClick={()=>setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>View</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* TAB 13: Settings */}
           {activeTab === 'settings' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
@@ -1914,16 +1880,11 @@ function App() {
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
                 <h3 style={{ margin: '0 0 5px 0', fontSize: '17px' }}>{t.companyLogoTitle}</h3>
                 <p style={{ fontSize: '12px', color: theme.textMuted, margin: '0 0 12px 0' }}>{t.companyLogoDesc}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#d97706' }}>{t.logoUrlLabel}</label>
-                  <input type="file" accept="image/png, image/jpeg" onChange={handleLogoFileUpload} style={{ padding: '8px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', cursor: 'pointer' }} />
-                  {companyLogo && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
-                      <img src={companyLogo} alt="Logo Preview" style={{ width: '60px', height: '60px', objectFit: 'contain', background: '#fff', borderRadius: '6px', padding: '4px', border: `1px solid ${theme.border}` }} />
-                      <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 'bold' }}>تم تحميل الشعار بنجاح ✓</span>
-                    </div>
-                  )}
-                </div>
+                <form onSubmit={handleSaveCompanyLogo} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <input type="text" placeholder="https://example.com/logo.png" value={tempLogoInput} onChange={e=>setTempLogoInput(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  {tempLogoInput && <img src={tempLogoInput} alt="Logo Preview" style={{ width: '60px', height: '60px', objectFit: 'contain', background: '#fff', borderRadius: '6px', padding: '4px' }} />}
+                  <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '10px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveLogoBtn}</button>
+                </form>
               </div>
 
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
@@ -1999,7 +1960,6 @@ function App() {
               <button onClick={() => setShowEditProdModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
             </div>
             <form onSubmit={handleUpdateProduct} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الصنف</label><input type="text" value={editProdItemCode} onChange={e=>setEditProdItemCode(e.target.value)} placeholder="مثال: SKU-001" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodName}</label><input type="text" value={editProdName} onChange={e=>setEditProdName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodPrice}</label><input type="number" value={editProdPrice} onChange={e=>setEditProdPrice(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodStock}</label><input type="number" value={editProdStock} onChange={e=>setEditProdStock(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
@@ -2122,13 +2082,14 @@ function App() {
             </div>
 
             <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px', textAlign: 'center' }}>
+                {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '120px', height: '120px', objectFit: 'contain', marginBottom: '10px', display: 'block', margin: '0 auto 10px auto' }} />) : null}
+                <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
+                <p style={{ margin: '3px 0', fontSize: '13px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
                 <div>
-                  {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '70px', height: '70px', objectFit: 'contain', marginBottom: '8px' }} />) : null}
-                  <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
-                  <p style={{ margin: '3px 0', fontSize: '12px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
-                </div>
-                <div style={{ textAlign: 'left' }}>
                   <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#d97706' }}>{t.taxInvoiceTitle}</h3>
                   <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>رقم الفاتورة:</strong> INV-{printingInvoice.invoiceNo}</p>
                   <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>الحالة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#f43f5e' : '#10b981', fontWeight: 'bold' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
