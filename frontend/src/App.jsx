@@ -1049,6 +1049,14 @@ function App() {
     setUser(null); localStorage.clear(); delete API.defaults.headers.common['Authorization']; setShowLanding(true); setAuthView('login');
   };
 
+  const handleExportSales = () => {
+    const isAr = lang === 'ar';
+    const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
+    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'طريقة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Payment Method', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
+    const rows = filteredInvoices.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.paymentMethod || 'نقد', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
+    exportToExcel(title, headers, rows, lang);
+  };
+
   const handleExportInventory = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
@@ -2080,63 +2088,61 @@ function App() {
             </div>
 
             <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
-              
-              {/* الترويسة مع الشعار في الوسط وتفاصيل الفاتورة في اليسار تماماً كما أشرت بالصور */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
-                <div></div>
-                <div style={{ textAlign: 'center' }}>
-                  {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '90px', height: '90px', objectFit: 'contain', margin: '0 auto 6px auto', display: 'block' }} />) : null}
-                  <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
-                  <p style={{ margin: '2px 0', fontSize: '11px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
-                </div>
-                <div style={{ textAlign: 'left', fontSize: '12px' }}>
-                  <h3 style={{ margin: '0 0 4px 0', fontSize: '15px', color: '#d97706' }}>{t.taxInvoiceTitle}</h3>
-                  <p style={{ margin: '2px 0' }}><strong>رقم الفاتورة:</strong> INV-{printingInvoice.invoiceNo}</p>
-                  <p style={{ margin: '2px 0' }}><strong>الحالة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#f43f5e' : '#10b981', fontWeight: 'bold' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
-                  <p style={{ margin: '2px 0' }}><strong>طريقة الدفع:</strong> <span style={{ color: '#0284c7', fontWeight: 'bold' }}>{printingInvoice.paymentMethod || 'نقد'}</span></p>
-                  {printingInvoice.dueDate && (<p style={{ margin: '2px 0', color: '#f43f5e' }}><strong>الاستحقاق:</strong> {printingInvoice.dueDate}</p>)}
-                  <p style={{ margin: '2px 0', color: '#64748b' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px', textAlign: 'center' }}>
+                {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '120px', height: '120px', objectFit: 'contain', marginBottom: '10px', display: 'block', margin: '0 auto 10px auto' }} />) : null}
+                <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
+                <p style={{ margin: '3px 0', fontSize: '13px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#d97706' }}>{t.taxInvoiceTitle}</h3>
+                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>رقم الفاتورة:</strong> INV-{printingInvoice.invoiceNo}</p>
+                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>الحالة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#f43f5e' : '#10b981', fontWeight: 'bold' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
+                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>طريقة الدفع:</strong> <span style={{ color: '#0284c7', fontWeight: 'bold' }}>{printingInvoice.paymentMethod || 'نقد'}</span></p>
+                  {printingInvoice.dueDate && (<p style={{ margin: '2px 0', fontSize: '12px', color: '#f43f5e' }}><strong>مدة الاستحقاق:</strong> {printingInvoice.dueDate}</p>)}
+                  <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
                 </div>
               </div>
 
-              <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', marginBottom: '15px', fontSize: '12px', border: '1px solid #e2e8f0' }}>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#0f172a' }}>بيانات العميل:</h4>
-                <p style={{ margin: '2px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
-                <p style={{ margin: '2px 0' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
-                <p style={{ margin: '2px 0' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
+              <div style={{ background: '#f8fafc', padding: '12px 15px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#0f172a' }}>بيانات العميل:</h4>
+                <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
+                <p style={{ margin: '3px 0' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
+                <p style={{ margin: '3px 0' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
               </div>
 
-              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px', fontSize: '12px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
                 <thead>
                   <tr style={{ background: '#0f172a', color: '#fff' }}>
-                    <th style={{ padding: '8px', textAlign: 'right' }}>{t.itemDesc}</th>
-                    <th style={{ padding: '8px', textAlign: 'center' }}>{t.itemQuantity}</th>
-                    <th style={{ padding: '8px', textAlign: 'center' }}>{t.unitPriceCol}</th>
-                    <th style={{ padding: '8px', textAlign: 'left' }}>{t.totalCol}</th>
+                    <th style={{ padding: '10px', textAlign: 'right' }}>{t.itemDesc}</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>{t.itemQuantity}</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>{t.unitPriceCol}</th>
+                    <th style={{ padding: '10px', textAlign: 'left' }}>{t.totalCol}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(printingInvoice.items || []).map((it, idx) => (
                     <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '8px', textAlign: 'right' }}>{it.product?.name || it.name || 'خدمة عامة'}</td>
-                      <td style={{ padding: '8px', textAlign: 'center' }}>{it.quantity} {it.unitType ? `(${it.unitType})` : ''}</td>
-                      <td style={{ padding: '8px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
-                      <td style={{ padding: '8px', textAlign: 'left', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
+                      <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || it.name || 'خدمة عامة'}</td>
+                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity} {it.unitType ? `(${it.unitType})` : ''}</td>
+                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
+                      <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '12px' }}>
-                <img src={generateZatcaQR(printingInvoice, businessName)} alt="ZATCA QR" style={{ width: '90px', height: '90px' }} />
-                <div style={{ textAlign: 'left', fontSize: '13px', minWidth: '200px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '3px 0' }}><span style={{ color: '#64748b' }}>{t.subtotal}</span><strong>{printingInvoice.subtotal} {t.currency}</strong></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '3px 0' }}><span style={{ color: '#64748b' }}>{t.vatAmount}</span><strong>{printingInvoice.taxAmount} {t.currency}</strong></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '8px 0 0 0', borderTop: '1px solid #cbd5e1', paddingTop: '6px', fontSize: '15px', color: '#d97706' }}><strong>{t.totalDue}</strong><strong>{printingInvoice.totalAmount} {t.currency}</strong></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '15px' }}>
+                <img src={generateZatcaQR(printingInvoice, businessName)} alt="ZATCA QR" style={{ width: '100px', height: '100px' }} />
+                <div style={{ textAlign: 'left', fontSize: '14px', minWidth: '220px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span style={{ color: '#64748b' }}>{t.subtotal}</span><strong>{printingInvoice.subtotal} {t.currency}</strong></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span style={{ color: '#64748b' }}>{t.vatAmount}</span><strong>{printingInvoice.taxAmount} {t.currency}</strong></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '1px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#d97706' }}><strong>{t.totalDue}</strong><strong>{printingInvoice.totalAmount} {t.currency}</strong></div>
                 </div>
               </div>
 
-              <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '10px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '8px' }}>{t.invoiceFooterNote}</div>
+              <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>{t.invoiceFooterNote}</div>
             </div>
           </div>
         </div>
