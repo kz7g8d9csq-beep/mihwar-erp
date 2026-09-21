@@ -654,6 +654,41 @@ function App() {
     localStorage.setItem('mihwar_customers', JSON.stringify(updated));
   };
 
+  const handleOpenEditSupplier = (supp) => {
+    setEditingSuppId(supp.id);
+    setEditSuppName(supp.name || '');
+    setEditSuppTaxNumber(supp.taxNumber || '');
+    setEditSuppPhone(supp.phone || '');
+    setEditSuppAddress(supp.address || '');
+    setEditSuppGracePeriod(supp.gracePeriod || '');
+    setShowEditSuppModal(true);
+  };
+
+  const handleUpdateSupplier = (e) => {
+    e.preventDefault();
+    if (!editSuppName.trim()) return;
+    const updated = suppliers.map(s => s.id === editingSuppId ? {
+      ...s,
+      name: editSuppName.trim(),
+      taxNumber: editSuppTaxNumber.trim(),
+      phone: editSuppPhone.trim(),
+      address: editSuppAddress.trim(),
+      gracePeriod: editSuppGracePeriod.trim()
+    } : s);
+    setSuppliers(updated);
+    localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
+    setShowEditSuppModal(false);
+    setEditingSuppId(null);
+    alert('✅ تم تحديث بيانات المورد بنجاح!');
+  };
+
+  const handleDeleteSupplier = (suppId) => {
+    if (!window.confirm('⚠️ هل أنت متأكد من حذف هذا المورد؟')) return;
+    const updated = suppliers.filter(s => s.id !== suppId);
+    setSuppliers(updated);
+    localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
+  };
+
   const handleOpenPayConfirm = (invoiceId) => {
     setPayTargetInvoiceId(invoiceId);
     setPayConfirmMethod('نقد');
