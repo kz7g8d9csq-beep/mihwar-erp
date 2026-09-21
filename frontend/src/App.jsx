@@ -328,7 +328,7 @@ function App() {
   const [editProdPrice, setEditProdPrice] = useState('');
   const [editProdStock, setEditProdStock] = useState('');
 
-  // العملاء (مع إضافة العنوان وفترة السماح يدويًا)
+  // العملاء
   const [customers, setCustomers] = useState(() => {
     const saved = localStorage.getItem('mihwar_customers');
     return saved ? JSON.parse(saved) : [
@@ -349,20 +349,26 @@ function App() {
   const [editCustAddress, setEditCustAddress] = useState('');
   const [editCustGracePeriod, setEditCustGracePeriod] = useState('');
 
-  // الموردين
+  // الموردين (مع إضافة العنوان وفترة السماح يدويًا وتعديل يدوي)
   const [suppliers, setSuppliers] = useState(() => {
     const saved = localStorage.getItem('mihwar_suppliers');
-    return saved ? JSON.parse(saved) : [];
+    return saved ? JSON.parse(saved) : [
+      { id: 1, name: 'شركة العالم للتوريد', taxNumber: '300123456700003', phone: '0501112233', address: 'جدة - المنطقة الصناعية', gracePeriod: '15 يوم' }
+    ];
   });
   const [suppName, setSuppName] = useState('');
   const [suppTaxNumber, setSuppTaxNumber] = useState('');
   const [suppPhone, setSuppPhone] = useState('');
+  const [suppAddress, setSuppAddress] = useState('');
+  const [suppGracePeriod, setSuppGracePeriod] = useState('');
   const [supplierSearchQuery, setSupplierSearchQuery] = useState('');
   const [editingSuppId, setEditingSuppId] = useState(null);
   const [showEditSuppModal, setShowEditSuppModal] = useState(false);
   const [editSuppName, setEditSuppName] = useState('');
   const [editSuppTaxNumber, setEditSuppTaxNumber] = useState('');
   const [editSuppPhone, setEditSuppPhone] = useState('');
+  const [editSuppAddress, setEditSuppAddress] = useState('');
+  const [editSuppGracePeriod, setEditSuppGracePeriod] = useState('');
 
   // الفواتير والتقارير
   const [invoices, setInvoices] = useState(() => {
@@ -509,7 +515,7 @@ function App() {
 
   const filteredInventory = inventory.filter(i => safeLower(i.name).includes(safeLower(inventorySearchQuery)));
   const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)) || safeLower(c.address).includes(safeLower(customerSearchQuery)));
-  const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)));
+  const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)) || safeLower(s.address).includes(safeLower(supplierSearchQuery)));
   const filteredInvoices = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(invoiceSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(invoiceSearchQuery)));
   const filteredPurchaseInvoices = purchaseInvoices.filter(pi => safeLower(pi.invoiceNo || pi.id).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.productName).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.supplier?.name).includes(safeLower(purchaseInvoicesListSearch)));
   const filteredReports = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(reportSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(reportSearchQuery)));
@@ -613,7 +619,6 @@ function App() {
     localStorage.setItem('mihwar_inventory', JSON.stringify(updated));
   };
 
-  // تعديل عميل يدويًا
   const handleOpenEditCustomer = (cust) => {
     setEditingCustId(cust.id);
     setEditCustName(cust.name || '');
@@ -649,19 +654,33 @@ function App() {
     localStorage.setItem('mihwar_customers', JSON.stringify(updated));
   };
 
+  // تعديل مورد يدويًا
   const handleOpenEditSupplier = (supp) => {
-    setEditingSuppId(supp.id); setEditSuppName(supp.name || ''); setEditSuppTaxNumber(supp.taxNumber || ''); setEditSuppPhone(supp.phone || ''); setShowEditSuppModal(true);
+    setEditingSuppId(supp.id);
+    setEditSuppName(supp.name || '');
+    setEditSuppTaxNumber(supp.taxNumber || '');
+    setEditSuppPhone(supp.phone || '');
+    setEditSuppAddress(supp.address || '');
+    setEditSuppGracePeriod(supp.gracePeriod || '');
+    setShowEditSuppModal(true);
   };
 
   const handleUpdateSupplier = (e) => {
     e.preventDefault();
     if (!editSuppName.trim()) return;
-    const updated = suppliers.map(s => s.id === editingSuppId ? { ...s, name: editSuppName.trim(), taxNumber: editSuppTaxNumber.trim(), phone: editSuppPhone.trim() } : s);
+    const updated = suppliers.map(s => s.id === editingSuppId ? {
+      ...s,
+      name: editSuppName.trim(),
+      taxNumber: editSuppTaxNumber.trim(),
+      phone: editSuppPhone.trim(),
+      address: editSuppAddress.trim(),
+      gracePeriod: editSuppGracePeriod.trim()
+    } : s);
     setSuppliers(updated);
     localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
     setShowEditSuppModal(false);
     setEditingSuppId(null);
-    alert('✅ تم تحديث المورد بنجاح!');
+    alert('✅ تم تحديث بيانات المورد بنجاح!');
   };
 
   const handleDeleteSupplier = (suppId) => {
@@ -918,7 +937,40 @@ function App() {
     exportToExcel(title, headers, rows, lang);
   };
 
-  // فتح حساب عميل جديد يدويًا مع العنوان وفترة السماح
+  const cartSubtotal = cartItems.reduce((sum, it) => sum + it.subtotal, 0);
+  const cartTax = cartSubtotal * 0.15;
+  const cartGrandTotal = cartSubtotal + cartTax;
+
+  const inventoryVal = inventory.reduce((sum, i) => sum + (Number(i.price) * i.stock), 0);
+  const totalSalesVal = invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+  const totalPurchasesVal = purchaseInvoices.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
+  const netProfitVal = totalSalesVal - totalPurchasesVal;
+  
+  const lowStockItems = inventory.filter(i => i.stock <= lowStockThreshold);
+  const totalPayroll = employees.reduce((sum, e) => sum + Number(e.salary || 0), 0);
+
+  const currentYear = new Date().getFullYear();
+  const currentYearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === currentYear);
+  const monthlyData = Array.from({ length: 12 }, (_, i) => {
+    const monthInvs = currentYearInvoices.filter(inv => new Date(inv.createdAt).getMonth() === i);
+    const total = monthInvs.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const count = monthInvs.length;
+    return { monthName: new Date(currentYear, i, 1).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US', { month: 'long' }), total, count };
+  });
+
+  const pastYearsData = Array.from({ length: 10 }, (_, i) => {
+    const targetYear = currentYear - i;
+    const yearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
+    const totalSales = yearInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
+    const totalProfit = yearInvoices.reduce((sum, inv) => {
+      const rev = Number(inv.subtotal || 0);
+      const cogs = (inv.items || []).reduce((s, it) => s + ((it.product?.cost || 0) * it.quantity), 0);
+      return sum + (rev - cogs);
+    }, 0);
+    const count = yearInvoices.length;
+    return { year: targetYear, totalSales, totalProfit, count };
+  }).filter(y => y.count > 0 || y.year === currentYear);
+
   const handleAddCustomer = (e) => {
     e.preventDefault();
     if (!custName.trim()) return;
@@ -936,14 +988,22 @@ function App() {
     setCustName(''); setCustNationalId(''); setCustPhone(''); setCustAddress(''); setCustGracePeriod('');
   };
 
+  // فتح حساب مورد جديد يدويًا مع العنوان وفترة السماح
   const handleAddSupplier = (e) => {
     e.preventDefault();
     if (!suppName.trim()) return;
-    const newSupp = { id: Date.now(), name: suppName.trim(), taxNumber: suppTaxNumber.trim(), phone: suppPhone.trim() };
+    const newSupp = {
+      id: Date.now(),
+      name: suppName.trim(),
+      taxNumber: suppTaxNumber.trim(),
+      phone: suppPhone.trim(),
+      address: suppAddress.trim(),
+      gracePeriod: suppGracePeriod.trim()
+    };
     const updated = [newSupp, ...suppliers];
     setSuppliers(updated);
     localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
-    setSuppName(''); setSuppTaxNumber(''); setSuppPhone('');
+    setSuppName(''); setSuppTaxNumber(''); setSuppPhone(''); setSuppAddress(''); setSuppGracePeriod('');
   };
 
   const handleAddProduct = (e) => {
@@ -1009,7 +1069,6 @@ function App() {
     exportToExcel(title, headers, rows, lang);
   };
 
-  // تصدير دليل العملاء مع العنوان وفترة السماح تلقائياً
   const handleExportCustomers = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'دليل_العملاء' : 'Clients_Directory';
@@ -1024,44 +1083,20 @@ function App() {
     exportToExcel(title, headers, rows, lang);
   };
 
+  // تصدير دليل الموردين مع العنوان وفترة السماح تلقائياً
   const handleExportSuppliers = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'دليل_الموردين' : 'Suppliers_Directory';
-    const headers = isAr ? ['اسم المورد', 'الرقم الضريبي', 'الهاتف'] : ['Supplier Name', 'Tax No', 'Phone'];
-    const rows = filteredSuppliers.map(s => [s.name, s.taxNumber || '-', s.phone || '-']);
+    const headers = isAr ? ['اسم المورد', 'الرقم الضريبي', 'الهاتف', 'العنوان', 'فترة السماح'] : ['Supplier Name', 'Tax No', 'Phone', 'Address', 'Grace Period'];
+    const rows = filteredSuppliers.map(s => [
+      s.name,
+      s.taxNumber || '-',
+      s.phone || '-',
+      s.address || '-',
+      s.gracePeriod || '-'
+    ]);
     exportToExcel(title, headers, rows, lang);
   };
-
-  const cartGrandTotalCalc = cartItems.reduce((sum, it) => sum + it.subtotal, 0) * 1.15;
-  const inventoryVal = inventory.reduce((sum, i) => sum + (Number(i.price) * i.stock), 0);
-  const totalSalesVal = invoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-  const totalPurchasesVal = purchaseInvoices.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
-  const netProfitVal = totalSalesVal - totalPurchasesVal;
-  
-  const lowStockItems = inventory.filter(i => i.stock <= lowStockThreshold);
-  const totalPayroll = employees.reduce((sum, e) => sum + Number(e.salary || 0), 0);
-
-  const currentYear = new Date().getFullYear();
-  const currentYearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === currentYear);
-  const monthlyData = Array.from({ length: 12 }, (_, i) => {
-    const monthInvs = currentYearInvoices.filter(inv => new Date(inv.createdAt).getMonth() === i);
-    const total = monthInvs.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-    const count = monthInvs.length;
-    return { monthName: new Date(currentYear, i, 1).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US', { month: 'long' }), total, count };
-  });
-
-  const pastYearsData = Array.from({ length: 10 }, (_, i) => {
-    const targetYear = currentYear - i;
-    const yearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
-    const totalSales = yearInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-    const totalProfit = yearInvoices.reduce((sum, inv) => {
-      const rev = Number(inv.subtotal || 0);
-      const cogs = (inv.items || []).reduce((s, it) => s + ((it.product?.cost || 0) * it.quantity), 0);
-      return sum + (rev - cogs);
-    }, 0);
-    const count = yearInvoices.length;
-    return { year: targetYear, totalSales, totalProfit, count };
-  }).filter(y => y.count > 0 || y.year === currentYear);
 
   if (!user && showLanding) {
     return (
@@ -1428,12 +1463,12 @@ function App() {
                 <div>
                   <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#38bdf8' }}>ملخص الحسبة التلقائية</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#94a3b8' }}>المبلغ الخاضع للضريبة:</span><strong>{cartItems.reduce((s, it) => s + it.subtotal, 0).toFixed(2)} {t.currency}</strong></div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#94a3b8' }}>ضريبة القيمة المضافة (15%):</span><strong>{(cartItems.reduce((s, it) => s + it.subtotal, 0) * 0.15).toFixed(2)} {t.currency}</strong></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#94a3b8' }}>المبلغ الخاضع للضريبة:</span><strong>{cartSubtotal.toFixed(2)} {t.currency}</strong></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#94a3b8' }}>ضريبة القيمة المضافة (15%):</span><strong>{cartTax.toFixed(2)} {t.currency}</strong></div>
                   </div>
                 </div>
                 <div style={{ borderTop: '1px dashed #334155', paddingTop: '15px', marginTop: '20px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold' }}><span>الإجمالي النهائي:</span><span style={{ color: '#38bdf8' }}>{cartGrandTotalCalc.toFixed(2)} {t.currency}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold' }}><span>الإجمالي النهائي:</span><span style={{ color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span></div>
                 </div>
               </div>
             </div>
@@ -1600,7 +1635,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 7: Customers (محدث بإضافة العنوان وفترة السماح يدوياً وفي الإكسل) */}
+          {/* TAB 7: Customers */}
           {activeTab === 'customers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1646,7 +1681,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 8: Suppliers */}
+          {/* TAB 8: Suppliers (محدث بإضافة العنوان وفترة السماح يدوياً وفي الإكسل وتعديل المورد) */}
           {activeTab === 'suppliers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1655,6 +1690,8 @@ function App() {
                   <input type="text" placeholder="اسم المورد / الشركة *" value={suppName} onChange={e=>setSuppName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="الرقم الضريبي" value={suppTaxNumber} onChange={e=>setSuppTaxNumber(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="رقم الهاتف" value={suppPhone} onChange={e=>setSuppPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <input type="text" placeholder="العنوان (مثال: جدة - المنطقة الصناعية)" value={suppAddress} onChange={e=>setSuppAddress(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={suppGracePeriod} onChange={e=>setSuppGracePeriod(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ المورد</button>
                 </form>
               </div>
@@ -1662,18 +1699,20 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>دليل الموردين</h3>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="text" value={supplierSearchQuery} onChange={e => setSupplierSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الرقم الضريبي..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} />
+                    <input type="text" value={supplierSearchQuery} onChange={e => setSupplierSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الرقم الضريبي أو العنوان..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} />
                     <button onClick={handleExportSuppliers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
                   </div>
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>اسم المورد</th><th style={{ padding: '10px' }}>الرقم الضريبي</th><th style={{ padding: '10px' }}>الهاتف</th><th style={{ padding: '10px' }}>الإجراءات</th></tr></thead>
+                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>اسم المورد</th><th style={{ padding: '10px' }}>الرقم الضريبي</th><th style={{ padding: '10px' }}>الهاتف</th><th style={{ padding: '10px' }}>العنوان</th><th style={{ padding: '10px' }}>فترة السماح</th><th style={{ padding: '10px' }}>الإجراءات</th></tr></thead>
                   <tbody>
                     {filteredSuppliers.map(s => (
                       <tr key={s.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
                         <td style={{ padding: '10px', fontWeight: 'bold' }}>{s.name}</td>
                         <td style={{ padding: '10px' }}>{s.taxNumber || '-'}</td>
                         <td style={{ padding: '10px' }}>{s.phone || '-'}</td>
+                        <td style={{ padding: '10px' }}>{s.address || '-'}</td>
+                        <td style={{ padding: '10px', color: '#38bdf8', fontWeight: 'bold' }}>{s.gracePeriod || '-'}</td>
                         <td style={{ padding: '10px' }}>
                           <div style={{ display: 'flex', gap: '6px' }}>
                             <button onClick={() => handleOpenEditSupplier(s)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>تعديل ✏️</button>
@@ -1904,7 +1943,7 @@ function App() {
           ALL POPUPS & MODALS 
       ======================== */}
 
-      {/* Edit Customer Modal (مع العنوان وفترة السماح يدويًا) */}
+      {/* Edit Customer Modal */}
       {showEditCustModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -1927,7 +1966,7 @@ function App() {
         </div>
       )}
 
-      {/* Edit Supplier Modal */}
+      {/* Edit Supplier Modal (مع إضافة خانتي العنوان وفترة السماح للتعديل اليدوي) */}
       {showEditSuppModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -1939,6 +1978,8 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>اسم المورد / الشركة</label><input type="text" value={editSuppName} onChange={e=>setEditSuppName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الرقم الضريبي</label><input type="text" value={editSuppTaxNumber} onChange={e=>setEditSuppTaxNumber(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editSuppPhone} onChange={e=>setEditSuppPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editSuppAddress} onChange={e=>setEditSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث المورد</button>
                 <button type="button" onClick={() => setShowEditSuppModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
@@ -2200,4 +2241,4 @@ function App() {
   );
 }
 
-export default App;
+App;
