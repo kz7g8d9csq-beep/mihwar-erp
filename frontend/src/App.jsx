@@ -142,8 +142,8 @@ const dict = {
     invRepo: 'سجل فواتير المبيعات',
     prefTitle: '🌐 تفضيلات اللغة والمظهر',
     companyLogoTitle: '🏢 شعار المنشأة (الفاتورة)',
-    companyLogoDesc: 'اختر أو ارفع صورة شعار منشأتك لتظهر تلقائياً في الفواتير المطبوعة',
-    logoUrlLabel: 'رابط صورة الشعار (URL أو رفع ملف):',
+    companyLogoDesc: 'اختر أو ارفع صورة شعار منشأتك (PNG) لتظهر تلقائياً في الفواتير المطبوعة',
+    logoUrlLabel: 'رفع ملف الشعار من الجهاز (PNG/JPG):',
     saveLogoBtn: 'حفظ شعار المنشأة',
     securityTitle: '🔒 أمان الحساب وتغيير كلمة المرور',
     oldPass: 'كلمة المرور الحالية',
@@ -226,8 +226,8 @@ const dict = {
     invRepo: 'Sales Invoices',
     prefTitle: '🌐 Language & Display',
     companyLogoTitle: '🏢 Company Logo (Invoice)',
-    companyLogoDesc: 'Upload or set company logo URL to appear on printed invoices',
-    logoUrlLabel: 'Logo Image URL:',
+    companyLogoDesc: 'Upload company logo file (PNG) to appear on printed invoices',
+    logoUrlLabel: 'Upload Logo File:',
     saveLogoBtn: 'Save Company Logo',
     securityTitle: '🔒 Account Security',
     oldPass: 'Current Password',
@@ -307,7 +307,6 @@ function App() {
   const [companyLogo, setCompanyLogo] = useState(() => {
     return localStorage.getItem('mihwar_company_logo') || '';
   });
-  const [tempLogoInput, setTempLogoInput] = useState(companyLogo);
 
   // المخزون
   const [inventory, setInventory] = useState(() => {
@@ -1030,10 +1029,19 @@ function App() {
     setNewProdName(''); setNewProdPrice(''); setNewProdStock(''); setNewProdItemCode('');
   };
 
-  const handleSaveCompanyLogo = (e) => {
-    e.preventDefault();
-    setCompanyLogo(tempLogoInput);
-    localStorage.setItem('mihwar_company_logo', tempLogoInput);
+  // رفع ملف شعار المنشأة عبر الملفات (PNG/JPG)
+  const handleLogoFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result;
+      setCompanyLogo(base64String);
+      localStorage.setItem('mihwar_company_logo', base64String);
+      setTempLogoInput(base64String);
+      alert('✅ تم رفع وحفظ شعار المنشأة بنجاح!');
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleChangePassword = async (e) => {
@@ -1888,7 +1896,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 12: Settings */}
+          {/* TAB 12: Settings (محدث برفع شعار المنشأة عبر الملفات PNG) */}
           {activeTab === 'settings' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
@@ -1906,11 +1914,16 @@ function App() {
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
                 <h3 style={{ margin: '0 0 5px 0', fontSize: '17px' }}>{t.companyLogoTitle}</h3>
                 <p style={{ fontSize: '12px', color: theme.textMuted, margin: '0 0 12px 0' }}>{t.companyLogoDesc}</p>
-                <form onSubmit={handleSaveCompanyLogo} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <input type="text" placeholder="https://example.com/logo.png" value={tempLogoInput} onChange={e=>setTempLogoInput(e.target.value)} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-                  {tempLogoInput && <img src={tempLogoInput} alt="Logo Preview" style={{ width: '60px', height: '60px', objectFit: 'contain', background: '#fff', borderRadius: '6px', padding: '4px' }} />}
-                  <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '10px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveLogoBtn}</button>
-                </form>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#d97706' }}>{t.logoUrlLabel}</label>
+                  <input type="file" accept="image/png, image/jpeg" onChange={handleLogoFileUpload} style={{ padding: '8px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', cursor: 'pointer' }} />
+                  {companyLogo && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
+                      <img src={companyLogo} alt="Logo Preview" style={{ width: '60px', height: '60px', objectFit: 'contain', background: '#fff', borderRadius: '6px', padding: '4px', border: `1px solid ${theme.border}` }} />
+                      <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 'bold' }}>تم تحميل الشعار بنجاح ✓</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
