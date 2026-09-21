@@ -349,7 +349,7 @@ function App() {
   const [editCustAddress, setEditCustAddress] = useState('');
   const [editCustGracePeriod, setEditCustGracePeriod] = useState('');
 
-  // الموردين
+  // الموردين (مع الدوال النشطة للتعديل والحذف)
   const [suppliers, setSuppliers] = useState(() => {
     const saved = localStorage.getItem('mihwar_suppliers');
     return saved ? JSON.parse(saved) : [
@@ -652,6 +652,42 @@ function App() {
     const updated = customers.filter(c => c.id !== custId);
     setCustomers(updated);
     localStorage.setItem('mihwar_customers', JSON.stringify(updated));
+  };
+
+  // دوال التعديل والحذف النشطة للموردين
+  const handleOpenEditSupplier = (supp) => {
+    setEditingSuppId(supp.id);
+    setEditSuppName(supp.name || '');
+    setEditSuppTaxNumber(supp.taxNumber || '');
+    setEditSuppPhone(supp.phone || '');
+    setEditSuppAddress(supp.address || '');
+    setEditSuppGracePeriod(supp.gracePeriod || '');
+    setShowEditSuppModal(true);
+  };
+
+  const handleUpdateSupplier = (e) => {
+    e.preventDefault();
+    if (!editSuppName.trim()) return;
+    const updated = suppliers.map(s => s.id === editingSuppId ? {
+      ...s,
+      name: editSuppName.trim(),
+      taxNumber: editSuppTaxNumber.trim(),
+      phone: editSuppPhone.trim(),
+      address: editSuppAddress.trim(),
+      gracePeriod: editSuppGracePeriod.trim()
+    } : s);
+    setSuppliers(updated);
+    localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
+    setShowEditSuppModal(false);
+    setEditingSuppId(null);
+    alert('✅ تم تحديث بيانات المورد بنجاح!');
+  };
+
+  const handleDeleteSupplier = (suppId) => {
+    if (!window.confirm('⚠️ هل أنت متأكد من حذف هذا المورد؟')) return;
+    const updated = suppliers.filter(s => s.id !== suppId);
+    setSuppliers(updated);
+    localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
   };
 
   const handleOpenPayConfirm = (invoiceId) => {
@@ -1643,7 +1679,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 8: Suppliers (مع ربط أزرار التعديل والحذف بالدوال البرمجية الصحيحة) */}
+          {/* TAB 8: Suppliers */}
           {activeTab === 'suppliers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
