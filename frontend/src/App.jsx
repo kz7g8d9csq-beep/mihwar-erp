@@ -53,7 +53,7 @@ const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
             <tr>
               ${row.map(cell => {
                 const str = String(cell ?? '');
-                const isCodeOrPhone = /^\d{9,}$/.test(str) || str.startsWith('05') || str.startsWith('+');
+                const isCodeOrPhone = /^\d{9,}$/.test(str) || str.startsWith('05') || str.startsWith('+') || str.startsWith('SKU');
                 const isCurrency = /^-?\d+(\.\d+)?$/.test(str) && !isCodeOrPhone;
                 if (isCodeOrPhone) {
                   return `<td class="text-cell">${str}</td>`;
@@ -311,7 +311,7 @@ function App() {
   });
   const [tempLogoInput, setTempLogoInput] = useState(companyLogo);
 
-  // المخزون
+  // المخزون (مع إضافة رقم الصنف للإدخال والتعديل اليدوي)
   const [inventory, setInventory] = useState(() => {
     const saved = localStorage.getItem('mihwar_inventory');
     return saved ? JSON.parse(saved) : [
@@ -321,12 +321,14 @@ function App() {
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
+  const [newProdItemCode, setNewProdItemCode] = useState('');
   const [inventorySearchQuery, setInventorySearchQuery] = useState('');
   const [editingProdId, setEditingProdId] = useState(null);
   const [showEditProdModal, setShowEditProdModal] = useState(false);
   const [editProdName, setEditProdName] = useState('');
   const [editProdPrice, setEditProdPrice] = useState('');
   const [editProdStock, setEditProdStock] = useState('');
+  const [editProdItemCode, setEditProdItemCode] = useState('');
 
   // العملاء
   const [customers, setCustomers] = useState(() => {
@@ -349,7 +351,7 @@ function App() {
   const [editCustAddress, setEditCustAddress] = useState('');
   const [editCustGracePeriod, setEditCustGracePeriod] = useState('');
 
-  // الموردين (مع الدوال النشطة للتعديل والحذف)
+  // الموردين
   const [suppliers, setSuppliers] = useState(() => {
     const saved = localStorage.getItem('mihwar_suppliers');
     return saved ? JSON.parse(saved) : [
@@ -513,7 +515,7 @@ function App() {
     localStorage.setItem('mihwar_purchases', JSON.stringify(purchaseInvoices));
   }, [purchaseInvoices]);
 
-  const filteredInventory = inventory.filter(i => safeLower(i.name).includes(safeLower(inventorySearchQuery)));
+  const filteredInventory = inventory.filter(i => safeLower(i.name).includes(safeLower(inventorySearchQuery)) || safeLower(i.itemCode).includes(safeLower(inventorySearchQuery)));
   const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)) || safeLower(c.address).includes(safeLower(customerSearchQuery)));
   const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)) || safeLower(s.address).includes(safeLower(supplierSearchQuery)));
   const filteredInvoices = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(invoiceSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(invoiceSearchQuery)));
@@ -597,14 +599,26 @@ function App() {
     alert('✅ تم إعفاء الخصم بنجاح واستعادة الرصيد للموظف!');
   };
 
+  // تعديل المنتج مع دعم رقم الصنف
   const handleOpenEditProduct = (prod) => {
-    setEditingProdId(prod.id); setEditProdName(prod.name || ''); setEditProdPrice(prod.price || ''); setEditProdStock(prod.stock !== undefined ? prod.stock : 0); setShowEditProdModal(true);
+    setEditingProdId(prod.id);
+    setEditProdName(prod.name || '');
+    setEditProdPrice(prod.price || '');
+    setEditProdStock(prod.stock !== undefined ? prod.stock : 0);
+    setEditProdItemCode(prod.itemCode || '');
+    setShowEditProdModal(true);
   };
 
   const handleUpdateProduct = (e) => {
     e.preventDefault();
     if (!editProdName || !editProdPrice) return;
-    const updated = inventory.map(item => item.id === editingProdId ? { ...item, name: editProdName, price: Number(editProdPrice), stock: Number(editProdStock) } : item);
+    const updated = inventory.map(item => item.id === editingProdId ? {
+      ...item,
+      name: editProdName,
+      price: Number(editProdPrice),
+      stock: Number(editProdStock),
+      itemCode: editProdItemCode.trim()
+    } : item);
     setInventory(updated);
     localStorage.setItem('mihwar_inventory', JSON.stringify(updated));
     setShowEditProdModal(false);
@@ -654,7 +668,6 @@ function App() {
     localStorage.setItem('mihwar_customers', JSON.stringify(updated));
   };
 
-  // دوال التعديل والحذف النشطة للموردين
   const handleOpenEditSupplier = (supp) => {
     setEditingSuppId(supp.id);
     setEditSuppName(supp.name || '');
@@ -1005,14 +1018,22 @@ function App() {
     setSuppName(''); setSuppTaxNumber(''); setSuppPhone(''); setSuppAddress(''); setSuppGracePeriod('');
   };
 
+  // إضافة منتج جديد مع رقم الصنف اليدوي
   const handleAddProduct = (e) => {
     e.preventDefault();
     if (!newProdName || !newProdPrice) return;
-    const newProd = { id: Date.now(), name: newProdName, price: Number(newProdPrice), stock: Number(newProdStock || 0), boxSize: 12 };
+    const newProd = {
+      id: Date.now(),
+      name: newProdName.trim(),
+      price: Number(newProdPrice),
+      stock: Number(newProdStock || 0),
+      boxSize: 12,
+      itemCode: newProdItemCode.trim() || '-'
+    };
     const updated = [newProd, ...inventory];
     setInventory(updated);
     localStorage.setItem('mihwar_inventory', JSON.stringify(updated));
-    setNewProdName(''); setNewProdPrice(''); setNewProdStock('');
+    setNewProdName(''); setNewProdPrice(''); setNewProdStock(''); setNewProdItemCode('');
   };
 
   const handleSaveCompanyLogo = (e) => {
@@ -1056,14 +1077,15 @@ function App() {
     exportToExcel(title, headers, rows, lang);
   };
 
+  // تصدير المخزون مع رقم الصنف
   const handleExportInventory = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
-    const headers = isAr ? ['اسم المنتج', 'المخزون بالحبة', 'المخزون بالكرتون', 'سعر البيع'] : ['Product Name', 'Stock (Pieces)', 'Stock (Cartons)', 'Sale Price'];
+    const headers = isAr ? ['رقم الصنف', 'اسم المنتج', 'المخزون بالحبة', 'المخزون بالكرتون', 'سعر البيع'] : ['Item Code', 'Product Name', 'Stock (Pieces)', 'Stock (Cartons)', 'Sale Price'];
     const rows = filteredInventory.map(i => {
       const boxSize = Number(i.boxSize || 12);
       const cartons = (i.stock / boxSize).toFixed(1);
-      return [i.name, `${i.stock} حبة`, `${cartons} كرتون`, Number(i.price).toFixed(2)];
+      return [i.itemCode || '-', i.name, `${i.stock} حبة`, `${cartons} كرتون`, Number(i.price).toFixed(2)];
     });
     exportToExcel(title, headers, rows, lang);
   };
@@ -1679,7 +1701,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 8: Suppliers */}
+          {/* TAB 8: Suppliers (مع الأزرار النشطة للتعديل والحذف) */}
           {activeTab === 'suppliers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1732,6 +1754,7 @@ function App() {
                 <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
                   <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>➕ إضافة منتج</h3>
                   <form onSubmit={handleAddProduct} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <input type="text" placeholder="رقم الصنف (مثال: SKU-001)" value={newProdItemCode} onChange={e=>setNewProdItemCode(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                     <input type="text" placeholder={t.prodName} value={newProdName} onChange={e=>setNewProdName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                     <input type="number" placeholder={t.prodPrice} value={newProdPrice} onChange={e=>setNewProdPrice(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                     <input type="number" placeholder={t.prodStock} value={newProdStock} onChange={e=>setNewProdStock(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
@@ -1743,14 +1766,18 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>{t.stockRepo}</h3>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="text" value={inventorySearchQuery} onChange={e => setInventorySearchQuery(e.target.value)} placeholder="🔍 ابحث باسم المنتج..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '200px' }} />
+                    <input type="text" value={inventorySearchQuery} onChange={e => setInventorySearchQuery(e.target.value)} placeholder="🔍 ابحث برقم الصنف أو الاسم..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} />
                     <button onClick={handleExportInventory} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
                   </div>
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                   <thead>
                     <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '10px' }}>Name</th><th style={{ padding: '10px' }}>Price</th><th style={{ padding: '10px' }}>المخزون بالحبة وبالكرتون</th><th style={{ padding: '10px' }}>الإجراءات</th>
+                      <th style={{ padding: '10px' }}>رقم الصنف</th>
+                      <th style={{ padding: '10px' }}>Name</th>
+                      <th style={{ padding: '10px' }}>Price</th>
+                      <th style={{ padding: '10px' }}>المخزون بالحبة وبالكرتون</th>
+                      <th style={{ padding: '10px' }}>الإجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1759,6 +1786,7 @@ function App() {
                       const cartons = (i.stock / boxSize).toFixed(1);
                       return (
                         <tr key={i.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                          <td style={{ padding: '10px', fontWeight: 'bold', color: '#38bdf8' }}>{i.itemCode || '-'}</td>
                           <td style={{ padding: '10px' }}>{i.name}</td>
                           <td style={{ padding: '10px' }}>{i.price}</td>
                           <td style={{ padding: '10px', color: '#10b981', fontWeight: 'bold' }}>
@@ -1987,7 +2015,7 @@ function App() {
         </div>
       )}
 
-      {/* Edit Product Modal */}
+      {/* Edit Product Modal (مع دعم رقم الصنف للتعديل اليدوي) */}
       {showEditProdModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -1996,6 +2024,7 @@ function App() {
               <button onClick={() => setShowEditProdModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
             </div>
             <form onSubmit={handleUpdateProduct} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الصنف</label><input type="text" value={editProdItemCode} onChange={e=>setEditProdItemCode(e.target.value)} placeholder="مثال: SKU-001" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodName}</label><input type="text" value={editProdName} onChange={e=>setEditProdName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodPrice}</label><input type="number" value={editProdPrice} onChange={e=>setEditProdPrice(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodStock}</label><input type="number" value={editProdStock} onChange={e=>setEditProdStock(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
