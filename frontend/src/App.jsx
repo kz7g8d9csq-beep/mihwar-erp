@@ -95,7 +95,6 @@ const dict = {
     customers: 'العملاء',
     suppliers: 'الموردين',
     inventory: 'المخزون',
-    reports: 'التقارير',
     settings: 'الإعدادات',
     production: 'الإنتاج',
     hr: 'الموارد البشرية',
@@ -180,7 +179,6 @@ const dict = {
     customers: 'Clients',
     suppliers: 'Suppliers',
     inventory: 'Inventory',
-    reports: 'Reports',
     settings: 'Settings',
     production: 'Production',
     hr: 'HR',
@@ -307,7 +305,7 @@ function App() {
   const [businessName, setBusinessName] = useState('نظام محور');
 
   const [companyLogo, setCompanyLogo] = useState(() => {
-    return localStorage.getItem('mihwar_company_logo'] || '';
+    return localStorage.getItem('mihwar_company_logo') || '';
   });
   const [tempLogoInput, setTempLogoInput] = useState(companyLogo);
 
@@ -372,13 +370,12 @@ function App() {
   const [editSuppAddress, setEditSuppAddress] = useState('');
   const [editSuppGracePeriod, setEditSuppGracePeriod] = useState('');
 
-  // الفواتير والتقارير
+  // الفواتير
   const [invoices, setInvoices] = useState(() => {
     const saved = localStorage.getItem('mihwar_invoices');
     return saved ? JSON.parse(saved) : [];
   });
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
-  const [reportSearchQuery, setReportSearchQuery] = useState('');
   
   // المبيعات والفوترة
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
@@ -520,7 +517,6 @@ function App() {
   const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)) || safeLower(s.address).includes(safeLower(supplierSearchQuery)));
   const filteredInvoices = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(invoiceSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(invoiceSearchQuery)));
   const filteredPurchaseInvoices = purchaseInvoices.filter(pi => safeLower(pi.invoiceNo || pi.id).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.productName).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.supplier?.name).includes(safeLower(purchaseInvoicesListSearch)));
-  const filteredReports = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(reportSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(reportSearchQuery)));
   const filteredCustomersForSales = customers.filter(c => safeLower(c.name).includes(safeLower(salesCustomerSearch)) || safeLower(c.nationalId).includes(safeLower(salesCustomerSearch)) || safeLower(c.phone).includes(safeLower(salesCustomerSearch)));
   const filteredCustomersForPos = customers.filter(c => safeLower(c.name).includes(safeLower(posCustomerSearch)) || safeLower(c.nationalId).includes(safeLower(posCustomerSearch)) || safeLower(c.phone).includes(safeLower(posCustomerSearch)));
   const filteredProductsForPurchase = inventory.filter(p => safeLower(p.name).includes(safeLower(purchaseProductSearch)));
@@ -970,19 +966,6 @@ function App() {
     return { monthName: new Date(currentYear, i, 1).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US', { month: 'long' }), total, count };
   });
 
-  const pastYearsData = Array.from({ length: 10 }, (_, i) => {
-    const targetYear = currentYear - i;
-    const yearInvoices = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
-    const totalSales = yearInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-    const totalProfit = yearInvoices.reduce((sum, inv) => {
-      const rev = Number(inv.subtotal || 0);
-      const cogs = (inv.items || []).reduce((s, it) => s + ((it.product?.cost || 0) * it.quantity), 0);
-      return sum + (rev - cogs);
-    }, 0);
-    const count = yearInvoices.length;
-    return { year: targetYear, totalSales, totalProfit, count };
-  }).filter(y => y.count > 0 || y.year === currentYear);
-
   const handleAddCustomer = (e) => {
     e.preventDefault();
     if (!custName.trim()) return;
@@ -1071,7 +1054,7 @@ function App() {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
     const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'طريقة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Payment Method', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
-    const rows = filteredReports.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.paymentMethod || 'نقد', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
+    const rows = invoices.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.paymentMethod || 'نقد', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -1177,7 +1160,6 @@ function App() {
     { id: 'inventory', label: t.inventory, adminOnly: false, icon: '📦' },
     { id: 'production', label: t.production, adminOnly: true, icon: '⚙️' },
     { id: 'hr', label: t.hr, adminOnly: true, icon: '👔' },
-    { id: 'reports', label: t.reports, adminOnly: true, icon: '📈' },
     { id: 'settings', label: t.settings, adminOnly: false, icon: '⚙️' }
   ];
 
@@ -1893,60 +1875,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 12: Reports */}
-          {activeTab === 'reports' && user.role !== 'cashier' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#d97706' }}>📈 تقارير الرسوم البيانية التفاعلية للأداء المالي</h3>
-                <p style={{ fontSize: '13px', color: theme.textMuted, margin: '0 0 20px 0' }}>تحليل مرئي لحركة المبيعات والنمو المالي على مستوى الشهر والسنوات.</p>
-
-                {/* الرسم البياني الأول: السنة الحالية شهرياً */}
-                <div style={{ background: theme.bgMain, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '20px', marginBottom: '25px' }}>
-                  <h4 style={{ margin: '0 0 15px 0', fontSize: '15px', color: theme.textDark }}>📊 أداء مبيعات السنة الحالية ({currentYear}) - شهرياً</h4>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', height: '220px', paddingBottom: '10px', borderBottom: `2px solid ${theme.border}`, overflowX: 'auto' }}>
-                    {monthlyData.map((m, idx) => {
-                      const maxVal = Math.max(...monthlyData.map(x => x.total), 1);
-                      const heightPercent = Math.max(12, Math.round((m.total / maxVal) * 160));
-                      return (
-                        <div key={idx} style={{ flex: 1, minWidth: '45px', display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                          <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#10b981', marginBottom: '6px' }}>{m.total > 0 ? `${m.total.toFixed(0)}` : ''}</span>
-                          <div title={`${m.monthName}: ${m.total.toFixed(2)} ر.س`} style={{ width: '100%', height: `${heightPercent}px`, background: 'linear-gradient(180deg, #d97706 0%, #b45309 100%)', borderRadius: '6px 6px 0 0', transition: '0.3s' }}></div>
-                          <span style={{ fontSize: '11px', color: theme.textMuted, marginTop: '8px', textAlign: 'center', whiteSpace: 'nowrap' }}>{m.monthName}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* الرسم البياني الثاني: عشر سنوات (تلقائية النطاق مثل 2016-2026 أو 2017-2027) */}
-                <div style={{ background: theme.bgMain, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '20px' }}>
-                  <h4 style={{ margin: '0 0 15px 0', fontSize: '15px', color: theme.textDark }}>📈 سجل النمو المالي للعشر سنوات الأخيرة ({currentYear - 9} حتى {currentYear})</h4>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '15px', height: '220px', paddingBottom: '10px', borderBottom: `2px solid ${theme.border}`, overflowX: 'auto' }}>
-                    {Array.from({ length: 10 }, (_, i) => {
-                      const targetYear = currentYear - 9 + i;
-                      const yearInvs = invoices.filter(inv => new Date(inv.createdAt).getFullYear() === targetYear);
-                      const yearTotal = yearInvs.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
-                      const maxYearVal = Math.max(...Array.from({ length: 10 }, (_, idx) => {
-                        const y = currentYear - 9 + idx;
-                        return invoices.filter(inv => new Date(inv.createdAt).getFullYear() === y).reduce((s, inv) => s + Number(inv.totalAmount || 0), 0);
-                      }), 1);
-                      const heightPercentYear = Math.max(12, Math.round((yearTotal / maxYearVal) * 160));
-                      return (
-                        <div key={targetYear} style={{ flex: 1, minWidth: '55px', display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                          <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#38bdf8', marginBottom: '6px' }}>{yearTotal > 0 ? `${yearTotal.toFixed(0)}` : ''}</span>
-                          <div title={`سنة ${targetYear}: ${yearTotal.toFixed(2)} ر.س`} style={{ width: '100%', height: `${heightPercentYear}px`, background: 'linear-gradient(180deg, #0284c7 0%, #0369a1 100%)', borderRadius: '6px 6px 0 0', transition: '0.3s' }}></div>
-                          <span style={{ fontSize: '12px', fontWeight: 'bold', color: theme.textDark, marginTop: '8px' }}>{targetYear}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          )}
-
-          {/* TAB 13: Settings */}
+          {/* TAB 12: Settings */}
           {activeTab === 'settings' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
@@ -2267,7 +2196,7 @@ function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <tr style={{ borderBottom: '1px solid #e2e8f5' }}>
                     <td style={{ padding: '10px', textAlign: 'right', fontWeight: 'bold' }}>{printingPurchaseInvoice.productName}</td>
                     <td style={{ padding: '10px', textAlign: 'center' }}>{printingPurchaseInvoice.unitType}</td>
                     <td style={{ padding: '10px', textAlign: 'center' }}>{printingPurchaseInvoice.quantity}</td>
