@@ -811,7 +811,6 @@ function App() {
     }
   };
 
-  // المشتريات: وحدة التوريد تحتوي فقط على كرتون أو قطعة، مع خانة مستقلة للجرام والكيلو كما طلبت
   const handleSavePurchase = async () => {
     if (!selectedPurchaseProdId || !purchaseQty) {
       alert('يرجى اختيار المنتج والكمية الموردة');
@@ -1288,7 +1287,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 3: Sales */}
+          {/* TAB 3: Sales (تم إصلاح خطأ الاسم البرمجي لـ setSalesCustomerSearch) */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1311,7 +1310,7 @@ function App() {
                   </div>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>الوحدة</label>
-                    <select value={itemUnitType} onChange={e=>setItemUnitType(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
+                    <select value={salesUnitType} onChange={e=>setSalesUnitType(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
                       <option value="قطعة">قطعة</option>
                       <option value="كرتون">كرتون</option>
                     </select>
@@ -1429,7 +1428,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 5: Purchases (محدث بطلبك: وحدة التوريد كرتون أو قطعة، مع خانة مستقلة للجرام والكيلو) */}
+          {/* TAB 5: Purchases */}
           {activeTab === 'purchases' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '650px', margin: 'auto' }}>
               <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>تسجيل فاتورة شراء وتوريد بضاعة</h2>
