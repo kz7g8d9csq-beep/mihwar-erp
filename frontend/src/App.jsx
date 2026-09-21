@@ -95,7 +95,6 @@ const dict = {
     customers: 'العملاء',
     suppliers: 'الموردين',
     inventory: 'المخزون',
-    reports: 'التقارير',
     settings: 'الإعدادات',
     production: 'الإنتاج',
     hr: 'الموارد البشرية',
@@ -180,7 +179,6 @@ const dict = {
     customers: 'Clients',
     suppliers: 'Suppliers',
     inventory: 'Inventory',
-    reports: 'Reports',
     settings: 'Settings',
     production: 'Production',
     hr: 'HR',
@@ -369,13 +367,12 @@ function App() {
   const [editSuppAddress, setEditSuppAddress] = useState('');
   const [editSuppGracePeriod, setEditSuppGracePeriod] = useState('');
 
-  // الفواتير والتقارير
+  // الفواتير
   const [invoices, setInvoices] = useState(() => {
     const saved = localStorage.getItem('mihwar_invoices');
     return saved ? JSON.parse(saved) : [];
   });
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
-  const [reportSearchQuery, setReportSearchQuery] = useState('');
   
   // المبيعات والفوترة
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
@@ -517,7 +514,6 @@ function App() {
   const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)) || safeLower(s.address).includes(safeLower(supplierSearchQuery)));
   const filteredInvoices = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(invoiceSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(invoiceSearchQuery)));
   const filteredPurchaseInvoices = purchaseInvoices.filter(pi => safeLower(pi.invoiceNo || pi.id).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.productName).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.supplier?.name).includes(safeLower(purchaseInvoicesListSearch)));
-  const filteredReports = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(reportSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(reportSearchQuery)));
   const filteredCustomersForSales = customers.filter(c => safeLower(c.name).includes(safeLower(salesCustomerSearch)) || safeLower(c.nationalId).includes(safeLower(salesCustomerSearch)) || safeLower(c.phone).includes(safeLower(salesCustomerSearch)));
   const filteredCustomersForPos = customers.filter(c => safeLower(c.name).includes(safeLower(posCustomerSearch)) || safeLower(c.nationalId).includes(safeLower(posCustomerSearch)) || safeLower(c.phone).includes(safeLower(posCustomerSearch)));
   const filteredProductsForPurchase = inventory.filter(p => safeLower(p.name).includes(safeLower(purchaseProductSearch)));
@@ -1053,14 +1049,6 @@ function App() {
     setUser(null); localStorage.clear(); delete API.defaults.headers.common['Authorization']; setShowLanding(true); setAuthView('login');
   };
 
-  const handleExportSales = () => {
-    const isAr = lang === 'ar';
-    const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
-    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'طريقة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Payment Method', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
-    const rows = filteredReports.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.paymentMethod || 'نقد', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
-    exportToExcel(title, headers, rows, lang);
-  };
-
   const handleExportInventory = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
@@ -1163,7 +1151,6 @@ function App() {
     { id: 'inventory', label: t.inventory, adminOnly: false, icon: '📦' },
     { id: 'production', label: t.production, adminOnly: true, icon: '⚙️' },
     { id: 'hr', label: t.hr, adminOnly: true, icon: '👔' },
-    { id: 'reports', label: t.reports, adminOnly: true, icon: '📈' },
     { id: 'settings', label: t.settings, adminOnly: false, icon: '⚙️' }
   ];
 
@@ -1873,37 +1860,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 12: Reports */}
-          {activeTab === 'reports' && user.role !== 'cashier' && (
-            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                <h2 style={{ margin: 0, fontSize: '18px' }}>{t.invRepo}</h2>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <input type="text" value={reportSearchQuery} onChange={e => setReportSearchQuery(e.target.value)} placeholder="🔍 ابحث برقم الفاتورة أو اسم العميل..." style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '240px' }} />
-                  <button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير المبيعات</button>
-                </div>
-              </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                    <th style={{ padding: '10px' }}>No</th><th style={{ padding: '10px' }}>Client</th><th style={{ padding: '10px' }}>Total</th><th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredReports.map(inv => (
-                    <tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                      <td style={{ padding: '10px' }}>#{inv.invoiceNo}</td>
-                      <td style={{ padding: '10px' }}>{inv.customer?.name||'Cash'}</td>
-                      <td style={{ padding: '10px' }}>{inv.totalAmount}</td>
-                      <td><button onClick={()=>setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>View</button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* TAB 13: Settings */}
+          {/* TAB 12: Settings */}
           {activeTab === 'settings' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
@@ -2124,7 +2081,7 @@ function App() {
 
             <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
               
-              {/* الترويسة المرتبة مع الشعار في الوسط وتفاصيل الفاتورة في اليسار */}
+              {/* الترويسة مع الشعار في الوسط وتفاصيل الفاتورة في اليسار تماماً كما أشرت بالصور */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
                 <div></div>
                 <div style={{ textAlign: 'center' }}>
