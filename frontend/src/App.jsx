@@ -89,7 +89,8 @@ const dict = {
     dashboard: 'لوحة التحكم',
     pos: 'نقطة البيع (POS)',
     sales: 'المبيعات والفوترة',
-    invoicesList: 'سجل الفواتير',
+    invoicesList: 'سجل فواتير المبيعات',
+    purchaseInvoicesList: 'سجل فواتير الشراء',
     purchases: 'المشتريات',
     customers: 'العملاء',
     suppliers: 'الموردين',
@@ -139,7 +140,7 @@ const dict = {
     saveProd: 'حفظ المنتج',
     updateProd: 'تحديث المنتج',
     stockRepo: '📦 مستودع المنتجات',
-    invRepo: 'سجل الفواتير والمبيعات المعتمدة',
+    invRepo: 'سجل فواتير المبيعات',
     prefTitle: '🌐 تفضيلات اللغة والمظهر',
     companyLogoTitle: '🏢 شعار المنشأة (الفاتورة)',
     companyLogoDesc: 'اختر أو ارفع صورة شعار منشأتك لتظهر تلقائياً في الفواتير المطبوعة',
@@ -173,7 +174,8 @@ const dict = {
     dashboard: 'Dashboard',
     pos: 'POS Touch',
     sales: 'Sales & Invoicing',
-    invoicesList: 'Invoices List',
+    invoicesList: 'Sales Invoices List',
+    purchaseInvoicesList: 'Purchase Invoices List',
     purchases: 'Purchasing',
     customers: 'Clients',
     suppliers: 'Suppliers',
@@ -396,6 +398,7 @@ function App() {
     const saved = localStorage.getItem('mihwar_purchases');
     return saved ? JSON.parse(saved) : [];
   });
+  const [purchaseInvoicesListSearch, setPurchaseInvoicesListSearch] = useState('');
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [selectedPurchaseProdId, setSelectedPurchaseProdId] = useState('');
   const [purchaseUnitType, setPurchaseUnitType] = useState('قطعة');
@@ -451,6 +454,7 @@ function App() {
   });
 
   const [printingInvoice, setPrintingInvoice] = useState(null);
+  const [printingPurchaseInvoice, setPrintingPurchaseInvoice] = useState(null);
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
 
@@ -503,6 +507,7 @@ function App() {
   const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)));
   const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)));
   const filteredInvoices = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(invoiceSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(invoiceSearchQuery)));
+  const filteredPurchaseInvoices = purchaseInvoices.filter(pi => safeLower(pi.id).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.productName).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.supplier?.name).includes(safeLower(purchaseInvoicesListSearch)));
   const filteredReports = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(reportSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(reportSearchQuery)));
   const filteredCustomersForSales = customers.filter(c => safeLower(c.name).includes(safeLower(salesCustomerSearch)) || safeLower(c.nationalId).includes(safeLower(salesCustomerSearch)) || safeLower(c.phone).includes(safeLower(salesCustomerSearch)));
   const filteredCustomersForPos = customers.filter(c => safeLower(c.name).includes(safeLower(posCustomerSearch)) || safeLower(c.nationalId).includes(safeLower(posCustomerSearch)) || safeLower(c.phone).includes(safeLower(posCustomerSearch)));
@@ -811,6 +816,7 @@ function App() {
     }
   };
 
+  // المشتريات: حفظ فاتورة الشراء تلقائياً وإضافتها لسجل فواتير الشراء وربطها بالمخزون
   const handleSavePurchase = async () => {
     if (!selectedPurchaseProdId || !purchaseQty) {
       alert('يرجى اختيار المنتج والكمية الموردة');
@@ -842,6 +848,7 @@ function App() {
 
     const newPurchaseInvoice = {
       id: Date.now(),
+      invoiceNo: Math.floor(100000 + Math.random() * 900000),
       createdAt: new Date().toISOString(),
       supplier: suppliers.find(s => s.id === Number(selectedSupplierId)) || null,
       productId: prodId,
@@ -874,8 +881,7 @@ function App() {
     setPurchaseBoxCost('');
     setWeightInputValue('');
     setUnitGramOrKilo('لا يوجد');
-    alert(`✅ تم اعتماد التوريد وزيادة المخزون بنجاح بمقدار (${addedPieces} وحدة)!`);
-    setActiveTab('inventory');
+    setPrintingPurchaseInvoice(newPurchaseInvoice);
   };
 
   const cartSubtotal = cartItems.reduce((sum, it) => sum + it.subtotal, 0);
@@ -1066,7 +1072,8 @@ function App() {
     { id: 'pos', label: t.pos, adminOnly: false, icon: '🛒' },
     { id: 'sales', label: t.sales, adminOnly: true, icon: '🧾' },
     { id: 'invoicesList', label: t.invoicesList, adminOnly: true, icon: '📑' },
-    { id: 'purchases', label: t.purchases, adminOnly: true, icon: '📥' },
+    { id: 'purchaseInvoicesList', label: t.purchaseInvoicesList, adminOnly: true, icon: '📥' },
+    { id: 'purchases', label: t.purchases, adminOnly: true, icon: '📝' },
     { id: 'customers', label: t.customers, adminOnly: true, icon: '👥' },
     { id: 'suppliers', label: t.suppliers, adminOnly: true, icon: '🏭' },
     { id: 'inventory', label: t.inventory, adminOnly: false, icon: '📦' },
@@ -1287,7 +1294,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 3: Sales (تم إصلاح خطأ الاسم البرمجي لـ setSalesCustomerSearch) */}
+          {/* TAB 3: Sales */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1386,11 +1393,11 @@ function App() {
             </div>
           )}
 
-          {/* TAB 4: Invoices List */}
+          {/* TAB 4: Sales Invoices List (سجل فواتير المبيعات) */}
           {activeTab === 'invoicesList' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                <h2 style={{ margin: 0, fontSize: '18px' }}>{t.invRepo}</h2>
+                <h2 style={{ margin: 0, fontSize: '18px' }}>📑 سجل فواتير المبيعات</h2>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                   <input type="text" value={invoiceSearchQuery} onChange={e => setInvoiceSearchQuery(e.target.value)} placeholder="🔍 ابحث برقم الفاتورة أو العميل..." style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '240px' }} />
                   <button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير إلى Excel 📥</button>
@@ -1428,7 +1435,52 @@ function App() {
             </div>
           )}
 
-          {/* TAB 5: Purchases */}
+          {/* TAB 5: Purchase Invoices List (سجل فواتير الشراء - القسم الجديد) */}
+          {activeTab === 'purchaseInvoicesList' && user.role !== 'cashier' && (
+            <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                <h2 style={{ margin: 0, fontSize: '18px' }}>📥 سجل فواتير الشراء</h2>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <input type="text" value={purchaseInvoicesListSearch} onChange={e => setPurchaseInvoicesListSearch(e.target.value)} placeholder="🔍 ابحث برقم الفاتورة أو المنتج أو المورد..." style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '280px' }} />
+                </div>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '700px' }}>
+                <thead>
+                  <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                    <th style={{ padding: '12px' }}>رقم الفاتورة</th>
+                    <th style={{ padding: '12px' }}>المورد</th>
+                    <th style={{ padding: '12px' }}>المنتج</th>
+                    <th style={{ padding: '12px' }}>الوحدة</th>
+                    <th style={{ padding: '12px' }}>الكمية</th>
+                    <th style={{ padding: '12px' }}>الإجمالي</th>
+                    <th style={{ padding: '12px' }}>التاريخ</th>
+                    <th style={{ padding: '12px' }}>الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPurchaseInvoices.map(pi => (
+                    <tr key={pi.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                      <td style={{ padding: '12px', fontWeight: 'bold' }}>#{pi.invoiceNo || pi.id}</td>
+                      <td style={{ padding: '12px' }}>{pi.supplier?.name || 'توريد نقدي مباشر'}</td>
+                      <td style={{ padding: '12px', fontWeight: 'bold', color: '#d97706' }}>{pi.productName}</td>
+                      <td style={{ padding: '12px', textAlign: 'center' }}>{pi.unitType || 'قطعة'}</td>
+                      <td style={{ padding: '12px', textAlign: 'center' }}>{pi.quantity}</td>
+                      <td style={{ padding: '12px', color: '#10b981', fontWeight: 'bold' }}>{pi.totalAmount} {t.currency}</td>
+                      <td style={{ padding: '12px', color: theme.textMuted }}>{new Date(pi.createdAt).toLocaleDateString('en-CA')}</td>
+                      <td style={{ padding: '12px' }}>
+                        <button onClick={() => setPrintingPurchaseInvoice(pi)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>معاينة وطباعة 👁️</button>
+                      </td>
+                    </tr>
+                  ))}
+                  {!filteredPurchaseInvoices.length && (
+                    <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لا توجد فواتير شراء مسجلة بعد.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* TAB 6: Purchases (قسم المشتريات) */}
           {activeTab === 'purchases' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '650px', margin: 'auto' }}>
               <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>تسجيل فاتورة شراء وتوريد بضاعة</h2>
@@ -1501,7 +1553,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 6: Customers */}
+          {/* TAB 7: Customers */}
           {activeTab === 'customers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1543,7 +1595,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 7: Suppliers */}
+          {/* TAB 8: Suppliers */}
           {activeTab === 'suppliers' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1585,7 +1637,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 8: Inventory */}
+          {/* TAB 9: Inventory */}
           {activeTab === 'inventory' && (
             <div style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '20px' }}>
               {user.role !== 'cashier' && (
@@ -1639,7 +1691,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 9: Production */}
+          {/* TAB 10: Production */}
           {activeTab === 'production' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '30px', textAlign: 'center' }}>
               <h2>🏭 إدارة الإنتاج وأوامر التصنيع (BOM)</h2>
@@ -1648,7 +1700,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 10: HR */}
+          {/* TAB 11: HR */}
           {activeTab === 'hr' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -1728,7 +1780,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 11: Reports */}
+          {/* TAB 12: Reports */}
           {activeTab === 'reports' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -1758,7 +1810,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 12: Settings */}
+          {/* TAB 13: Settings */}
           {activeTab === 'settings' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
@@ -1962,7 +2014,7 @@ function App() {
         </div>
       )}
 
-      {/* Invoice Print Modal */}
+      {/* Invoice Print Modal (مع إظهار الوحدة بجانب الكمية في الفاتورة المطبوعة) */}
       {printingInvoice && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
           <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -2010,7 +2062,7 @@ function App() {
                   {(printingInvoice.items || []).map((it, idx) => (
                     <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
                       <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || it.name || 'خدمة عامة'}</td>
-                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity}</td>
+                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity} {it.unitType ? `(${it.unitType})` : ''}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
                       <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
                     </tr>
@@ -2028,6 +2080,65 @@ function App() {
               </div>
 
               <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>{t.invoiceFooterNote}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Purchase Invoice Print Modal (معاينة فاتورة الشراء) */}
+      {printingPurchaseInvoice && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
+          <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={() => window.print()} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>🖨️ طباعة فاتورة الشراء / PDF</button>
+              </div>
+              <button onClick={()=>setPrintingPurchaseInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>إغلاق</button>
+            </div>
+
+            <div style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '900', color: '#0f172a' }}>{businessName} - قسم التوريد</h2>
+                  <p style={{ margin: '3px 0', fontSize: '12px', color: '#64748b' }}>فاتورة شراء بضاعة من مورد</p>
+                </div>
+                <div style={{ textAlign: 'left' }}>
+                  <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#d97706' }}>فاتورة شراء</h3>
+                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>رقم الفاتورة:</strong> PUR-{printingPurchaseInvoice.invoiceNo || printingPurchaseInvoice.id}</p>
+                  <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ التوريد:</strong> {new Date(printingPurchaseInvoice.createdAt).toLocaleDateString('en-CA')}</p>
+                </div>
+              </div>
+
+              <div style={{ background: '#f8fafc', padding: '12px 15px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#0f172a' }}>بيانات المورد:</h4>
+                <p style={{ margin: '3px 0' }}><strong>المورد:</strong> {printingPurchaseInvoice.supplier?.name || 'توريد نقدي مباشر'}</p>
+                <p style={{ margin: '3px 0' }}><strong>الرقم الضريبي:</strong> {printingPurchaseInvoice.supplier?.taxNumber || '-'}</p>
+              </div>
+
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: '#0f172a', color: '#fff' }}>
+                    <th style={{ padding: '10px', textAlign: 'right' }}>المنتج</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>وحدة التوريد</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>الكمية</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>الوزن / ملاحظة</th>
+                    <th style={{ padding: '10px', textAlign: 'left' }}>الإجمالي</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <td style={{ padding: '10px', textAlign: 'right', fontWeight: 'bold' }}>{printingPurchaseInvoice.productName}</td>
+                    <td style={{ padding: '10px', textAlign: 'center' }}>{printingPurchaseInvoice.unitType}</td>
+                    <td style={{ padding: '10px', textAlign: 'center' }}>{printingPurchaseInvoice.quantity}</td>
+                    <td style={{ padding: '10px', textAlign: 'center' }}>{printingPurchaseInvoice.weightNote || '-'}</td>
+                    <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>{printingPurchaseInvoice.totalAmount} {t.currency}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div style={{ textAlign: 'left', fontSize: '15px', fontWeight: 'bold', borderTop: '2px solid #e2e8f0', paddingTop: '15px', color: '#d97706' }}>
+                الإجمالي النهائي للتوريد: {printingPurchaseInvoice.totalAmount} {t.currency}
+              </div>
             </div>
           </div>
         </div>
