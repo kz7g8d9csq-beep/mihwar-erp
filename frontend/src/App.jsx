@@ -309,7 +309,7 @@ function App() {
     return localStorage.getItem('mihwar_company_logo') || '';
   });
 
-  // المخزون
+  // المخزون (مع دعم رقم الصنف Item Code)
   const [inventory, setInventory] = useState(() => {
     const saved = localStorage.getItem('mihwar_inventory');
     return saved ? JSON.parse(saved) : [
@@ -1730,7 +1730,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 9: Inventory (مع استعادة رقم الصنف Item Code وإمكانية البحث والفلترة به) */}
+          {/* TAB 9: Inventory */}
           {activeTab === 'inventory' && (
             <div style={{ display: 'grid', gridTemplateColumns: user.role === 'cashier' ? '1fr' : '1fr 2fr', gap: '20px' }}>
               {user.role !== 'cashier' && (
@@ -2094,7 +2094,7 @@ function App() {
         </div>
       )}
 
-      {/* Invoice Print Modal */}
+      {/* Invoice Print Modal - بالشكل الأصلي تماماً (الشعار في الوسط، التفاصيل في اليسار) */}
       {printingInvoice && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
           <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -2106,13 +2106,9 @@ function App() {
             </div>
 
             <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px', textAlign: 'center' }}>
-                {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '120px', height: '120px', objectFit: 'contain', marginBottom: '10px', display: 'block', margin: '0 auto 10px auto' }} />) : null}
-                <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
-                <p style={{ margin: '3px 0', fontSize: '13px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+              
+              {/* الترويسة بالشكل الأصلي: الشعار والاسم في الوسط، والتفاصيل في اليسار */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
                 <div>
                   <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#d97706' }}>{t.taxInvoiceTitle}</h3>
                   <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>رقم الفاتورة:</strong> INV-{printingInvoice.invoiceNo}</p>
@@ -2121,6 +2117,12 @@ function App() {
                   {printingInvoice.dueDate && (<p style={{ margin: '2px 0', fontSize: '12px', color: '#f43f5e' }}><strong>مدة الاستحقاق:</strong> {printingInvoice.dueDate}</p>)}
                   <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
                 </div>
+                <div style={{ textAlign: 'center', margin: '0 auto' }}>
+                  {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '120px', height: '120px', objectFit: 'contain', marginBottom: '10px', display: 'block', margin: '0 auto 10px auto' }} />) : null}
+                  <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
+                  <p style={{ margin: '3px 0', fontSize: '13px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
+                </div>
+                <div></div>
               </div>
 
               <div style={{ background: '#f8fafc', padding: '12px 15px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', border: '1px solid #e2e8f0' }}>
@@ -2130,29 +2132,26 @@ function App() {
                 <p style={{ margin: '3px 0' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
               </div>
 
-              {/* جدول أصناف الفاتورة قابل للتمرير لاستيعاب أصناف متعددة وكثيرة */}
-              <div style={{ maxHeight: '350px', overflowY: 'auto', marginBottom: '20px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead>
-                    <tr style={{ background: '#0f172a', color: '#fff', position: 'sticky', top: 0, zIndex: 10 }}>
-                      <th style={{ padding: '10px', textAlign: 'right' }}>{t.itemDesc}</th>
-                      <th style={{ padding: '10px', textAlign: 'center' }}>{t.itemQuantity}</th>
-                      <th style={{ padding: '10px', textAlign: 'center' }}>{t.unitPriceCol}</th>
-                      <th style={{ padding: '10px', textAlign: 'left' }}>{t.totalCol}</th>
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: '#0f172a', color: '#fff' }}>
+                    <th style={{ padding: '10px', textAlign: 'right' }}>{t.itemDesc}</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>{t.itemQuantity}</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>{t.unitPriceCol}</th>
+                    <th style={{ padding: '10px', textAlign: 'left' }}>{t.totalCol}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(printingInvoice.items || []).map((it, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || it.name || 'خدمة عامة'}</td>
+                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity} {it.unitType ? `(${it.unitType})` : ''}</td>
+                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
+                      <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {(printingInvoice.items || []).map((it, idx) => (
-                      <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
-                        <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || it.name || 'خدمة عامة'}</td>
-                        <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity} {it.unitType ? `(${it.unitType})` : ''}</td>
-                        <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
-                        <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '15px' }}>
                 <img src={generateZatcaQR(printingInvoice, businessName)} alt="ZATCA QR" style={{ width: '100px', height: '100px' }} />
