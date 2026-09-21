@@ -415,7 +415,7 @@ function App() {
   const [purchasePieceCost, setPurchasePieceCost] = useState('');
   const [purchaseBoxCost, setPurchaseBoxCost] = useState('');
 
-  // الموارد البشرية
+  // الموارد البشرية (مع إضافة حالة البحث بالاسم أو الهوية)
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
@@ -423,6 +423,7 @@ function App() {
       { id: 2, name: 'محمد عبدالله الزهراني', idNumber: '288145789632', empNo: '21', role: 'مشرف خط إنتاج', dept: 'إنتاج وتعبئة', phone: '0501234567', salary: 5050, deductions: 50, vacations: 21, insurance: 'شامل الفئة ب', status: 'نشط', iqamaEnd: '2026-10-15', healthEnd: '2026-08-20', contractEnd: '2027-01-01' }
     ];
   });
+  const [hrSearchQuery, setHrSearchQuery] = useState('');
 
   const [deductionsList, setDeductionsList] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_deductions');
@@ -518,6 +519,9 @@ function App() {
   const filteredCustomersForPos = customers.filter(c => safeLower(c.name).includes(safeLower(posCustomerSearch)) || safeLower(c.nationalId).includes(safeLower(posCustomerSearch)) || safeLower(c.phone).includes(safeLower(posCustomerSearch)));
   const filteredProductsForPurchase = inventory.filter(p => safeLower(p.name).includes(safeLower(purchaseProductSearch)));
   const filteredEmployeesForHrDeduct = employees.filter(emp => safeLower(emp.name).includes(safeLower(hrDeductSearchQuery)) || safeLower(emp.idNumber).includes(safeLower(hrDeductSearchQuery)));
+  
+  // فلترة الموظفين في قسم الموارد البشرية بالاسم أو الهوية
+  const filteredEmployees = employees.filter(emp => safeLower(emp.name).includes(safeLower(hrSearchQuery)) || safeLower(emp.idNumber).includes(safeLower(hrSearchQuery)));
 
   const handleSaveEmployee = (e) => {
     e.preventDefault();
@@ -1788,7 +1792,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 11: HR */}
+          {/* TAB 11: HR (محدث بخانة البحث بالاسم أو الهوية فوق جدول الموظفين) */}
           {activeTab === 'hr' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -1812,7 +1816,10 @@ function App() {
               </div>
 
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📋 سجل الموظفين، الرواتب، الأجازات والوثائق</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                  <h3 style={{ margin: 0, fontSize: '17px' }}>📋 سجل الموظفين، الرواتب، الأجازات والوثائق</h3>
+                  <input type="text" value={hrSearchQuery} onChange={e => setHrSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم أو رقم الهوية..." style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '260px' }} />
+                </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '950px' }}>
                   <thead>
                     <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
@@ -1820,7 +1827,7 @@ function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {employees.map(emp => (
+                    {filteredEmployees.map(emp => (
                       <tr key={emp.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
                         <td style={{ padding: '12px', fontWeight: 'bold' }}>{emp.name} <span style={{ fontSize: '11px', color: theme.textMuted }}>(#{emp.empNo})</span></td>
                         <td style={{ padding: '12px' }}>{emp.idNumber}</td>
@@ -1837,6 +1844,9 @@ function App() {
                         </td>
                       </tr>
                     ))}
+                    {!filteredEmployees.length && (
+                      <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لا توجد نتائج مطابقة للبحث.</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -2088,13 +2098,14 @@ function App() {
             </div>
 
             <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px', textAlign: 'center' }}>
+                {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '120px', height: '120px', objectFit: 'contain', marginBottom: '10px', display: 'block', margin: '0 auto 10px auto' }} />) : null}
+                <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
+                <p style={{ margin: '3px 0', fontSize: '13px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
                 <div>
-                  {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '90px', height: '90px', objectFit: 'contain', marginBottom: '8px' }} />) : null}
-                  <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
-                  <p style={{ margin: '3px 0', fontSize: '12px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
-                </div>
-                <div style={{ textAlign: 'left' }}>
                   <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#d97706' }}>{t.taxInvoiceTitle}</h3>
                   <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>رقم الفاتورة:</strong> INV-{printingInvoice.invoiceNo}</p>
                   <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>الحالة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#f43f5e' : '#10b981', fontWeight: 'bold' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
