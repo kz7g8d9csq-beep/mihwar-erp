@@ -309,7 +309,6 @@ function App() {
     return localStorage.getItem('mihwar_company_logo') || '';
   });
 
-  // المخزون (مع دعم رقم الصنف Item Code)
   const [inventory, setInventory] = useState(() => {
     const saved = localStorage.getItem('mihwar_inventory');
     return saved ? JSON.parse(saved) : [
@@ -328,7 +327,6 @@ function App() {
   const [editProdStock, setEditProdStock] = useState('');
   const [editItemCode, setEditItemCode] = useState('');
 
-  // العملاء
   const [customers, setCustomers] = useState(() => {
     const saved = localStorage.getItem('mihwar_customers');
     return saved ? JSON.parse(saved) : [
@@ -349,7 +347,6 @@ function App() {
   const [editCustAddress, setEditCustAddress] = useState('');
   const [editCustGracePeriod, setEditCustGracePeriod] = useState('');
 
-  // الموردين
   const [suppliers, setSuppliers] = useState(() => {
     const saved = localStorage.getItem('mihwar_suppliers');
     return saved ? JSON.parse(saved) : [
@@ -370,14 +367,12 @@ function App() {
   const [editSuppAddress, setEditSuppAddress] = useState('');
   const [editSuppGracePeriod, setEditSuppGracePeriod] = useState('');
 
-  // الفواتير
   const [invoices, setInvoices] = useState(() => {
     const saved = localStorage.getItem('mihwar_invoices');
     return saved ? JSON.parse(saved) : [];
   });
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
   
-  // المبيعات والفوترة
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -390,18 +385,15 @@ function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
-  // نقطة البيع (POS)
   const [posCustomerSearch, setPosCustomerSearch] = useState('');
   const [posSelectedCustomerId, setPosSelectedCustomerId] = useState('');
   const [showPosPayModal, setShowPosPayModal] = useState(false);
   const [posPaymentMethod, setPosPaymentMethod] = useState('نقد');
 
-  // نافذة تأكيد طريقة السداد في سجل الفواتير
   const [showPayConfirmModal, setShowPayConfirmModal] = useState(false);
   const [payTargetInvoiceId, setPayTargetInvoiceId] = useState(null);
   const [payConfirmMethod, setPayConfirmMethod] = useState('نقد');
 
-  // المشتريات
   const [purchaseProductSearch, setPurchaseProductSearch] = useState('');
   const [purchaseInvoices, setPurchaseInvoices] = useState(() => {
     const saved = localStorage.getItem('mihwar_purchases');
@@ -418,7 +410,6 @@ function App() {
   const [purchasePieceCost, setPurchasePieceCost] = useState('');
   const [purchaseBoxCost, setPurchaseBoxCost] = useState('');
 
-  // الموارد البشرية
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
@@ -1177,7 +1168,7 @@ function App() {
         @media print {
           body * { visibility: hidden !important; }
           #zatca-printable-invoice, #zatca-printable-invoice * { visibility: visible !important; }
-          #zatca-printable-invoice { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; padding: 15mm !important; background: #fff !important; color: #000 !important; box-sizing: border-box !important; }
+          #zatca-printable-invoice { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; padding: 10mm !important; background: #fff !important; color: #000 !important; box-sizing: border-box !important; }
           .no-print-zone { display: none !important; }
           @page { size: A4 portrait; margin: 0mm; }
         }
@@ -2094,75 +2085,92 @@ function App() {
         </div>
       )}
 
-      {/* Invoice Print Modal - بالشكل الأصلي تماماً (الشعار في الوسط، التفاصيل في اليسار) */}
+      {/* ========================================================
+          🚀 التعديل الجذري والفاخر لقسم الفاتورة (طباعة وعرض) 🚀
+      ======================================================== */}
       {printingInvoice && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
-          <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={() => window.print()} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>🖨️ طباعة الفاتورة / PDF</button>
-              </div>
-              <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.closeModal}</button>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '15px' }}>
+          <div style={{ background: '#fff', color: '#0f172a', padding: '25px', borderRadius: '20px', maxWidth: '850px', width: '100%', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)' }}>
+            <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>
+              <button onClick={() => window.print()} style={{ background: 'linear-gradient(135deg, #d97706, #b45309)', color: '#fff', border: 'none', padding: '10px 22px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>🖨️ طباعة الفاتورة الفاخرة / PDF</button>
+              <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#64748b', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>{t.closeModal}</button>
             </div>
 
-            <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
+            <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#1e293b', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
               
-              {/* الترويسة بالشكل الأصلي: الشعار والاسم في الوسط، والتفاصيل في اليسار */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
-                <div>
-                  <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#d97706' }}>{t.taxInvoiceTitle}</h3>
-                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>رقم الفاتورة:</strong> INV-{printingInvoice.invoiceNo}</p>
-                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>الحالة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#f43f5e' : '#10b981', fontWeight: 'bold' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
-                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>طريقة الدفع:</strong> <span style={{ color: '#0284c7', fontWeight: 'bold' }}>{printingInvoice.paymentMethod || 'نقد'}</span></p>
-                  {printingInvoice.dueDate && (<p style={{ margin: '2px 0', fontSize: '12px', color: '#f43f5e' }}><strong>مدة الاستحقاق:</strong> {printingInvoice.dueDate}</p>)}
-                  <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
+              {/* شريط ترويسة راقي بتصميم بطاقة عصرية */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '3px solid #f1f5f9', paddingBottom: '20px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '70px', height: '70px', objectFit: 'contain', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '4px' }} />) : null}
+                  <div>
+                    <h2 style={{ margin: '0 0 3px 0', fontSize: '20px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>المملكة العربية السعودية • نظام محور المعتمد</p>
+                  </div>
                 </div>
-                <div style={{ textAlign: 'center', margin: '0 auto' }}>
-                  {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '120px', height: '120px', objectFit: 'contain', marginBottom: '10px', display: 'block', margin: '0 auto 10px auto' }} />) : null}
-                  <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
-                  <p style={{ margin: '3px 0', fontSize: '13px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
+                <div style={{ textAlign: 'left', background: '#f8fafc', padding: '12px 18px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <h3 style={{ margin: '0 0 6px 0', fontSize: '18px', color: '#d97706', fontWeight: '900' }}>{t.taxInvoiceTitle}</h3>
+                  <p style={{ margin: '2px 0', fontSize: '12px' }}><strong>رقم الفاتورة:</strong> <span style={{ color: '#0f172a', fontWeight: 'bold' }}>INV-{printingInvoice.invoiceNo}</span></p>
+                  <p style={{ margin: '2px 0', fontSize: '12px' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
                 </div>
-                <div></div>
               </div>
 
-              <div style={{ background: '#f8fafc', padding: '12px 15px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', border: '1px solid #e2e8f0' }}>
-                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#0f172a' }}>بيانات العميل:</h4>
-                <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
-                <p style={{ margin: '3px 0' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
-                <p style={{ margin: '3px 0' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
+              {/* بطاقة معلومات العميل وحالة السداد */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
+                <div style={{ background: '#f8fafc', padding: '14px 18px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#d97706', fontWeight: 'bold' }}>📍 بيانات العميل:</h4>
+                  <p style={{ margin: '3px 0', fontSize: '13px' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
+                  <p style={{ margin: '3px 0', fontSize: '13px' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
+                  <p style={{ margin: '3px 0', fontSize: '13px' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
+                </div>
+                <div style={{ background: '#f8fafc', padding: '14px 18px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <p style={{ margin: '3px 0', fontSize: '13px' }}><strong>حالة الفاتورة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#ef4444' : '#10b981', fontWeight: 'bold', padding: '2px 8px', background: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#fee2e2' : '#d1fae5', borderRadius: '6px' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
+                  <p style={{ margin: '5px 0', fontSize: '13px' }}><strong>طريقة الدفع:</strong> <span style={{ color: '#0284c7', fontWeight: 'bold' }}>{printingInvoice.paymentMethod || 'نقد'}</span></p>
+                  {printingInvoice.dueDate && (<p style={{ margin: '3px 0', fontSize: '12px', color: '#ef4444' }}><strong>مدة الاستحقاق:</strong> {printingInvoice.dueDate}</p>)}
+                </div>
               </div>
 
-              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
-                <thead>
-                  <tr style={{ background: '#0f172a', color: '#fff' }}>
-                    <th style={{ padding: '10px', textAlign: 'right' }}>{t.itemDesc}</th>
-                    <th style={{ padding: '10px', textAlign: 'center' }}>{t.itemQuantity}</th>
-                    <th style={{ padding: '10px', textAlign: 'center' }}>{t.unitPriceCol}</th>
-                    <th style={{ padding: '10px', textAlign: 'left' }}>{t.totalCol}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(printingInvoice.items || []).map((it, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || it.name || 'خدمة عامة'}</td>
-                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity} {it.unitType ? `(${it.unitType})` : ''}</td>
-                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
-                      <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
+              {/* جدول المنتجات الفاخر والمضغوط لاستغلال المساحات بأفضل شكل */}
+              <div style={{ overflowX: 'auto', marginBottom: '20px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
+                  <thead>
+                    <tr style={{ background: '#0f172a', color: '#fff', textAlign: 'right' }}>
+                      <th style={{ padding: '10px 12px', width: '5%' }}>#</th>
+                      <th style={{ padding: '10px 12px', width: '45%' }}>{t.itemDesc}</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'center', width: '15%' }}>{t.itemQuantity}</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'center', width: '15%' }}>{t.unitPriceCol}</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'left', width: '20%' }}>{t.totalCol}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {(printingInvoice.items || []).map((it, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                        <td style={{ padding: '8px 12px', color: '#64748b' }}>{idx + 1}</td>
+                        <td style={{ padding: '8px 12px', fontWeight: 'bold', color: '#0f172a' }}>{it.product?.name || it.name || 'خدمة عامة'}</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>{it.quantity} {it.unitType ? `(${it.unitType})` : ''}</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
+                        <td style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 'bold', color: '#047857' }}>{it.subtotal} {t.currency}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
+              {/* قسم QR والملخص المالي النهائي */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '15px' }}>
-                <img src={generateZatcaQR(printingInvoice, businessName)} alt="ZATCA QR" style={{ width: '100px', height: '100px' }} />
-                <div style={{ textAlign: 'left', fontSize: '14px', minWidth: '220px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span style={{ color: '#64748b' }}>{t.subtotal}</span><strong>{printingInvoice.subtotal} {t.currency}</strong></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span style={{ color: '#64748b' }}>{t.vatAmount}</span><strong>{printingInvoice.taxAmount} {t.currency}</strong></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '1px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#d97706' }}><strong>{t.totalDue}</strong><strong>{printingInvoice.totalAmount} {t.currency}</strong></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <img src={generateZatcaQR(printingInvoice, businessName)} alt="ZATCA QR" style={{ width: '95px', height: '95px', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '3px' }} />
+                  <div style={{ fontSize: '11px', color: '#64748b', maxWidth: '220px', lineHeight: '1.5' }}>
+                    <span>QR Code معتمد متوافق مع متطلبات هيئة الزكاة والضريبة والجمارك (ZATCA).</span>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'left', fontSize: '13.5px', minWidth: '250px', background: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '5px 0' }}><span style={{ color: '#64748b' }}>{t.subtotal}</span><strong>{printingInvoice.subtotal} {t.currency}</strong></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '5px 0' }}><span style={{ color: '#64748b' }}>{t.vatAmount}</span><strong>{printingInvoice.taxAmount} {t.currency}</strong></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '2px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#d97706', fontWeight: '900' }}><span>{t.totalDue}</span><span>{printingInvoice.totalAmount} {t.currency}</span></div>
                 </div>
               </div>
 
-              <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>{t.invoiceFooterNote}</div>
+              <div style={{ textAlign: 'center', marginTop: '25px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '12px' }}>{t.invoiceFooterNote}</div>
             </div>
           </div>
         </div>
