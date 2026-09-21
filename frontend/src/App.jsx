@@ -666,7 +666,6 @@ function App() {
     alert(`✅ تم تأكيد السداد بطريقة (${payConfirmMethod}) وتحويل الفاتورة إلى مدفوعة!`);
   };
 
-  // المبيعات والفوترة: مع خصم المخزون تلقائياً عند إصدار الفاتورة
   const handleAddItemToSalesCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
@@ -691,6 +690,7 @@ function App() {
     setCartItems(cartItems.filter((_, i) => i !== idx));
   };
 
+  // المبيعات والفوترة: مع خصم المخزون تلقائياً
   const handleSaveSalesInvoice = () => {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
@@ -699,16 +699,15 @@ function App() {
       const tax = sub * 0.15;
       const tot = sub + tax;
 
-      // 1. خصم المخزون تلقائياً عند بيع المنتجات
+      // خصم الكمية المباعة من المخزون تلقائياً
       const updatedInventory = inventory.map(prod => {
-        const matchingCartItems = cartItems.filter(item => item.productId === prod.id);
-        if (matchingCartItems.length > 0) {
-          const totalSoldQty = matchingCartItems.reduce((sum, item) => {
-            // إذا كان الوحدة كرتون وكل كرتون يحوي مثلا 12 أو حبة حسب المتاح، هنا نحسب القطع أو الكمية المباشرة
+        const matchingItems = cartItems.filter(item => item.productId === prod.id);
+        if (matchingItems.length > 0) {
+          const totalSold = matchingItems.reduce((sum, item) => {
             const multiplier = item.unitType === 'كرتون' ? (prod.boxSize || 12) : 1;
             return sum + (item.quantity * multiplier);
           }, 0);
-          return { ...prod, stock: Math.max(0, prod.stock - totalSoldQty) };
+          return { ...prod, stock: Math.max(0, prod.stock - totalSold) };
         }
         return prod;
       });
@@ -816,7 +815,7 @@ function App() {
     const prodId = Number(selectedPurchaseProdId);
     const targetProd = inventory.find(p => p.id === prodId);
 
-    // زيادة المخزون تلقائياً عند الشراء من المورد
+    // زيادة رصيد المخزون تلقائياً عند الشراء من المورد
     const updatedInventory = inventory.map(item => {
       if (item.id === prodId) {
         return { ...item, stock: Number(item.stock || 0) + qty };
@@ -1262,7 +1261,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 3: Sales (مع ربط خصم المخزون تلقائياً) */}
+          {/* TAB 3: Sales (مع ربط خصم المخزون تلقائياً عند إصدار الفاتورة) */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1383,7 +1382,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 5: Purchases (مع ربط زيادة المخزون تلقائياً عند الشراء من المورد) */}
+          {/* TAB 5: Purchases (مع ربط زيادة المخزون تلقائياً عند الشراء) */}
           {activeTab === 'purchases' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '600px', margin: 'auto' }}>
               <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>تسجيل فاتورة شراء وتوريد بضاعة</h2>
@@ -1930,7 +1929,7 @@ function App() {
                 <div style={{ textAlign: 'left', fontSize: '14px', minWidth: '220px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span style={{ color: '#64748b' }}>{t.subtotal}</span><strong>{printingInvoice.subtotal} {t.currency}</strong></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span style={{ color: '#64748b' }}>{t.vatAmount}</span><strong>{printingInvoice.taxAmount} {t.currency}</strong></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '1px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#d97706'>>()=><strong>{t.totalDue}</strong><strong>{printingInvoice.totalAmount} {t.currency}</strong></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '1px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#d97706' }}><strong>{t.totalDue}</strong><strong>{printingInvoice.totalAmount} {t.currency}</strong></div>
                 </div>
               </div>
 
