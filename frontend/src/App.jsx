@@ -507,7 +507,7 @@ function App() {
   const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)));
   const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)));
   const filteredInvoices = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(invoiceSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(invoiceSearchQuery)));
-  const filteredPurchaseInvoices = purchaseInvoices.filter(pi => safeLower(pi.id).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.productName).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.supplier?.name).includes(safeLower(purchaseInvoicesListSearch)));
+  const filteredPurchaseInvoices = purchaseInvoices.filter(pi => safeLower(pi.invoiceNo || pi.id).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.productName).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.supplier?.name).includes(safeLower(purchaseInvoicesListSearch)));
   const filteredReports = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(reportSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(reportSearchQuery)));
   const filteredCustomersForSales = customers.filter(c => safeLower(c.name).includes(safeLower(salesCustomerSearch)) || safeLower(c.nationalId).includes(safeLower(salesCustomerSearch)) || safeLower(c.phone).includes(safeLower(salesCustomerSearch)));
   const filteredCustomersForPos = customers.filter(c => safeLower(c.name).includes(safeLower(posCustomerSearch)) || safeLower(c.nationalId).includes(safeLower(posCustomerSearch)) || safeLower(c.phone).includes(safeLower(posCustomerSearch)));
@@ -816,7 +816,6 @@ function App() {
     }
   };
 
-  // المشتريات: حفظ فاتورة الشراء تلقائياً وإضافتها لسجل فواتير الشراء وربطها بالمخزون
   const handleSavePurchase = async () => {
     if (!selectedPurchaseProdId || !purchaseQty) {
       alert('يرجى اختيار المنتج والكمية الموردة');
@@ -882,6 +881,23 @@ function App() {
     setWeightInputValue('');
     setUnitGramOrKilo('لا يوجد');
     setPrintingPurchaseInvoice(newPurchaseInvoice);
+    setActiveTab('purchaseInvoicesList');
+  };
+
+  const handleExportPurchaseInvoices = () => {
+    const isAr = lang === 'ar';
+    const title = isAr ? 'تقرير_فواتير_الشراء' : 'Purchase_Invoices_Report';
+    const headers = isAr ? ['رقم الفاتورة', 'المورد', 'المنتج', 'وحدة التوريد', 'الكمية', 'الإجمالي (ر.س)', 'التاريخ'] : ['Invoice No', 'Supplier', 'Product', 'Unit Type', 'Quantity', 'Total (SAR)', 'Date'];
+    const rows = filteredPurchaseInvoices.map(pi => [
+      `#${pi.invoiceNo || pi.id}`,
+      pi.supplier?.name || (isAr ? 'توريد نقدي مباشر' : 'Direct Cash Supply'),
+      pi.productName,
+      pi.unitType || 'قطعة',
+      pi.quantity,
+      Number(pi.totalAmount || 0).toFixed(2),
+      new Date(pi.createdAt).toLocaleDateString('en-CA')
+    ]);
+    exportToExcel(title, headers, rows, lang);
   };
 
   const cartSubtotal = cartItems.reduce((sum, it) => sum + it.subtotal, 0);
@@ -979,42 +995,6 @@ function App() {
 
   const handleLogout = () => {
     setUser(null); localStorage.clear(); delete API.defaults.headers.common['Authorization']; setShowLanding(true); setAuthView('login');
-  };
-
-  const handleExportSales = () => {
-    const isAr = lang === 'ar';
-    const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
-    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'طريقة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Payment Method', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
-    const rows = filteredReports.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.paymentMethod || 'نقد', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
-    exportToExcel(title, headers, rows, lang);
-  };
-
-  const handleExportInventory = () => {
-    const isAr = lang === 'ar';
-    const title = isAr ? 'تقرير_جرد_المستودع_الحي' : 'Live_Inventory_Audit_Report';
-    const headers = isAr ? ['اسم المنتج', 'الرصيد بالحبة', 'الرصيد بالكرتون', 'سعر البيع'] : ['Product Name', 'Stock (Pieces)', 'Stock (Cartons)', 'Sale Price'];
-    const rows = filteredInventory.map(i => {
-      const boxSize = Number(i.boxSize || 12);
-      const cartons = (i.stock / boxSize).toFixed(1);
-      return [i.name, `${i.stock} حبة`, `${cartons} كرتون`, Number(i.price).toFixed(2)];
-    });
-    exportToExcel(title, headers, rows, lang);
-  };
-
-  const handleExportCustomers = () => {
-    const isAr = lang === 'ar';
-    const title = isAr ? 'دليل_العملاء' : 'Clients_Directory';
-    const headers = isAr ? ['الاسم', 'الهوية', 'الهاتف'] : ['Name', 'ID', 'Phone'];
-    const rows = filteredCustomers.map(c => [c.name, c.nationalId || '-', c.phone || '-']);
-    exportToExcel(title, headers, rows, lang);
-  };
-
-  const handleExportSuppliers = () => {
-    const isAr = lang === 'ar';
-    const title = isAr ? 'دليل_الموردين' : 'Suppliers_Directory';
-    const headers = isAr ? ['اسم المورد', 'الرقم الضريبي', 'الهاتف'] : ['Supplier Name', 'Tax No', 'Phone'];
-    const rows = filteredSuppliers.map(s => [s.name, s.taxNumber || '-', s.phone || '-']);
-    exportToExcel(title, headers, rows, lang);
   };
 
   if (!user && showLanding) {
@@ -1393,7 +1373,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 4: Sales Invoices List (سجل فواتير المبيعات) */}
+          {/* TAB 4: Sales Invoices List */}
           {activeTab === 'invoicesList' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -1435,13 +1415,14 @@ function App() {
             </div>
           )}
 
-          {/* TAB 5: Purchase Invoices List (سجل فواتير الشراء - القسم الجديد) */}
+          {/* TAB 5: Purchase Invoices List (سجل فواتير الشراء - مع زر تصدير Excel كما طلبت) */}
           {activeTab === 'purchaseInvoicesList' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <h2 style={{ margin: 0, fontSize: '18px' }}>📥 سجل فواتير الشراء</h2>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                   <input type="text" value={purchaseInvoicesListSearch} onChange={e => setPurchaseInvoicesListSearch(e.target.value)} placeholder="🔍 ابحث برقم الفاتورة أو المنتج أو المورد..." style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '280px' }} />
+                  <button onClick={handleExportPurchaseInvoices} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير إلى Excel 📥</button>
                 </div>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '700px' }}>
@@ -1480,7 +1461,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 6: Purchases (قسم المشتريات) */}
+          {/* TAB 6: Purchases */}
           {activeTab === 'purchases' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '650px', margin: 'auto' }}>
               <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>تسجيل فاتورة شراء وتوريد بضاعة</h2>
@@ -2014,7 +1995,7 @@ function App() {
         </div>
       )}
 
-      {/* Invoice Print Modal (مع إظهار الوحدة بجانب الكمية في الفاتورة المطبوعة) */}
+      {/* Invoice Print Modal */}
       {printingInvoice && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
           <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -2085,7 +2066,7 @@ function App() {
         </div>
       )}
 
-      {/* Purchase Invoice Print Modal (معاينة فاتورة الشراء) */}
+      {/* Purchase Invoice Print Modal */}
       {printingPurchaseInvoice && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
           <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
