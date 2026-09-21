@@ -179,6 +179,7 @@ const dict = {
     customers: 'Clients',
     suppliers: 'Suppliers',
     inventory: 'Inventory',
+    reports: 'Reports',
     settings: 'Settings',
     production: 'Production',
     hr: 'HR',
@@ -1955,7 +1956,7 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الرقم الضريبي</label><input type="text" value={editSuppTaxNumber} onChange={e=>setEditSuppTaxNumber(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editSuppPhone} onChange={e=>setEditSuppPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editSuppAddress} onChange={e=>setEditSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث المورد</button>
                 <button type="button" onClick={() => setShowEditSuppModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
@@ -2084,130 +2085,79 @@ function App() {
         </div>
       )}
 
-      {/* Invoice Print Modal - التنسيق العصري والمطور للفاتورة */}
+      {/* Invoice Print Modal - بتصميم هندسي حديث ومنظم مع دعم إضافة أصناف كثيرة */}
       {printingInvoice && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '15px' }}>
-          <div style={{ background: '#fff', color: '#0f172a', padding: '32px', borderRadius: '18px', maxWidth: '750px', width: '100%', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
+          <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '780px', width: '100%', maxHeight: '92vh', overflowY: 'auto' }}>
             
-            {/* شريط الإجراءات والطباعة */}
-            <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '14px', marginBottom: '20px' }}>
-              <button onClick={() => window.print()} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '9px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                🖨️ طباعة الفاتورة / PDF
-              </button>
-              <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>
-                {t.closeModal}
-              </button>
+            <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '12px', marginBottom: '20px' }}>
+              <button onClick={() => window.print()} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 18px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>🖨️ طباعة الفاتورة / PDF</button>
+              <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>{t.closeModal}</button>
             </div>
 
-            {/* صفحة الفاتورة القابلة للطباعة */}
-            <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#0f172a', padding: '10px 5px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
+            <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
               
-              {/* 1. الترويسة الرئيسية مع الشعار في الوسط بدقة وتناسق كامل */}
-              <div style={{ textAlign: 'center', marginBottom: '22px', paddingBottom: '18px', borderBottom: '2px solid #e2e8f0' }}>
-                {companyLogo ? (
-                  <img src={companyLogo} alt="Logo" style={{ maxHeight: '100px', maxWidth: '220px', objectFit: 'contain', margin: '0 auto 10px auto', display: 'block' }} />
-                ) : null}
-                <h2 style={{ margin: '0 0 4px 0', fontSize: '22px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
-                <p style={{ margin: '0 0 10px 0', fontSize: '12.5px', color: '#64748b' }}>المملكة العربية السعودية • جدة</p>
-                <div style={{ display: 'inline-block', background: '#fef3c7', color: '#b45309', padding: '4px 18px', borderRadius: '20px', fontSize: '13px', fontWeight: '900', border: '1px solid #fde68a' }}>
-                  {t.taxInvoiceTitle}
+              {/* الشعار في وسط الصفحة تماماً */}
+              <div style={{ textAlign: 'center', marginBottom: '25px', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px' }}>
+                {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '110px', height: '110px', objectFit: 'contain', margin: '0 auto 8px auto', display: 'block' }} />) : null}
+                <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h1>
+                <p style={{ margin: '3px 0', fontSize: '12px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
+              </div>
+
+              {/* تفاصيل الفاتورة والعميل مقسمة بشكل مرتب جداً */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '13px' }}>
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#d97706', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px' }}>📄 تفاصيل الفاتورة الضريبية</h4>
+                  <p style={{ margin: '3px 0' }}><strong>رقم الفاتورة:</strong> INV-{printingInvoice.invoiceNo}</p>
+                  <p style={{ margin: '3px 0' }}><strong>الحالة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#f43f5e' : '#10b981', fontWeight: 'bold' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
+                  <p style={{ margin: '3px 0' }}><strong>طريقة الدفع:</strong> <span style={{ color: '#0284c7', fontWeight: 'bold' }}>{printingInvoice.paymentMethod || 'نقد'}</span></p>
+                  {printingInvoice.dueDate && (<p style={{ margin: '3px 0', color: '#f43f5e' }}><strong>مدة الاستحقاق:</strong> {printingInvoice.dueDate}</p>)}
+                  <p style={{ margin: '3px 0', color: '#64748b' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
+                </div>
+
+                <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '13px' }}>
+                  <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#0f172a', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px' }}>👤 بيانات العميل:</h4>
+                  <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
+                  <p style={{ margin: '3px 0' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
+                  <p style={{ margin: '3px 0' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
                 </div>
               </div>
 
-              {/* 2. بطاقات منظمة ومقسمة لبيانات الفاتورة والعميل جنباً إلى جنب */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '22px' }}>
-                {/* بطاقة تفاصيل الفاتورة */}
-                <div style={{ background: '#f8fafc', padding: '14px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12.5px' }}>
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '13.5px', color: '#d97706', fontWeight: '900', borderBottom: '1px dashed #cbd5e1', paddingBottom: '6px' }}>تفاصيل الفاتورة:</h4>
-                  <p style={{ margin: '4px 0', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>رقم الفاتورة:</span>
-                    <strong>INV-{printingInvoice.invoiceNo}</strong>
-                  </p>
-                  <p style={{ margin: '4px 0', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>تاريخ الإصدار:</span>
-                    <span>{new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</span>
-                  </p>
-                  <p style={{ margin: '4px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#64748b' }}>حالة الدفع:</span>
-                    <span style={{ background: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#fee2e2' : '#d1fae5', color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#dc2626' : '#059669', padding: '2px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px' }}>
-                      {printingInvoice.paymentStatus || 'مدفوعة'}
-                    </span>
-                  </p>
-                  <p style={{ margin: '4px 0', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>طريقة الدفع:</span>
-                    <strong>{printingInvoice.paymentMethod || 'نقد'}</strong>
-                  </p>
-                  {printingInvoice.dueDate && (
-                    <p style={{ margin: '4px 0', display: 'flex', justifyContent: 'space-between', color: '#dc2626' }}>
-                      <span>مدة الاستحقاق:</span>
-                      <strong>{printingInvoice.dueDate}</strong>
-                    </p>
-                  )}
-                </div>
-
-                {/* بطاقة بيانات العميل */}
-                <div style={{ background: '#f8fafc', padding: '14px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12.5px' }}>
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '13.5px', color: '#0f172a', fontWeight: '900', borderBottom: '1px dashed #cbd5e1', paddingBottom: '6px' }}>بيانات العميل:</h4>
-                  <p style={{ margin: '4px 0', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>{t.clientCol}</span>
-                    <strong>{printingInvoice.customer?.name || 'عميل نقدي عام'}</strong>
-                  </p>
-                  <p style={{ margin: '4px 0', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>{t.clientPhone}</span>
-                    <span>{printingInvoice.customer?.phone || '0556682463'}</span>
-                  </p>
-                  <p style={{ margin: '4px 0', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>{t.clientEmail}</span>
-                    <span>{printingInvoice.customer?.email || 'customer@gmail.com'}</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* 3. جدول بنود الفاتورة بتصميم أنيق */}
-              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '22px', fontSize: '12.5px', overflow: 'hidden', borderRadius: '8px' }}>
-                <thead>
-                  <tr style={{ background: '#0f172a', color: '#fff' }}>
-                    <th style={{ padding: '10px 14px', textAlign: 'right' }}>{t.itemDesc}</th>
-                    <th style={{ padding: '10px 14px', textAlign: 'center' }}>{t.itemQuantity}</th>
-                    <th style={{ padding: '10px 14px', textAlign: 'center' }}>{t.unitPriceCol}</th>
-                    <th style={{ padding: '10px 14px', textAlign: 'left' }}>{t.totalCol}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(printingInvoice.items || []).map((it, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#fafafa' }}>
-                      <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: '600' }}>{it.product?.name || it.name || 'خدمة عامة'}</td>
-                      <td style={{ padding: '10px 14px', textAlign: 'center' }}>{it.quantity} {it.unitType ? `(${it.unitType})` : ''}</td>
-                      <td style={{ padding: '10px 14px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
-                      <td style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
+              {/* جدول الأصناف المصمم لاستيعاب بنود كثيرة بشكل مرتب مع تمرير احترافي */}
+              <div style={{ maxHeight: '350px', overflowY: 'auto', marginBottom: '20px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ background: '#0f172a', color: '#fff', position: 'sticky', top: 0, zIndex: 10 }}>
+                      <th style={{ padding: '10px', textAlign: 'right' }}>{t.itemDesc}</th>
+                      <th style={{ padding: '10px', textAlign: 'center' }}>{t.itemQuantity}</th>
+                      <th style={{ padding: '10px', textAlign: 'center' }}>{t.unitPriceCol}</th>
+                      <th style={{ padding: '10px', textAlign: 'left' }}>{t.totalCol}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {(printingInvoice.items || []).map((it, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#f9fafb' }}>
+                        <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || it.name || 'خدمة عامة'}</td>
+                        <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity} {it.unitType ? `(${it.unitType})` : ''}</td>
+                        <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
+                        <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-              {/* 4. رمز الـ QR وحسبة المجاميع النهائية */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '18px 20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                  <img src={generateZatcaQR(printingInvoice, businessName)} alt="ZATCA QR" style={{ width: '100px', height: '100px', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '4px', background: '#fff' }} />
-                  <div style={{ fontSize: '11px', color: '#64748b' }}>
-                    <p style={{ margin: '0 0 3px 0', fontWeight: 'bold', color: '#0f172a' }}>رمز الاستجابة السريع (ZATCA QR)</p>
-                    <p style={{ margin: 0 }}>متوافق مع متطلبات هيئة الزكاة والضريبة والجمارك</p>
-                  </div>
-                </div>
-                <div style={{ textAlign: 'left', fontSize: '13.5px', minWidth: '240px' }}>
+              {/* QR والملخص المالي */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '15px' }}>
+                <img src={generateZatcaQR(printingInvoice, businessName)} alt="ZATCA QR" style={{ width: '100px', height: '100px' }} />
+                <div style={{ textAlign: 'left', fontSize: '14px', minWidth: '220px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span style={{ color: '#64748b' }}>{t.subtotal}</span><strong>{printingInvoice.subtotal} {t.currency}</strong></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span style={{ color: '#64748b' }}>{t.vatAmount}</span><strong>{printingInvoice.taxAmount} {t.currency}</strong></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '2px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#d97706', fontWeight: '900' }}>
-                    <span>{t.totalDue}</span>
-                    <span>{printingInvoice.totalAmount} {t.currency}</span>
-                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '1px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#d97706' }}><strong>{t.totalDue}</strong><strong>{printingInvoice.totalAmount} {t.currency}</strong></div>
                 </div>
               </div>
 
-              {/* 5. تذييل الفاتورة */}
-              <div style={{ textAlign: 'center', marginTop: '25px', fontSize: '11px', color: '#94a3b8', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>
-                {t.invoiceFooterNote}
-              </div>
+              <div style={{ textAlign: 'center', marginTop: '25px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>{t.invoiceFooterNote}</div>
             </div>
           </div>
         </div>
