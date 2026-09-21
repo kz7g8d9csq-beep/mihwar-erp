@@ -366,19 +366,20 @@ function App() {
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
   const [reportSearchQuery, setReportSearchQuery] = useState('');
   
-  // المبيعات والفوترة
+  // المبيعات والفوترة (تحديد نوع الكمية قطعة واحدة أو كرتون وطرق الدفع نقد، شبكة، حوالة)
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
+  const [itemUnitType, setItemUnitType] = useState('قطعة واحدة'); // قطعة واحدة أو كرتون
   const [itemQty, setItemQty] = useState(1);
   const [itemPrice, setItemPrice] = useState('');
   const [invoiceStatus, setInvoiceStatus] = useState('مدفوعة');
-  const [paymentMethod, setPaymentMethod] = useState('نقد');
+  const [paymentMethod, setPaymentMethod] = useState('نقد'); // نقد، شبكة، حوالة
   const [dueDateInput, setDueDateInput] = useState('');
   const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
-  // نقطة البيع (POS)
+  // نقطة البيع السريعة (POS)
   const [posCustomerSearch, setPosCustomerSearch] = useState('');
   const [posSelectedCustomerId, setPosSelectedCustomerId] = useState('');
   const [showPosPayModal, setShowPosPayModal] = useState(false);
@@ -673,16 +674,16 @@ function App() {
     if (qty <= 0) return;
     const price = itemPrice !== '' && !isNaN(Number(itemPrice)) ? Number(itemPrice) : product.price;
 
-    const existing = cartItems.find(it => it.productId === product.id && it.unitPrice === price);
+    const existing = cartItems.find(it => it.productId === product.id && it.unitPrice === price && it.unitType === itemUnitType);
     const reqQ = (existing ? existing.quantity : 0) + qty;
     if (reqQ > product.stock) { alert('Stock limit exceeded'); return; }
 
     if (existing) {
-      setCartItems(cartItems.map(it => (it.productId === product.id && it.unitPrice === price) ? { ...it, quantity: reqQ, subtotal: Number((reqQ * price).toFixed(2)) } : it));
+      setCartItems(cartItems.map(it => (it.productId === product.id && it.unitPrice === price && it.unitType === itemUnitType) ? { ...it, quantity: reqQ, subtotal: Number((reqQ * price).toFixed(2)) } : it));
     } else {
-      setCartItems([...cartItems, { productId: product.id, name: product.name, quantity: qty, unitPrice: price, subtotal: Number((qty * price).toFixed(2)) }]);
+      setCartItems([...cartItems, { productId: product.id, name: product.name, unitType: itemUnitType, quantity: qty, unitPrice: price, subtotal: Number((qty * price).toFixed(2)) }]);
     }
-    setSelectedProductId(''); setItemQty(1); setItemPrice('');
+    setSelectedProductId(''); setItemQty(1); setItemPrice(''); setItemUnitType('قطعة واحدة');
   };
 
   const handleRemoveSalesCartItem = (idx) => {
@@ -702,7 +703,7 @@ function App() {
         invoiceNo: Math.floor(100000 + Math.random() * 900000),
         createdAt: new Date().toISOString(),
         customer: customers.find(c => c.id === Number(selectedCustomerId)) || null,
-        items: cartItems.map(it => ({ product: { name: it.name }, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
+        items: cartItems.map(it => ({ product: { name: it.name }, unitType: it.unitType, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
         subtotal: sub.toFixed(2),
         taxAmount: tax.toFixed(2),
         totalAmount: tot.toFixed(2),
@@ -722,7 +723,8 @@ function App() {
       }
       localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
 
-      setCartItems([]); 
+      setCartItems(''); 
+      setCartItems([]);
       setDueDateInput('');
       setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
@@ -925,8 +927,8 @@ function App() {
   const handleExportSales = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
-    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
-    const rows = filteredReports.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
+    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'طريقة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Payment Method', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
+    const rows = filteredReports.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.paymentMethod || 'نقد', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -1112,38 +1114,6 @@ function App() {
                   <span style={{ fontSize: '12px', color: theme.textMuted }}>قطعة</span>
                 </div>
               </div>
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📅 تحليل أداء مبيعات السنة الحالية ({currentYear})</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>الشهر</th><th style={{ padding: '10px' }}>عدد الفواتير</th><th style={{ padding: '10px' }}>إجمالي المبيعات (ر.س)</th><th style={{ padding: '10px' }}>نسبة الأداء</th></tr></thead>
-                  <tbody>
-                    {monthlyData.map((m, idx) => (
-                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{m.monthName}</td>
-                        <td style={{ padding: '10px' }}>{m.count} فاتورة</td>
-                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#10b981' }}>{m.total.toFixed(2)} {t.currency}</td>
-                        <td style={{ padding: '10px' }}><div style={{ width: '100%', maxWidth: '150px', height: '6px', background: theme.bgMain, borderRadius: '3px', overflow: 'hidden', border: `1px solid ${theme.border}` }}><div style={{ width: `${Math.min(100, (m.total / (totalSalesVal || 1)) * 100)}%`, height: '100%', background: '#d97706' }}></div></div></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📊 سجل النمو المالي للسنوات الماضية (حتى 10 سنوات)</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>السنة المالية</th><th style={{ padding: '10px' }}>عدد الفواتير</th><th style={{ padding: '10px' }}>إجمالي المبيعات</th><th style={{ padding: '10px' }}>صافي الربح التقديري</th></tr></thead>
-                  <tbody>
-                    {pastYearsData.map((y, idx) => (
-                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#d97706' }}>{y.year}</td>
-                        <td style={{ padding: '10px' }}>{y.count} فاتورة</td>
-                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{y.totalSales.toFixed(2)} {t.currency}</td>
-                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#10b981' }}>+{y.totalProfit.toFixed(2)} {t.currency}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </div>
           )}
 
@@ -1205,32 +1175,7 @@ function App() {
             </div>
           )}
 
-          {/* نافذة اختيار طريقة الدفع في نقطة البيع السريعة */}
-          {showPosPayModal && (
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3100, padding: '15px' }}>
-              <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '420px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
-                  <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '900', color: '#10b981' }}>اختيار طريقة الدفع السريع</h3>
-                  <button onClick={() => setShowPosPayModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>طريقة الدفع (نقداً أو شبكة):</label>
-                    <select value={posPaymentMethod} onChange={e => setPosPaymentMethod(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
-                      <option value="نقد">نقداً</option>
-                      <option value="شبكة">شبكة</option>
-                    </select>
-                  </div>
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
-                    <button type="button" onClick={handleSavePosInvoice} disabled={isSubmittingSale} style={{ flex: 1, background: '#10b981', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تأكيد وإصدار الفاتورة 🚀</button>
-                    <button type="button" onClick={() => setShowPosPayModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إلغاء</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: Sales */}
+          {/* TAB 3: Sales (مع إضافة خيار تحديد نوع الكمية قطعة واحدة أو كرتون بين المنتج والسعر، وقائمة طرق الدفع نقد/شبكة/حوالة وطباعتها في الفاتورة فقط بناءً على طلبك) */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1243,12 +1188,21 @@ function App() {
                     {filteredCustomersForSales.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '10px', marginBottom: '15px', alignItems: 'end' }}>
+
+                {/* تخطيط القسم المطلوب بدقة: [اختيار المنتج] | [نوع الكمية: قطعة واحدة أو كرتون] | [السعر] | [الكمية] | [زر إضافة] */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr 1fr 1fr auto', gap: '8px', marginBottom: '15px', alignItems: 'end' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>اختيار المنتج</label>
                     <select value={selectedProductId} onChange={e => { setSelectedProductId(e.target.value); const p = inventory.find(x => x.id === Number(e.target.value)); if (p) setItemPrice(p.price); }} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
                       <option value="">-- اختر المنتج --</option>
                       {inventory.map(p=><option key={p.id} value={p.id}>{p.name} (متوفر: {p.stock})</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>نوع الكمية</label>
+                    <select value={itemUnitType} onChange={e => setItemUnitType(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
+                      <option value="قطعة واحدة">قطعة واحدة</option>
+                      <option value="كرتون">كرتون</option>
                     </select>
                   </div>
                   <div>
@@ -1265,10 +1219,24 @@ function App() {
                   </div>
                   <button onClick={handleAddItemToSalesCart} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '11px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>➕ إضافة</button>
                 </div>
+
                 <div style={{ marginBottom: '20px', background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '13px', fontWeight: 'bold' }}>حالة الدفع:</span>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="payStatus" checked={invoiceStatus === 'مدفوعة'} onChange={() => setInvoiceStatus('مدفوعة')} /> مدفوعة</label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="payStatus" checked={invoiceStatus === 'غير مدفوعة'} onChange={() => setInvoiceStatus('غير مدفوعة')} /> غير مدفوعة (أجل)</label>
+
+                  {/* قائمة منسدلة لطريقة الدفع عند اختيار "مدفوعة" تحتوي على ثلاثة خيارات (نقد، شبكة، حوالة) فقط */}
+                  {invoiceStatus === 'مدفوعة' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '10px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#10b981' }}>طريقة الدفع:</span>
+                      <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #10b981', background: theme.cardBg, color: theme.textDark, fontSize: '12px', outline: 'none' }}>
+                        <option value="نقد">نقد</option>
+                        <option value="شبكة">شبكة</option>
+                        <option value="حوالة">حوالة</option>
+                      </select>
+                    </div>
+                  )}
+
                   {invoiceStatus === 'غير مدفوعة' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 'auto' }}>
                       <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f43f5e' }}>مدة الاستحقاق:</span>
@@ -1276,20 +1244,22 @@ function App() {
                     </div>
                   )}
                 </div>
+
                 <h3 style={{ margin: '0 0 10px 0', fontSize: '15px' }}>🛒 محتويات الفاتورة الحالية</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '20px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '8px' }}>المنتج</th><th style={{ padding: '8px' }}>الكمية</th><th style={{ padding: '8px' }}>السعر</th><th style={{ padding: '8px' }}>المجموع</th><th></th></tr></thead>
+                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '8px' }}>المنتج</th><th style={{ padding: '8px' }}>نوع الكمية</th><th style={{ padding: '8px' }}>العدد</th><th style={{ padding: '8px' }}>السعر</th><th style={{ padding: '8px' }}>المجموع</th><th></th></tr></thead>
                   <tbody>
                     {cartItems.map((it, idx) => (
                       <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
                         <td style={{ padding: '8px' }}>{it.name}</td>
+                        <td style={{ padding: '8px', textAlign: 'center' }}>{it.unitType || 'قطعة واحدة'}</td>
                         <td style={{ padding: '8px', textAlign: 'center' }}>{it.quantity}</td>
                         <td style={{ padding: '8px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
                         <td style={{ padding: '8px', color: '#10b981', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
                         <td style={{ padding: '8px' }}><button onClick={() => handleRemoveSalesCartItem(idx)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>✖</button></td>
                       </tr>
                     ))}
-                    {!cartItems.length && (<tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لم يتم إضافة أي صنف للفاتورة بعد.</td></tr>)}
+                    {!cartItems.length && (<tr><td colSpan="6" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لم يتم إضافة أي صنف للفاتورة بعد.</td></tr>)}
                   </tbody>
                 </table>
                 <button onClick={handleSaveSalesInvoice} disabled={!cartItems.length || isSubmittingSale} style={{ width: '100%', background: '#10b981', color: '#fff', padding: '14px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>إتمام الدفع وإصدار الفاتورة 💳</button>
@@ -1766,7 +1736,7 @@ function App() {
               </div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{editingEmpId ? t.updateEmp : t.saveEmp}</button>
-                <button type="button" onClick={() => setShowAddEmpModal(false)} style={{ flex: '1', background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
+                <button type="button" onClick={() => setShowAddEmpModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
               </div>
             </form>
           </div>
