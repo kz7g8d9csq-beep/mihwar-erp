@@ -366,15 +366,15 @@ function App() {
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
   const [reportSearchQuery, setReportSearchQuery] = useState('');
   
-  // المبيعات والفوترة
+  // المبيعات والفوترة (مع خيار الوحدة: قطعة أو كرتون وطرق الدفع: نقد، شبكة، حوالة)
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
-  const [itemUnitType, setItemUnitType] = useState('قطعة واحدة');
+  const [salesUnitType, setSalesUnitType] = useState('قطعة'); // قطعة أو كرتون[cite: 5]
   const [itemQty, setItemQty] = useState(1);
   const [itemPrice, setItemPrice] = useState('');
   const [invoiceStatus, setInvoiceStatus] = useState('مدفوعة');
-  const [paymentMethod, setPaymentMethod] = useState('نقد');
+  const [paymentMethod, setPaymentMethod] = useState('نقد'); // نقد أو شبكة أو حوالة[cite: 5]
   const [dueDateInput, setDueDateInput] = useState('');
   const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
@@ -666,6 +666,7 @@ function App() {
     alert(`✅ تم تأكيد السداد بطريقة (${payConfirmMethod}) وتحويل الفاتورة إلى مدفوعة!`);
   };
 
+  // دالة إضافة المنتج للسلة مع دعم تحديد (قطعة أو كرتون) وخصم المخزون تلقائياً
   const handleAddItemToSalesCart = () => {
     if (!selectedProductId) return;
     const product = inventory.find(p => p.id === Number(selectedProductId));
@@ -674,23 +675,30 @@ function App() {
     if (qty <= 0) return;
     const price = itemPrice !== '' && !isNaN(Number(itemPrice)) ? Number(itemPrice) : product.price;
 
-    const existing = cartItems.find(it => it.productId === product.id && it.unitPrice === price && it.unitType === itemUnitType);
+    const existing = cartItems.find(it => it.productId === product.id && it.unitPrice === price && it.unitType === salesUnitType);
     const reqQ = (existing ? existing.quantity : 0) + qty;
-    if (reqQ > product.stock) { alert('الكمية المطلوبة تتجاوز الرصيد المتوفر في المخزون!'); return; }
+    
+    const multiplier = salesUnitType === 'كرتون' ? (product.boxSize || 12) : 1;
+    const totalPiecesReq = reqQ * multiplier;
+
+    if (totalPiecesReq > product.stock) { 
+      alert('الكمية المطلوبة تتجاوز الرصيد المتوفر في المخزون!'); 
+      return; 
+    }
 
     if (existing) {
-      setCartItems(cartItems.map(it => (it.productId === product.id && it.unitPrice === price && it.unitType === itemUnitType) ? { ...it, quantity: reqQ, subtotal: Number((reqQ * price).toFixed(2)) } : it));
+      setCartItems(cartItems.map(it => (it.productId === product.id && it.unitPrice === price && it.unitType === salesUnitType) ? { ...it, quantity: reqQ, subtotal: Number((reqQ * price).toFixed(2)) } : it));
     } else {
-      setCartItems([...cartItems, { productId: product.id, name: product.name, unitType: itemUnitType, quantity: qty, unitPrice: price, subtotal: Number((qty * price).toFixed(2)) }]);
+      setCartItems([...cartItems, { productId: product.id, name: product.name, unitType: salesUnitType, quantity: qty, unitPrice: price, subtotal: Number((qty * price).toFixed(2)) }]);
     }
-    setSelectedProductId(''); setItemQty(1); setItemPrice(''); setItemUnitType('قطعة واحدة');
+    setSelectedProductId(''); setItemQty(1); setItemPrice(''); setSalesUnitType('قطعة');
   };
 
   const handleRemoveSalesCartItem = (idx) => {
     setCartItems(cartItems.filter((_, i) => i !== idx));
   };
 
-  // المبيعات والفوترة: مع خصم المخزون تلقائياً
+  // حفظ فاتورة المبيعات مع خصم المخزون تلقائياً وطباعة طريقة الدفع (نقد، شبكة، حوالة)
   const handleSaveSalesInvoice = () => {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
@@ -699,15 +707,15 @@ function App() {
       const tax = sub * 0.15;
       const tot = sub + tax;
 
-      // خصم الكمية المباعة من المخزون تلقائياً
+      // خصم الكمية من المخزون تلقائياً
       const updatedInventory = inventory.map(prod => {
         const matchingItems = cartItems.filter(item => item.productId === prod.id);
         if (matchingItems.length > 0) {
-          const totalSold = matchingItems.reduce((sum, item) => {
+          const totalSoldPieces = matchingItems.reduce((sum, item) => {
             const multiplier = item.unitType === 'كرتون' ? (prod.boxSize || 12) : 1;
             return sum + (item.quantity * multiplier);
           }, 0);
-          return { ...prod, stock: Math.max(0, prod.stock - totalSold) };
+          return { ...prod, stock: Math.max(0, prod.stock - totalSoldPieces) };
         }
         return prod;
       });
@@ -750,7 +758,6 @@ function App() {
     }
   };
 
-  // نقطة البيع السريعة (POS): مع خصم المخزون تلقائياً
   const handleSavePosInvoice = () => {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
@@ -759,7 +766,6 @@ function App() {
       const tax = sub * 0.15;
       const tot = sub + tax;
 
-      // خصم المخزون تلقائياً
       const updatedInventory = inventory.map(prod => {
         const cartMatch = cartItems.find(item => item.productId === prod.id);
         if (cartMatch) {
@@ -803,7 +809,6 @@ function App() {
     }
   };
 
-  // المشتريات: مع زيادة المخزون تلقائياً عند التوريد من المورد
   const handleSavePurchase = async () => {
     if (!selectedPurchaseProdId || !purchaseQty || !purchaseCost) {
       alert('يرجى تحديد المنتج والكمية وسعر التكلفة');
@@ -815,7 +820,6 @@ function App() {
     const prodId = Number(selectedPurchaseProdId);
     const targetProd = inventory.find(p => p.id === prodId);
 
-    // زيادة رصيد المخزون تلقائياً عند الشراء من المورد
     const updatedInventory = inventory.map(item => {
       if (item.id === prodId) {
         return { ...item, stock: Number(item.stock || 0) + qty };
@@ -1178,7 +1182,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 2: POS (مع ربط خصم المخزون تلقائياً) */}
+          {/* TAB 2: POS */}
           {activeTab === 'pos' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '20px' }}>
@@ -1261,25 +1265,34 @@ function App() {
             </div>
           )}
 
-          {/* TAB 3: Sales (مع ربط خصم المخزون تلقائياً عند إصدار الفاتورة) */}
+          {/* TAB 3: Sales (محدث بالضبط بما طلبته: إضافة خانة الوحدة [قطعة أو كرتون] بين المنتج والسعر، وخيارات الدفع [نقد، شبكة، حوالة] عند النقر على مدفوعة) */}
           {activeTab === 'sales' && user.role !== 'cashier' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
                 <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#d97706' }}>⚡ إصدار فاتورة بيع جديدة</h2>
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>🔍 بحث واختيار العميل:</label>
-                  <input type="text" value={salesCustomerSearch} onChange={e => setSalesCustomerSearch(e.target.value)} placeholder="اكتب اسم المنشأة أو العميل للبحث السريع..." style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '8px', boxSizing: 'border-box', fontSize: '13px' }} />
+                  <input type="text" value={salesCustomerSearch} onChange={e => salesCustomerSearch(e.target.value)} placeholder="اكتب اسم المنشأة أو العميل للبحث السريع..." style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '8px', boxSizing: 'border-box', fontSize: '13px' }} />
                   <select value={selectedCustomerId} onChange={e=>setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
                     <option value="">-- عميل نقدي عام (افتراضي) --</option>
                     {filteredCustomersForSales.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '10px', marginBottom: '15px', alignItems: 'end' }}>
+
+                {/* التنسيق المطلوب تماماً: اختيار المنتج -> الوحدة (قطعة أو كرتون) -> السعر -> الكمية -> إضافة */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1.2fr 1fr 1fr auto', gap: '10px', marginBottom: '15px', alignItems: 'end' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>اختيار المنتج</label>
                     <select value={selectedProductId} onChange={e => { setSelectedProductId(e.target.value); const p = inventory.find(x => x.id === Number(e.target.value)); if (p) setItemPrice(p.price); }} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
                       <option value="">-- اختر المنتج --</option>
                       {inventory.map(p=><option key={p.id} value={p.id}>{p.name} (متوفر: {p.stock})</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>الوحدة</label>
+                    <select value={salesUnitType} onChange={e => setSalesUnitType(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
+                      <option value="قطعة">قطعة</option>
+                      <option value="كرتون">كرتون</option>
                     </select>
                   </div>
                   <div>
@@ -1296,10 +1309,24 @@ function App() {
                   </div>
                   <button onClick={handleAddItemToSalesCart} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '11px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>➕ إضافة</button>
                 </div>
+
+                {/* حالة الدفع وعند النقر على مدفوعة تظهر قائمة منسدلة (نقد أو شبكة أو حوالة) فقط */}
                 <div style={{ marginBottom: '20px', background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '13px', fontWeight: 'bold' }}>حالة الدفع:</span>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="payStatus" checked={invoiceStatus === 'مدفوعة'} onChange={() => setInvoiceStatus('مدفوعة')} /> مدفوعة</label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}><input type="radio" name="payStatus" checked={invoiceStatus === 'غير مدفوعة'} onChange={() => setInvoiceStatus('غير مدفوعة')} /> غير مدفوعة (أجل)</label>
+
+                  {invoiceStatus === 'مدفوعة' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '10px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#10b981' }}>طريقة الدفع:</span>
+                      <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #10b981', background: theme.cardBg, color: theme.textDark, fontSize: '12px', outline: 'none' }}>
+                        <option value="نقد">نقد</option>
+                        <option value="شبكة">شبكة</option>
+                        <option value="حوالة">حوالة</option>
+                      </select>
+                    </div>
+                  )}
+
                   {invoiceStatus === 'غير مدفوعة' && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: 'auto' }}>
                       <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f43f5e' }}>مدة الاستحقاق:</span>
@@ -1307,20 +1334,22 @@ function App() {
                     </div>
                   )}
                 </div>
+
                 <h3 style={{ margin: '0 0 10px 0', fontSize: '15px' }}>🛒 محتويات الفاتورة الحالية</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginBottom: '20px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '8px' }}>المنتج</th><th style={{ padding: '8px' }}>الكمية</th><th style={{ padding: '8px' }}>السعر</th><th style={{ padding: '8px' }}>المجموع</th><th></th></tr></thead>
+                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '8px' }}>المنتج</th><th style={{ padding: '8px' }}>الوحدة</th><th style={{ padding: '8px' }}>الكمية</th><th style={{ padding: '8px' }}>السعر</th><th style={{ padding: '8px' }}>المجموع</th><th></th></tr></thead>
                   <tbody>
                     {cartItems.map((it, idx) => (
                       <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
                         <td style={{ padding: '8px' }}>{it.name}</td>
+                        <td style={{ padding: '8px', textAlign: 'center' }}>{it.unitType || 'قطعة'}</td>
                         <td style={{ padding: '8px', textAlign: 'center' }}>{it.quantity}</td>
                         <td style={{ padding: '8px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
                         <td style={{ padding: '8px', color: '#10b981', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
                         <td style={{ padding: '8px' }}><button onClick={() => handleRemoveSalesCartItem(idx)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>✖</button></td>
                       </tr>
                     ))}
-                    {!cartItems.length && (<tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لم يتم إضافة أي صنف للفاتورة بعد.</td></tr>)}
+                    {!cartItems.length && (<tr><td colSpan="6" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لم يتم إضافة أي صنف للفاتورة بعد.</td></tr>)}
                   </tbody>
                 </table>
                 <button onClick={handleSaveSalesInvoice} disabled={!cartItems.length || isSubmittingSale} style={{ width: '100%', background: '#10b981', color: '#fff', padding: '14px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>إتمام الدفع وإصدار الفاتورة 💳</button>
@@ -1382,7 +1411,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 5: Purchases (مع ربط زيادة المخزون تلقائياً عند الشراء) */}
+          {/* TAB 5: Purchases */}
           {activeTab === 'purchases' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '600px', margin: 'auto' }}>
               <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>تسجيل فاتورة شراء وتوريد بضاعة</h2>
