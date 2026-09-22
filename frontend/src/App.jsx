@@ -300,7 +300,7 @@ function App() {
   const [authPhone, setAuthPhone] = useState('');
   const [authCompanyName, setAuthCompanyName] = useState('');
 
-  // حالات نافذة التحقق الصارم عبر EmailJS المجاني
+  // حالات نافذة التحقق الصارم عبر EmailJS
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [enteredOtp, setEnteredOtp] = useState('');
   const [generatedOtp, setGeneratedOtp] = useState('');
@@ -1047,7 +1047,7 @@ function App() {
   };
 
   // -------------------------------------------------------------
-  // نظام إرسال رمز التحقق (OTP) الفعلي عبر EmailJS 
+  // نظام إرسال رمز التحقق (OTP) الفعلي المعتمد عبر EmailJS
   // -------------------------------------------------------------
   const handleTriggerOtp = (e) => {
     e.preventDefault();
@@ -1080,16 +1080,16 @@ function App() {
     // بارامترات القالب في EmailJS
     const templateParams = {
       email: authEmail,
+      to_email: authEmail,
       passcode: randomOtp,
       time: '15 دقيقة'
     };
 
-    // المفاتيح الثابتة الخاصة بك[cite: 2]
-    const SERVICE_ID = 'service_wlj45av';
-    const TEMPLATE_ID = 'bz8fqdn';
-    const PUBLIC_KEY = 'H5wice2-sjrNZHBQX';
+    // المعرفات الثلاثة المؤكدة بدقة من صور حسابك[cite: 6, 7, 8]
+    const SERVICE_ID = 'service_wlj45av';       // من صورة خدمات البريد[cite: 8]
+    const TEMPLATE_ID = 'template_foajm36';     // من صورة قوالب البريد[cite: 6]
+    const PUBLIC_KEY = 'H5wice2-sjrNZHBQX';     // من صورة مفاتيح واجهة برمجة التطبيقات[cite: 7]
 
-    // تنفيذ طلب الإرسال
     emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY)
       .then((response) => {
         setIsSendingOtp(false);
@@ -1100,9 +1100,8 @@ function App() {
       .catch((error) => {
         setIsSendingOtp(false);
         console.error('EmailJS Error Object:', error);
-        // طباعة تفاصيل الخطأ الدقيقة على الشاشة مباشرة لسهولة الحل
-        const errorMessage = error.text || error.message || JSON.stringify(error);
-        alert(`❌ فشل إرسال البريد الإلكتروني.\nالسبب التقني من EmailJS:\n${errorMessage}\n\nتأكد من توافق المتغيرات في القالب مع الكود.`);
+        const errorMessage = error?.text || error?.message || JSON.stringify(error);
+        alert(`❌ فشل إرسال البريد الإلكتروني.\nالسبب: ${errorMessage}`);
       });
   };
 
@@ -1735,7 +1734,7 @@ function App() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '15px', background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px', color: '#10b981' }}>إضافة وحدة وزن (اختياري):</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>إضافة وحدة وزن (اختياري):</label>
                   <select value={unitGramOrKilo} onChange={e=>setUnitGramOrKilo(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
                     <option value="لا يوجد">-- بدون وزن --</option>
                     <option value="جرام">جرام</option>
@@ -1744,7 +1743,7 @@ function App() {
                 </div>
                 {unitGramOrKilo !== 'لا يوجد' && (
                   <div>
-                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px', color: '#10b981' }}>اكتب الوزن (مثال: 10 جرام أو 16 كيلو):</label>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>اكتب الوزن (مثال: 10 جرام أو 16 كيلو):</label>
                     <input type="text" placeholder="اكتب هنا يدوياً..." value={weightInputValue} onChange={e=>setWeightInputValue(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
                   </div>
                 )}
