@@ -144,9 +144,6 @@ const dict = {
     oldPass: 'كلمة المرور الحالية',
     newPass: 'كلمة المرور الجديدة',
     updatePassBtn: 'تحديث كلمة المرور',
-    deleteAccountTitle: '⚠️ منطقة الخطر - حذف الحساب',
-    deleteAccountDesc: 'حذف الحساب نهائياً ومسح كافة البيانات من النظام.',
-    deleteAccountBtn: 'حذف الحساب نهائياً 🗑️',
     logoutBtn: 'تسجيل الخروج',
     taxInvoiceTitle: 'فاتورة ضريبية',
     invoiceStatusPaid: 'مدفوعة',
@@ -227,9 +224,6 @@ const dict = {
     oldPass: 'Current Password',
     newPass: 'New Password',
     updatePassBtn: 'Update Password',
-    deleteAccountTitle: '⚠️ Danger Zone - Delete Account',
-    deleteAccountDesc: 'Permanently delete account and erase all data.',
-    deleteAccountBtn: 'Delete Account Permanently 🗑️',
     logoutBtn: 'Sign Out',
     taxInvoiceTitle: 'Tax Invoice',
     invoiceStatusPaid: 'Paid',
@@ -293,8 +287,9 @@ function App() {
 
   const [showLanding, setShowLanding] = useState(true);
   
-  const [authMode, setAuthMode] = useState('login');
-  const [loginType, setLoginType] = useState('admin');
+  // حالات صفحة الدخول والتسجيل الجديدة
+  const [authMode, setAuthMode] = useState('login'); // 'login' أو 'register'
+  const [loginType, setLoginType] = useState('admin'); // 'admin' أو 'cashier'
   
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
@@ -1037,15 +1032,64 @@ function App() {
     } catch (e) { alert('Failed'); }
   };
 
-  const handleDeleteAccount = () => {
-    if (!window.confirm('⚠️ تنبيه هام: هل أنت متأكد تماماً من رغبتك في حذف الحساب نهائياً ومسح كافة البيانات من النظام؟')) {
-      return;
+  // دوال تسجيل الدخول وإنشاء الحساب الجديدة حسب الشروط المطلوبة بدقة
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    if (authMode === 'register') {
+      if (authPassword !== authConfirmPassword) {
+        alert('❌ كلمة المرور وتأكيد كلمة المرور غير متطابقين!');
+        return;
+      }
+      if (!authAdminSecret.trim()) {
+        alert('❌ يرجى إدخال كلمة تسجيل دخول مالك النظام!');
+        return;
+      }
+      try {
+        await API.post('/api/register', {
+          email: authEmail,
+          password: authPassword,
+          adminSecret: authAdminSecret,
+          phone: authPhone,
+          businessName: authCompanyName
+        });
+        alert('✅ تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن.');
+        setAuthMode('login');
+      } catch (err) {
+        alert(err.response?.data?.error || 'حدث خطأ أثناء إنشاء الحساب');
+      }
+    } else {
+      // تسجيل الدخول
+      if (loginType === 'admin' && authAdminSecret !== 'MihwarAdmin2026!') {
+        alert('❌ خطأ أمني: كلمة دخول مالك النظام غير صحيحة!');
+        return;
+      }
+      try {
+        const res = await API.post('/api/login', { email: authEmail, password: authPassword });
+        const loggedUser = { ...res.data.user, role: loginType, businessName: authCompanyName || res.data.user?.businessName || 'نظام محور' };
+        setUser(loggedUser);
+        localStorage.setItem('mihwar_user', JSON.stringify(loggedUser));
+        if (res.data.token) {
+          localStorage.setItem('mihwar_token', res.data.token);
+          API.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+        }
+      } catch (err) {
+        alert(err.response?.data?.error || 'خطأ في البريد الإلكتروني أو كلمة المرور');
+      }
     }
-    localStorage.clear();
+  };
+
+  const handleLogout = () => {
     setUser(null);
+    localStorage.clear();
+    delete API.defaults.headers.common['Authorization'];
     setShowLanding(true);
     setAuthMode('login');
-    alert('✅ تم حذف الحساب وكافة البيانات بنجاح.');
+    setAuthEmail('');
+    setAuthPassword('');
+    setAuthConfirmPassword('');
+    setAuthAdminSecret('');
+    setAuthPhone('');
+    setAuthCompanyName('');
   };
 
   const handleExportSales = () => {
@@ -1129,6 +1173,7 @@ function App() {
             <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0 }}>نظام محور ERP - الإدارة المتكاملة</p>
           </div>
 
+          {/* التبديل بين تسجيل الدخول وفتح الحساب */}
           <div style={{ display: 'flex', gap: '8px', background: '#141824', padding: '5px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #263147' }}>
             <button type="button" onClick={() => setAuthMode('login')} style={{ flex: 1, padding: '8px', background: authMode === 'login' ? '#d97706' : 'transparent', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>تسجيل الدخول</button>
             <button type="button" onClick={() => setAuthMode('register')} style={{ flex: 1, padding: '8px', background: authMode === 'register' ? '#d97706' : 'transparent', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>فتح حساب</button>
@@ -1176,6 +1221,7 @@ function App() {
               </div>
             )}
 
+            {/* شرط كلمة تسجيل دخول مالك النظام (تظهر في التسجيل دائماً، وفي الدخول إذا تم اختيار مدير النظام) */}
             {(authMode === 'register' || (authMode === 'login' && loginType === 'admin')) && (
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#ef4444' }}>
@@ -1959,15 +2005,6 @@ function App() {
                   <input type="password" placeholder={t.newPass} value={newPass} onChange={e=>setNewPass(e.target.value)} required style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '10px', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t.updatePassBtn}</button>
                 </form>
-              </div>
-
-              {/* إضافة خيار حذف الحساب في الإعدادات مع إشعار التأكيد */}
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid #7f1d1d`, padding: '22px', gridColumn: '1 / -1' }}>
-                <h3 style={{ margin: '0 0 5px 0', fontSize: '17px', color: '#ef4444' }}>{t.deleteAccountTitle}</h3>
-                <p style={{ fontSize: '12px', color: theme.textMuted, margin: '0 0 15px 0' }}>{t.deleteAccountDesc}</p>
-                <button type="button" onClick={handleDeleteAccount} style={{ background: '#7f1d1d', color: '#fca5a5', padding: '12px 20px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
-                  {t.deleteAccountBtn}
-                </button>
               </div>
             </div>
           )}
