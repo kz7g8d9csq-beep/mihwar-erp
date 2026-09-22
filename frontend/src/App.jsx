@@ -287,13 +287,11 @@ function App() {
 
   const [showLanding, setShowLanding] = useState(true);
   
-  // حالات صفحة الدخول والتسجيل الجديدة
-  const [authMode, setAuthMode] = useState('login'); // 'login' أو 'register'
-  const [loginType, setLoginType] = useState('admin'); // 'admin' أو 'cashier'
+  const [authMode, setAuthMode] = useState('login');
+  const [loginType, setLoginType] = useState('admin');
   
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
-  const [authConfirmPassword, setAuthConfirmPassword] = useState('');
   const [authAdminSecret, setAuthAdminSecret] = useState('');
   const [authPhone, setAuthPhone] = useState('');
   const [authCompanyName, setAuthCompanyName] = useState('');
@@ -1032,30 +1030,25 @@ function App() {
     } catch (e) { alert('Failed'); }
   };
 
-  // دوال تسجيل الدخول وإنشاء الحساب الجديدة حسب الشروط المطلوبة بدقة
+  // تعديل فتح الحساب وتسجيل الدخول بالشروط الجديدة بدقة
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     if (authMode === 'register') {
-      if (authPassword !== authConfirmPassword) {
-        alert('❌ كلمة المرور وتأكيد كلمة المرور غير متطابقين!');
-        return;
-      }
-      if (!authAdminSecret.trim()) {
-        alert('❌ يرجى إدخال كلمة تسجيل دخول مالك النظام!');
+      if (!authEmail || !authPassword || !authPhone || !authCompanyName) {
+        alert('❌ يرجى تعبئة كافة الحقول المطلوبة لفتح الحساب!');
         return;
       }
       try {
         await API.post('/api/register', {
           email: authEmail,
           password: authPassword,
-          adminSecret: authAdminSecret,
           phone: authPhone,
           businessName: authCompanyName
         });
-        alert('✅ تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن.');
+        alert('✅ تم فتح الحساب بنجاح! يمكنك تسجيل الدخول الآن.');
         setAuthMode('login');
       } catch (err) {
-        alert(err.response?.data?.error || 'حدث خطأ أثناء إنشاء الحساب');
+        alert(err.response?.data?.error || 'حدث خطأ أثناء فتح الحساب');
       }
     } else {
       // تسجيل الدخول
@@ -1065,7 +1058,7 @@ function App() {
       }
       try {
         const res = await API.post('/api/login', { email: authEmail, password: authPassword });
-        const loggedUser = { ...res.data.user, role: loginType, businessName: authCompanyName || res.data.user?.businessName || 'نظام محور' };
+        const loggedUser = { ...res.data.user, role: loginType, businessName: res.data.user?.businessName || authCompanyName || 'نظام محور' };
         setUser(loggedUser);
         localStorage.setItem('mihwar_user', JSON.stringify(loggedUser));
         if (res.data.token) {
@@ -1086,7 +1079,6 @@ function App() {
     setAuthMode('login');
     setAuthEmail('');
     setAuthPassword('');
-    setAuthConfirmPassword('');
     setAuthAdminSecret('');
     setAuthPhone('');
     setAuthCompanyName('');
@@ -1173,7 +1165,6 @@ function App() {
             <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0 }}>نظام محور ERP - الإدارة المتكاملة</p>
           </div>
 
-          {/* التبديل بين تسجيل الدخول وفتح الحساب */}
           <div style={{ display: 'flex', gap: '8px', background: '#141824', padding: '5px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #263147' }}>
             <button type="button" onClick={() => setAuthMode('login')} style={{ flex: 1, padding: '8px', background: authMode === 'login' ? '#d97706' : 'transparent', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>تسجيل الدخول</button>
             <button type="button" onClick={() => setAuthMode('register')} style={{ flex: 1, padding: '8px', background: authMode === 'register' ? '#d97706' : 'transparent', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>فتح حساب</button>
@@ -1191,44 +1182,45 @@ function App() {
 
           <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             
-            {authMode === 'register' && (
+            {/* الشروط الـ 4 لفتح الحساب فقط */}
+            {authMode === 'register' ? (
               <>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>اسم الشركة أو المؤسسة أو المتجر *</label>
-                  <input type="text" placeholder="مثال: مؤسسة مانويل التجارية" value={authCompanyName} onChange={e=>setAuthCompanyName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>1. البريد الإلكتروني *</label>
+                  <input type="email" placeholder="name@example.com" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>رقم الهاتف *</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>2. كلمة المرور *</label>
+                  <input type="password" placeholder="••••••••" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>3. رقم الهاتف *</label>
                   <input type="text" placeholder="05xxxxxxxx" value={authPhone} onChange={e=>setAuthPhone(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>4. اسم المؤسسة أو الشركة أو المنشأة *</label>
+                  <input type="text" placeholder="مثال: مؤسسة مانويل التجارية" value={authCompanyName} onChange={e=>setAuthCompanyName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
               </>
-            )}
+            ) : (
+              <>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>البريد الإلكتروني *</label>
+                  <input type="email" placeholder="name@example.com" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
 
-            <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>البريد الإلكتروني *</label>
-              <input type="email" placeholder="name@example.com" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-            </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>كلمة المرور *</label>
+                  <input type="password" placeholder="••••••••" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
 
-            <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>كلمة المرور *</label>
-              <input type="password" placeholder="••••••••" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-            </div>
-
-            {authMode === 'register' && (
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>تأكيد كلمة المرور *</label>
-                <input type="password" placeholder="••••••••" value={authConfirmPassword} onChange={e=>setAuthConfirmPassword(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-              </div>
-            )}
-
-            {/* شرط كلمة تسجيل دخول مالك النظام (تظهر في التسجيل دائماً، وفي الدخول إذا تم اختيار مدير النظام) */}
-            {(authMode === 'register' || (authMode === 'login' && loginType === 'admin')) && (
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#ef4444' }}>
-                  {authMode === 'register' ? 'كلمة تسجيل دخول مالك النظام (سرية) *' : '🔑 كلمة تسجيل دخول مالك النظام *'}
-                </label>
-                <input type="password" placeholder={authMode === 'register' ? 'أنشئ كلمة سر لمالك النظام فقط' : 'أدخل كلمة سر مالك النظام'} value={authAdminSecret} onChange={e=>setAuthAdminSecret(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #ef4444', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-              </div>
+                {loginType === 'admin' && (
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#ef4444' }}>🔑 كلمة تسجيل دخول مالك النظام *</label>
+                    <input type="password" placeholder="أدخل كلمة سر مالك النظام" value={authAdminSecret} onChange={e=>setAuthAdminSecret(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #ef4444', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                )}
+              </>
             )}
 
             <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '13px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', marginTop: '10px' }}>
