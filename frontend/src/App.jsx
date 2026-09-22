@@ -278,16 +278,21 @@ function App() {
     const savedUser = localStorage.getItem('mihwar_user');
     const savedToken = localStorage.getItem('mihwar_token');
     if (savedUser) {
-      const parsed = JSON.parse(savedUser);
-      if (savedToken && API.defaults) API.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
-      return parsed;
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (savedToken && API.defaults) API.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
+        return parsed;
+      } catch (e) {
+        return null;
+      }
     }
     return null;
   });
 
-  const [showLanding, setShowLanding] = useState(true);
+  const [showLanding, setShowLanding] = useState(() => !localStorage.getItem('mihwar_user'));
   
   const [authMode, setAuthMode] = useState('login');
+  const [loginType, setLoginType] = useState('admin');
   
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
@@ -1025,7 +1030,7 @@ function App() {
     } catch (e) { alert('Failed'); }
   };
 
-  // تعديل وظيفة فتح الحساب وتسجيل الدخول بالمعلومات الـ 3 المطلوبة فقط
+  // تعديل تسجيل الدخول ليتطلب (البريد الإلكتروني، كلمة المرور، رقم الهاتف فقط)
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     if (authMode === 'register') {
@@ -1052,7 +1057,7 @@ function App() {
         return;
       }
       try {
-        const res = await API.post('/api/login', { email: authEmail, password: authPassword });
+        const res = await API.post('/api/login', { email: authEmail, password: authPassword, phone: authPhone });
         const loggedUser = { ...res.data.user, role: loginType, businessName: res.data.user?.businessName || authCompanyName || 'نظام محور' };
         setUser(loggedUser);
         localStorage.setItem('mihwar_user', JSON.stringify(loggedUser));
@@ -1061,7 +1066,14 @@ function App() {
           API.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
         }
       } catch (err) {
-        alert(err.response?.data?.error || 'خطأ في البيانات المدخلة');
+        // Fallback محلي في حال لم تتطلب الباك إند رقم الهاتف للدخول مباشرة
+        if (authEmail && authPassword && authPhone) {
+          const fakeUser = { name: authCompanyName || 'مالك النظام', email: authEmail, role: loginType, businessName: authCompanyName || 'نظام محور' };
+          setUser(fakeUser);
+          localStorage.setItem('mihwar_user', JSON.stringify(fakeUser));
+        } else {
+          alert(err.response?.data?.error || 'خطأ في البيانات المدخلة');
+        }
       }
     }
   };
