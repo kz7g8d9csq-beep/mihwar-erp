@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import API from './services/api';
+// استدعاء مكتبة EmailJS (تأكد من تحميلها في مشروعك عبر npm install emailjs-com أو سكريبت خارجي)
 import emailjs from 'emailjs-com';
 
 const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
@@ -300,12 +301,12 @@ function App() {
   const [authPhone, setAuthPhone] = useState('');
   const [authCompanyName, setAuthCompanyName] = useState('');
 
-  // حالات نافذة التحقق الصارم عبر EmailJS المجاني
+  // حالات نافذة التحقق الصارم عبر EmailJS الحقيقي
   const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpChannel, setOtpChannel] = useState('email');
   const [enteredOtp, setEnteredOtp] = useState('');
-  const [generatedOtp, setGeneratedOtp] = useState('');
   const [pendingAuthData, setPendingAuthData] = useState(null);
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [actualGeneratedOtp, setActualGeneratedOtp] = useState('');
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [businessName, setBusinessName] = useState('نظام محور');
@@ -1047,7 +1048,7 @@ function App() {
   };
 
   // -------------------------------------------------------------
-  // نظام إرسال رمز التحقق (OTP) الفعلي عبر EmailJS المجاني
+  // نظام الـ OTP الحقيقي باستخدام EmailJS (الخدمة والقالب والمفتاح المحددة)
   // -------------------------------------------------------------
   const handleTriggerOtp = async (e) => {
     e.preventDefault();
@@ -1064,48 +1065,45 @@ function App() {
       }
     }
 
+    // توليد رمز OTP عشوائي من 6 أرقام
+    const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+    setActualGeneratedOtp(generatedCode);
+
     setPendingAuthData({
       email: authEmail,
       password: authPassword,
       phone: authPhone,
-      businessName: authCompanyName || 'نظام محور'
+      businessName: authCompanyName
     });
 
-    setIsSendingOtp(true);
+    try {
+      // إرسال الإيميل الفعلي عبر EmailJS
+      const templateParams = {
+        to_email: authEmail,
+        pass_code: generatedCode,
+        message: `رمز التحقق الخاص بك في نظام محور هو: ${generatedCode}`
+      };
 
-    // توليد رمز مكون من 6 أرقام عشوائية
-    const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(randomOtp);
-
-    // بارامترات القالب في EmailJS
-    const templateParams = {
-      email: authEmail,
-      passcode: randomOtp,
-      time: '15 دقيقة'
-    };
-
-    // المفاتيح الثابتة الخاصة بك
-    const SERVICE_ID = 'service_wlj45av';
-    const TEMPLATE_ID = 'bz8fqdn';
-    const PUBLIC_KEY = 'H5wice2-sjrNZHBQX';
-
-    emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY)
-      .then(() => {
-        setIsSendingOtp(false);
-        setShowOtpModal(true);
-        alert('✅ تم إرسال رمز التحقق الحقيقي بنجاح إلى بريدك الإلكتروني!');
-      })
-      .catch((error) => {
-        setIsSendingOtp(false);
-        console.error('EmailJS Error:', error);
-        alert('❌ فشل إرسال البريد الإلكتروني عبر EmailJS. تأكد من صحة البريد أو الاتصال.');
-      });
+      // استخدام المعرفات التي طلبتها: Service ID, Template ID, Public Key
+      await emailjs.send(
+        'service_wlj45av',
+        'bz8fqdn',
+        templateParams,
+        'H5wice2-sjrNZHBQX'
+      );
+      
+      setShowOtpModal(true);
+      alert('✅ تم إرسال رمز التحقق إلى بريدك الإلكتروني بنجاح!');
+    } catch (err) {
+      console.error(err);
+      alert('❌ حدث خطأ أثناء إرسال البريد الإلكتروني. يرجى التحقق من اتصال الإنترنت وإعدادات القالب.');
+    }
   };
 
   const handleVerifyOtpAndProceed = (e) => {
     e.preventDefault();
     
-    if (enteredOtp.trim() === generatedOtp.trim()) {
+    if (enteredOtp === actualGeneratedOtp) {
       setShowOtpModal(false);
       setEnteredOtp('');
 
@@ -1121,10 +1119,9 @@ function App() {
         };
         setUser(loggedUser);
         localStorage.setItem('mihwar_user', JSON.stringify(loggedUser));
-        alert('✅ تم تسجيل الدخول بنجاح!');
       }
     } else {
-      alert('❌ رمز التحقق غير صحيح. يرجى المحاولة مرة أخرى.');
+      alert('❌ رمز التحقق غير صحيح! يرجى إعادة إدخال الرمز الصحيح المرسل لبريدك.');
     }
   };
 
@@ -1202,8 +1199,8 @@ function App() {
           </button>
         </header>
         <main style={{ padding: '80px 20px', maxWidth: '1100px', margin: 'auto', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '44px', fontWeight: '900', margin: '0 0 20px 0', color: '#f8fafc' }}>نظام إدارة الموارد المؤسسية</h1>
-          <p style={{ fontSize: '17px', color: '#94a3b8', maxWidth: '750px', margin: '0 auto 40px auto', lineHeight: '1.7' }}>إدارة متكاملة للمبيعات، المخزون، الحسابات، والموارد البشرية برؤية تقنية متطورة.</p>
+          <h1 style={{ fontSize: '44px', fontWeight: '900', margin: '0 0 20px 0', color: '#f8fafc' }}>{t.landingTitle}</h1>
+          <p style={{ fontSize: '17px', color: '#94a3b8', maxWidth: '750px', margin: '0 auto 40px auto', lineHeight: '1.7' }}>{t.landingDesc}</p>
           <button onClick={() => { setShowLanding(false); setAuthMode('login'); }} style={{ background: '#d97706', color: '#fff', padding: '14px 30px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
             تسجيل الدخول 🔑
           </button>
@@ -1277,8 +1274,8 @@ function App() {
               </>
             )}
 
-            <button type="submit" disabled={isSendingOtp} style={{ background: '#d97706', color: '#fff', padding: '13px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', marginTop: '5px' }}>
-              {isSendingOtp ? 'جاري الإرسال عبر البريد...' : (authMode === 'login' ? 'متابعة وإرسال رمز التحقق عبر الإيميل 🔐' : 'إرسال رمز التحقق وفتح الحساب 🔐')}
+            <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '13px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', marginTop: '5px' }}>
+              {authMode === 'login' ? 'متابعة وإرسال رمز التحقق 🔐' : 'إرسال رمز التحقق وفتح الحساب 🔐'}
             </button>
           </form>
         </div>
@@ -1289,7 +1286,7 @@ function App() {
             <div style={{ background: '#1b2230', color: '#f8fafc', padding: '35px', borderRadius: '20px', maxWidth: '400px', width: '100%', border: '1px solid #d97706', boxSizing: 'border-box', textAlign: 'center' }}>
               <h3 style={{ margin: '0 0 10px 0', fontSize: '20px', fontWeight: '900', color: '#d97706' }}>رمز التحقق الأمني (OTP)</h3>
               <p style={{ fontSize: '13px', color: '#94a3b8', margin: '0 0 20px 0', lineHeight: '1.6' }}>
-                تم إرسال رمز التحقق المكون من 6 أرقام إلى بريدك الإلكتروني بنجاح. أدخله أدناه:
+                أدخل رمز التحقق المكون من 6 أرقام المرسل عبر بريدك الإلكتروني:
               </p>
               
               <form onSubmit={handleVerifyOtpAndProceed} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -1414,6 +1411,38 @@ function App() {
                   <input type="number" value={lowStockThreshold} onChange={e => { const val = Number(e.target.value); setLowStockThreshold(val); localStorage.setItem('mihwar_low_stock_threshold', val); }} style={{ width: '65px', padding: '6px', borderRadius: '6px', border: '1px solid #d97706', background: theme.cardBg, color: theme.textDark, textAlign: 'center', fontWeight: 'bold', fontSize: '14px', outline: 'none' }} />
                   <span style={{ fontSize: '12px', color: theme.textMuted }}>قطعة</span>
                 </div>
+              </div>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📅 تحليل أداء مبيعات السنة الحالية ({currentYear})</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
+                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>الشهر</th><th style={{ padding: '10px' }}>عدد الفواتير</th><th style={{ padding: '10px' }}>إجمالي المبيعات (ر.س)</th><th style={{ padding: '10px' }}>نسبة الأداء</th></tr></thead>
+                  <tbody>
+                    {monthlyData.map((m, idx) => (
+                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{m.monthName}</td>
+                        <td style={{ padding: '10px' }}>{m.count} فاتورة</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#10b981' }}>{m.total.toFixed(2)} {t.currency}</td>
+                        <td style={{ padding: '10px' }}><div style={{ width: '100%', maxWidth: '150px', height: '6px', background: theme.bgMain, borderRadius: '3px', overflow: 'hidden', border: `1px solid ${theme.border}` }}><div style={{ width: `${Math.min(100, (m.total / (totalSalesVal || 1)) * 100)}%`, height: '100%', background: '#d97706' }}></div></div></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>📊 سجل النمو المالي للسنوات الماضية (حتى 10 سنوات)</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: lang === 'ar' ? 'right' : 'left', fontSize: '13px', minWidth: '500px' }}>
+                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>السنة المالية</th><th style={{ padding: '10px' }}>عدد الفواتير</th><th style={{ padding: '10px' }}>إجمالي المبيعات</th><th style={{ padding: '10px' }}>صافي الربح التقديري</th></tr></thead>
+                  <tbody>
+                    {pastYearsData.map((y, idx) => (
+                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#d97706' }}>{y.year}</td>
+                        <td style={{ padding: '10px' }}>{y.count} فاتورة</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{y.totalSales.toFixed(2)} {t.currency}</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#10b981' }}>+{y.totalProfit.toFixed(2)} {t.currency}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -2048,6 +2077,10 @@ function App() {
 
         </main>
       </div>
+
+      {/* =======================
+          ALL POPUPS & MODALS 
+      ======================= */}
 
       {/* Edit Customer Modal */}
       {showEditCustModal && (
