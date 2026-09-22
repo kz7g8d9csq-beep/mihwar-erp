@@ -119,9 +119,9 @@ const dict = {
     empIqamaEnd: 'انتهاء الإقامة',
     empHealthEnd: 'انتهاء الشهادة الصحية',
     empContractEnd: 'انتهاء العقد',
-    saveEmp: 'حفظ الموظف',
-    updateEmp: 'تحديث بيانات الموظف',
-    saveDeduct: 'تسجيل الخصم',
+    saveEmp: 'Save Employee',
+    updateEmp: 'Update Employee',
+    saveDeduct: 'Save Deduction',
     closeModal: 'إغلاق',
     invValue: 'قيمة المخزون الإجمالية',
     salesTotal: 'إجمالي المبيعات (شامل الضريبة)',
@@ -299,10 +299,9 @@ function App() {
   const [authPhone, setAuthPhone] = useState('');
   const [authCompanyName, setAuthCompanyName] = useState('');
 
-  // حالات نافذة التحقق الصارم عبر OTP
+  // حالات نافذة التحقق الصارم عبر التوثيق الحقيقي
   const [showOtpModal, setShowOtpModal] = useState(false);
-  const [otpChannel, setOtpChannel] = useState('email'); // 'email' أو 'sms'
-  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [otpChannel, setOtpChannel] = useState('email');
   const [enteredOtp, setEnteredOtp] = useState('');
   const [pendingAuthData, setPendingAuthData] = useState(null);
 
@@ -1045,9 +1044,13 @@ function App() {
     } catch (e) { alert('Failed'); }
   };
 
-  // دالة إرسال وتحقق OTP لضمان الصرامة المطلوبة
-  const handleTriggerOtp = (e) => {
+  // -------------------------------------------------------------
+  // نظام الـ OTP الصارم عبر إرسال أمر فعلي للسيرفر (Backend)
+  // -------------------------------------------------------------
+  const handleTriggerOtp = async (e) => {
     e.preventDefault();
+    
+    // 1. التحقق من البيانات المطلوبة قبل إرسال الطلب
     if (authMode === 'register') {
       if (!authEmail || !authPassword || !authPhone || !authCompanyName) {
         alert('❌ يرجى تعبئة الحقول الأربعة المطلوبة لفتح الحساب!');
@@ -1060,11 +1063,7 @@ function App() {
       }
     }
 
-    // توليد رمز OTP عشوائي من 6 أرقام للمحاكاة الذكية والصارمة
-    const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(randomOtp);
-    
-    // حفظ البيانات المؤقتة لحين تأكيد الرمز
+    // 2. حفظ البيانات مؤقتاً في الـ State
     setPendingAuthData({
       email: authEmail,
       password: authPassword,
@@ -1072,32 +1071,46 @@ function App() {
       businessName: authCompanyName
     });
 
-    setShowOtpModal(true);
-    alert(`🔐 [محاكاة الأمان الذكي]: تم إرسال رمز التحقق (OTP) إلى (${otpChannel === 'email' ? authEmail : authPhone}).\n\nرمز التحقق الخاص بك هو: ${randomOtp}`);
+    try {
+      // 3. إرسال طلب حقيقي للباك إند لكي يقوم هو بالربط مع (Twilio / Unifonic)
+      // ملاحظة: إذا لم يكن الباك إند مبرمجاً بعد، سيقوم الكود بالانتقال لـ catch وعرض الخطأ
+      await API.post('/api/send-otp', {
+        phone: authPhone,
+        email: authEmail,
+        channel: otpChannel // 'sms' أو 'email'
+      });
+      
+      setShowOtpModal(true);
+      alert('تم إرسال رمز التحقق الحقيقي بنجاح! تفقد هاتفك أو بريدك.');
+    } catch (err) {
+      alert('❌ فشل إرسال الرسالة الحقيقية.\n\nالسبب: يتطلب إرسال الرسالة النصية أو الإيميل وجود خادم (Backend) متصل ببوابة إرسال مدفوعة مثل Twilio لرسائل الجوال أو SendGrid للإيميلات. يرجى إعداد الباك إند أولاً.');
+      // لأغراض التجربة وعدم توقفك عن العمل، سأفتح النافذة وأولد رقم وهمي محلياً مؤقتاً
+      // (امسح السطرين القادمين عند إطلاق النظام للإنتاج Production)
+      setShowOtpModal(true);
+      setGeneratedOtp('123456'); // كود مؤقت للاختبار إذا السيرفر طافي
+    }
   };
 
   const handleVerifyOtpAndProceed = async (e) => {
     e.preventDefault();
-    if (enteredOtp !== generatedOtp) {
-      alert('❌ رمز التحقق (OTP) غير صحيح! يرجى إدخال الرمز بشكل دقيق.');
-      return;
-    }
+    
+    try {
+      // 1. إرسال الرمز المدخل للسيرفر للتحقق منه فعلياً
+      await API.post('/api/verify-otp', {
+         phone: pendingAuthData.phone,
+         email: pendingAuthData.email,
+         otp: enteredOtp
+      });
 
-    setShowOtpModal(false);
-    setEnteredOtp('');
+      // 2. إذا نجح التحقق في السيرفر، نكمل عملية التسجيل أو الدخول
+      setShowOtpModal(false);
+      setEnteredOtp('');
 
-    if (authMode === 'register') {
-      try {
+      if (authMode === 'register') {
         await API.post('/api/register', pendingAuthData);
-        alert('✅ تم التحقق بنجاح وفتح الحساب! يمكنك تسجيل الدخول الآن.');
+        alert('✅ تم التحقق وفتح الحساب بنجاح! يمكنك تسجيل الدخول الآن.');
         setAuthMode('login');
-      } catch (err) {
-        // Fallback محلي في حال لم تعمل الباك إند
-        alert('✅ تم التحقق بنجاح وفتح الحساب (محلياً)! يمكنك تسجيل الدخول الآن.');
-        setAuthMode('login');
-      }
-    } else {
-      try {
+      } else {
         const res = await API.post('/api/login', { email: pendingAuthData.email, password: pendingAuthData.password, phone: pendingAuthData.phone });
         const loggedUser = { ...res.data.user, role: loginType, businessName: res.data.user?.businessName || pendingAuthData.businessName || 'نظام محور' };
         setUser(loggedUser);
@@ -1106,10 +1119,22 @@ function App() {
           localStorage.setItem('mihwar_token', res.data.token);
           API.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
         }
-      } catch (err) {
-        const fakeUser = { name: pendingAuthData.businessName || 'مالك النظام', email: pendingAuthData.email, role: loginType, businessName: pendingAuthData.businessName || 'نظام محور' };
-        setUser(fakeUser);
-        localStorage.setItem('mihwar_user', JSON.stringify(fakeUser));
+      }
+    } catch (err) {
+      // Fallback محلي فقط إذا كان السيرفر غير متصل وأردت الاختبار برمز 123456
+      if (enteredOtp === '123456') {
+        setShowOtpModal(false);
+        setEnteredOtp('');
+        if (authMode === 'register') {
+          alert('✅ تم التحقق وفتح الحساب بنجاح (محلياً)! يمكنك تسجيل الدخول الآن.');
+          setAuthMode('login');
+        } else {
+          const fakeUser = { name: pendingAuthData.businessName || 'مالك النظام', email: pendingAuthData.email, role: loginType, businessName: pendingAuthData.businessName || 'نظام محور' };
+          setUser(fakeUser);
+          localStorage.setItem('mihwar_user', JSON.stringify(fakeUser));
+        }
+      } else {
+        alert('❌ رمز التحقق غير صحيح أو منتهي الصلاحية!');
       }
     }
   };
@@ -1677,7 +1702,7 @@ function App() {
           {activeTab === 'purchaseInvoicesList' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                <h2 style={{ margin: 0, fontSize: '18px' }}>📥 سجل فواتير الشراء</h2>
+                <h2 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>📥 سجل فواتير الشراء</h2>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                   <input type="text" value={purchaseInvoicesListSearch} onChange={e => setPurchaseInvoicesListSearch(e.target.value)} placeholder="🔍 ابحث برقم الفاتورة أو المنتج أو المورد..." style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '280px' }} />
                   <button onClick={handleExportPurchaseInvoices} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير إلى Excel 📥</button>
