@@ -100,11 +100,6 @@ const dict = {
     hr: 'الموارد البشرية',
     welcome: 'مرحباً بك،',
     currency: 'ر.س',
-    roleLabel: 'اختر نوع الدخول:',
-    roleAdmin: 'مدير النظام (Admin)',
-    roleCashier: 'كاشير (Cashier)',
-    adminSecretLabel: '🔑 كلمة المرور الإدارية الخاصة بمدير النظام:',
-    adminSecretPlaceholder: 'أدخل كلمة سر الإدارة المعتمدة',
     enterAppBtn: 'ابدأ العمل الآن 🚀',
     hrTitle: 'الموارد البشرية والرواتب والخصومات',
     hrSub: 'إدارة الموظفين، الرواتب، الأجازات، وسجل الخصومات بالتاريخ التلقائي.',
@@ -185,11 +180,6 @@ const dict = {
     hr: 'HR',
     welcome: 'Welcome,',
     currency: 'SAR',
-    roleLabel: 'Select Login Role:',
-    roleAdmin: 'System Administrator (Admin)',
-    roleCashier: 'Cashier (POS Only)',
-    adminSecretLabel: '🔑 Master Admin Secret Key:',
-    adminSecretPlaceholder: 'Enter master admin secret password',
     enterAppBtn: 'Get Started 🚀',
     hrTitle: 'Human Resources, Payroll & Deductions',
     hrSub: 'Manage employees, salaries, vacations, deductions with auto date.',
@@ -296,11 +286,17 @@ function App() {
   });
 
   const [showLanding, setShowLanding] = useState(true);
-  const [authView, setAuthView] = useState('login');
+  
+  // حالات صفحة الدخول والتسجيل الجديدة
+  const [authMode, setAuthMode] = useState('login'); // 'login' أو 'register'
+  const [loginType, setLoginType] = useState('admin'); // 'admin' أو 'cashier'
+  
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
-  const [loginRole, setLoginRole] = useState('admin');
-  const [adminSecretKey, setAdminSecretKey] = useState('');
+  const [authConfirmPassword, setAuthConfirmPassword] = useState('');
+  const [authAdminSecret, setAuthAdminSecret] = useState('');
+  const [authPhone, setAuthPhone] = useState('');
+  const [authCompanyName, setAuthCompanyName] = useState('');
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [businessName, setBusinessName] = useState('نظام محور');
@@ -309,6 +305,7 @@ function App() {
     return localStorage.getItem('mihwar_company_logo') || '';
   });
 
+  // المخزون
   const [inventory, setInventory] = useState(() => {
     const saved = localStorage.getItem('mihwar_inventory');
     return saved ? JSON.parse(saved) : [
@@ -327,6 +324,7 @@ function App() {
   const [editProdStock, setEditProdStock] = useState('');
   const [editItemCode, setEditItemCode] = useState('');
 
+  // العملاء
   const [customers, setCustomers] = useState(() => {
     const saved = localStorage.getItem('mihwar_customers');
     return saved ? JSON.parse(saved) : [
@@ -347,6 +345,7 @@ function App() {
   const [editCustAddress, setEditCustAddress] = useState('');
   const [editCustGracePeriod, setEditCustGracePeriod] = useState('');
 
+  // الموردين
   const [suppliers, setSuppliers] = useState(() => {
     const saved = localStorage.getItem('mihwar_suppliers');
     return saved ? JSON.parse(saved) : [
@@ -367,12 +366,14 @@ function App() {
   const [editSuppAddress, setEditSuppAddress] = useState('');
   const [editSuppGracePeriod, setEditSuppGracePeriod] = useState('');
 
+  // الفواتير
   const [invoices, setInvoices] = useState(() => {
     const saved = localStorage.getItem('mihwar_invoices');
     return saved ? JSON.parse(saved) : [];
   });
   const [invoiceSearchQuery, setInvoiceSearchQuery] = useState('');
   
+  // المبيعات والفوترة
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -385,15 +386,18 @@ function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
 
+  // نقطة البيع (POS)
   const [posCustomerSearch, setPosCustomerSearch] = useState('');
   const [posSelectedCustomerId, setPosSelectedCustomerId] = useState('');
   const [showPosPayModal, setShowPosPayModal] = useState(false);
   const [posPaymentMethod, setPosPaymentMethod] = useState('نقد');
 
+  // نافذة تأكيد طريقة السداد في سجل الفواتير
   const [showPayConfirmModal, setShowPayConfirmModal] = useState(false);
   const [payTargetInvoiceId, setPayTargetInvoiceId] = useState(null);
   const [payConfirmMethod, setPayConfirmMethod] = useState('نقد');
 
+  // المشتريات
   const [purchaseProductSearch, setPurchaseProductSearch] = useState('');
   const [purchaseInvoices, setPurchaseInvoices] = useState(() => {
     const saved = localStorage.getItem('mihwar_purchases');
@@ -410,6 +414,7 @@ function App() {
   const [purchasePieceCost, setPurchasePieceCost] = useState('');
   const [purchaseBoxCost, setPurchaseBoxCost] = useState('');
 
+  // الموارد البشرية
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [
@@ -1027,22 +1032,64 @@ function App() {
     } catch (e) { alert('Failed'); }
   };
 
+  // دوال تسجيل الدخول وإنشاء الحساب الجديدة حسب الشروط المطلوبة بدقة
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
-    if (loginRole === 'admin' && adminSecretKey !== 'MihwarAdmin2026!') {
-      alert('❌ خطأ أمني: كلمة المرور الإدارية السرية غير صحيحة!');
-      return;
+    if (authMode === 'register') {
+      if (authPassword !== authConfirmPassword) {
+        alert('❌ كلمة المرور وتأكيد كلمة المرور غير متطابقين!');
+        return;
+      }
+      if (!authAdminSecret.trim()) {
+        alert('❌ يرجى إدخال كلمة تسجيل دخول مالك النظام!');
+        return;
+      }
+      try {
+        await API.post('/api/register', {
+          email: authEmail,
+          password: authPassword,
+          adminSecret: authAdminSecret,
+          phone: authPhone,
+          businessName: authCompanyName
+        });
+        alert('✅ تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن.');
+        setAuthMode('login');
+      } catch (err) {
+        alert(err.response?.data?.error || 'حدث خطأ أثناء إنشاء الحساب');
+      }
+    } else {
+      // تسجيل الدخول
+      if (loginType === 'admin' && authAdminSecret !== 'MihwarAdmin2026!') {
+        alert('❌ خطأ أمني: كلمة دخول مالك النظام غير صحيحة!');
+        return;
+      }
+      try {
+        const res = await API.post('/api/login', { email: authEmail, password: authPassword });
+        const loggedUser = { ...res.data.user, role: loginType, businessName: authCompanyName || res.data.user?.businessName || 'نظام محور' };
+        setUser(loggedUser);
+        localStorage.setItem('mihwar_user', JSON.stringify(loggedUser));
+        if (res.data.token) {
+          localStorage.setItem('mihwar_token', res.data.token);
+          API.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+        }
+      } catch (err) {
+        alert(err.response?.data?.error || 'خطأ في البريد الإلكتروني أو كلمة المرور');
+      }
     }
-    try {
-      const res = await API.post('/api/login', { email: authEmail, password: authPassword });
-      const loggedUser = { ...res.data.user, role: loginRole };
-      setUser(loggedUser); localStorage.setItem('mihwar_user', JSON.stringify(loggedUser));
-      if (res.data.token) { localStorage.setItem('mihwar_token', res.data.token); API.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`; }
-    } catch (err) { alert(err.response?.data?.error || 'Auth error'); }
   };
 
   const handleLogout = () => {
-    setUser(null); localStorage.clear(); delete API.defaults.headers.common['Authorization']; setShowLanding(true); setAuthView('login');
+    setUser(null);
+    localStorage.clear();
+    delete API.defaults.headers.common['Authorization'];
+    setShowLanding(true);
+    setAuthMode('login');
+    setAuthEmail('');
+    setAuthPassword('');
+    setAuthConfirmPassword('');
+    setAuthAdminSecret('');
+    setAuthPhone('');
+    setAuthCompanyName('');
   };
 
   const handleExportSales = () => {
@@ -1108,7 +1155,7 @@ function App() {
         <main style={{ padding: '80px 20px', maxWidth: '1100px', margin: 'auto', textAlign: 'center' }}>
           <h1 style={{ fontSize: '44px', fontWeight: '900', margin: '0 0 20px 0', color: '#f8fafc' }}>{t.landingTitle}</h1>
           <p style={{ fontSize: '17px', color: '#94a3b8', maxWidth: '750px', margin: '0 auto 40px auto', lineHeight: '1.7' }}>{t.landingDesc}</p>
-          <button onClick={() => { setShowLanding(false); setAuthView('login'); }} style={{ background: '#d97706', color: '#fff', padding: '14px 30px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
+          <button onClick={() => { setShowLanding(false); setAuthMode('login'); }} style={{ background: '#d97706', color: '#fff', padding: '14px 30px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
             تسجيل الدخول 🔑
           </button>
         </main>
@@ -1118,26 +1165,76 @@ function App() {
 
   if (!user) {
     return (
-      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', minHeight: '100vh', color: '#f8fafc' }}>
-        <div style={{ display: 'flex', flex: 1, width: '100%', minHeight: '100vh', justifyContent: 'center', alignItems: 'center', padding: '40px' }}>
-          <div style={{ width: '100%', maxWidth: '420px', background: '#1b2230', padding: '30px', borderRadius: '16px', border: '1px solid #263147' }}>
-            <h1 style={{ color: '#f8fafc', fontSize: '24px', fontWeight: '900', margin: '0 0 20px 0' }}>تسجيل الدخول</h1>
-            <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <div style={{ background: '#141824', padding: '10px', borderRadius: '8px', border: '1px solid #263147' }}>
-                <label style={{ fontSize: '11px', color: '#d97706', display: 'block', marginBottom: '4px' }}>{t.roleLabel}</label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button type="button" onClick={() => setLoginRole('admin')} style={{ flex: 1, padding: '6px', background: loginRole==='admin'?'#d97706':'transparent', color: '#fff', border: '1px solid #263147', borderRadius: '6px', fontSize: '12px' }}>مدير النظام</button>
-                  <button type="button" onClick={() => setLoginRole('cashier')} style={{ flex: 1, padding: '6px', background: loginRole==='cashier'?'#d97706':'transparent', color: '#fff', border: '1px solid #263147', borderRadius: '6px', fontSize: '12px' }}>كاشير</button>
-                </div>
-              </div>
-              <input type="email" placeholder="البريد الإلكتروني" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none' }} />
-              <input type="password" placeholder="كلمة المرور" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none' }} />
-              {loginRole === 'admin' && (
-                <input type="password" placeholder={t.adminSecretLabel} value={adminSecretKey} onChange={e=>setAdminSecretKey(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', border: '1px solid #ef4444', background: '#141824', color: '#fff', outline: 'none' }} />
-              )}
-              <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>دخول النظام</button>
-            </form>
+      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', minHeight: '100vh', color: '#f8fafc', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+        <div style={{ width: '100%', maxWidth: '460px', background: '#1b2230', padding: '35px', borderRadius: '20px', border: '1px solid #263147', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4)' }}>
+          
+          <div style={{ textAlign: 'center', marginBottom: '25px' }}>
+            <h2 style={{ color: '#f8fafc', fontSize: '24px', fontWeight: '900', margin: '0 0 8px 0' }}>{authMode === 'login' ? 'تسجيل الدخول' : 'فتح حساب جديد'}</h2>
+            <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0 }}>نظام محور ERP - الإدارة المتكاملة</p>
           </div>
+
+          {/* التبديل بين تسجيل الدخول وفتح الحساب */}
+          <div style={{ display: 'flex', gap: '8px', background: '#141824', padding: '5px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #263147' }}>
+            <button type="button" onClick={() => setAuthMode('login')} style={{ flex: 1, padding: '8px', background: authMode === 'login' ? '#d97706' : 'transparent', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>تسجيل الدخول</button>
+            <button type="button" onClick={() => setAuthMode('register')} style={{ flex: 1, padding: '8px', background: authMode === 'register' ? '#d97706' : 'transparent', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>فتح حساب</button>
+          </div>
+
+          {authMode === 'login' && (
+            <div style={{ background: '#141824', padding: '10px', borderRadius: '10px', border: '1px solid #263147', marginBottom: '15px' }}>
+              <label style={{ fontSize: '11px', color: '#d97706', display: 'block', marginBottom: '6px', fontWeight: 'bold' }}>اختر صلاحية الدخول:</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button type="button" onClick={() => setLoginType('admin')} style={{ flex: 1, padding: '8px', background: loginType === 'admin' ? '#d97706' : 'transparent', color: '#fff', border: '1px solid #263147', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>مدير النظام الكامل</button>
+                <button type="button" onClick={() => setLoginType('cashier')} style={{ flex: 1, padding: '8px', background: loginType === 'cashier' ? '#d97706' : 'transparent', color: '#fff', border: '1px solid #263147', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>كاشير فقط</button>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            
+            {authMode === 'register' && (
+              <>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>اسم الشركة أو المؤسسة أو المتجر *</label>
+                  <input type="text" placeholder="مثال: مؤسسة مانويل التجارية" value={authCompanyName} onChange={e=>setAuthCompanyName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>رقم الهاتف *</label>
+                  <input type="text" placeholder="05xxxxxxxx" value={authPhone} onChange={e=>setAuthPhone(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+              </>
+            )}
+
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>البريد الإلكتروني *</label>
+              <input type="email" placeholder="name@example.com" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>كلمة المرور *</label>
+              <input type="password" placeholder="••••••••" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+
+            {authMode === 'register' && (
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>تأكيد كلمة المرور *</label>
+                <input type="password" placeholder="••••••••" value={authConfirmPassword} onChange={e=>setAuthConfirmPassword(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+            )}
+
+            {/* شرط كلمة تسجيل دخول مالك النظام (تظهر في التسجيل دائماً، وفي الدخول إذا تم اختيار مدير النظام) */}
+            {(authMode === 'register' || (authMode === 'login' && loginType === 'admin')) && (
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#ef4444' }}>
+                  {authMode === 'register' ? 'كلمة تسجيل دخول مالك النظام (سرية) *' : '🔑 كلمة تسجيل دخول مالك النظام *'}
+                </label>
+                <input type="password" placeholder={authMode === 'register' ? 'أنشئ كلمة سر لمالك النظام فقط' : 'أدخل كلمة سر مالك النظام'} value={authAdminSecret} onChange={e=>setAuthAdminSecret(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #ef4444', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+            )}
+
+            <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '13px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', marginTop: '10px' }}>
+              {authMode === 'login' ? (loginType === 'admin' ? 'دخول مدير النظام 🚀' : 'دخول الكاشير 🛒') : 'إتمام فتح الحساب ✓'}
+            </button>
+          </form>
         </div>
       </div>
     );
@@ -1168,7 +1265,7 @@ function App() {
         @media print {
           body * { visibility: hidden !important; }
           #zatca-printable-invoice, #zatca-printable-invoice * { visibility: visible !important; }
-          #zatca-printable-invoice { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; padding: 10mm !important; background: #fff !important; color: #000 !important; box-sizing: border-box !important; }
+          #zatca-printable-invoice { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; padding: 15mm !important; background: #fff !important; color: #000 !important; box-sizing: border-box !important; }
           .no-print-zone { display: none !important; }
           @page { size: A4 portrait; margin: 0mm; }
         }
@@ -2085,92 +2182,73 @@ function App() {
         </div>
       )}
 
-      {/* ========================================================
-          🚀 التعديل الجذري والفاخر لقسم الفاتورة (طباعة وعرض) 🚀
-      ======================================================== */}
+      {/* Invoice Print Modal */}
       {printingInvoice && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '15px' }}>
-          <div style={{ background: '#fff', color: '#0f172a', padding: '25px', borderRadius: '20px', maxWidth: '850px', width: '100%', maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)' }}>
-            <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>
-              <button onClick={() => window.print()} style={{ background: 'linear-gradient(135deg, #d97706, #b45309)', color: '#fff', border: 'none', padding: '10px 22px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>🖨️ طباعة الفاتورة الفاخرة / PDF</button>
-              <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#64748b', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>{t.closeModal}</button>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
+          <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button onClick={() => window.print()} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>🖨️ طباعة الفاتورة / PDF</button>
+              </div>
+              <button onClick={()=>setPrintingInvoice(null)} style={{ background: '#334155', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>{t.closeModal}</button>
             </div>
 
-            <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#1e293b', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
-              
-              {/* شريط ترويسة راقي بتصميم بطاقة عصرية */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '3px solid #f1f5f9', paddingBottom: '20px', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                  {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '70px', height: '70px', objectFit: 'contain', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '4px' }} />) : null}
-                  <div>
-                    <h2 style={{ margin: '0 0 3px 0', fontSize: '20px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>المملكة العربية السعودية • نظام محور المعتمد</p>
-                  </div>
+            <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#d97706' }}>{t.taxInvoiceTitle}</h3>
+                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>رقم الفاتورة:</strong> INV-{printingInvoice.invoiceNo}</p>
+                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>الحالة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#f43f5e' : '#10b981', fontWeight: 'bold' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
+                  <p style={{ margin: '2px 0', fontSize: '13px' }}><strong>طريقة الدفع:</strong> <span style={{ color: '#0284c7', fontWeight: 'bold' }}>{printingInvoice.paymentMethod || 'نقد'}</span></p>
+                  {printingInvoice.dueDate && (<p style={{ margin: '2px 0', fontSize: '12px', color: '#f43f5e' }}><strong>مدة الاستحقاق:</strong> {printingInvoice.dueDate}</p>)}
+                  <p style={{ margin: '2px 0', fontSize: '12px', color: '#64748b' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
                 </div>
-                <div style={{ textAlign: 'left', background: '#f8fafc', padding: '12px 18px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                  <h3 style={{ margin: '0 0 6px 0', fontSize: '18px', color: '#d97706', fontWeight: '900' }}>{t.taxInvoiceTitle}</h3>
-                  <p style={{ margin: '2px 0', fontSize: '12px' }}><strong>رقم الفاتورة:</strong> <span style={{ color: '#0f172a', fontWeight: 'bold' }}>INV-{printingInvoice.invoiceNo}</span></p>
-                  <p style={{ margin: '2px 0', fontSize: '12px' }}><strong>تاريخ الإصدار:</strong> {new Date(printingInvoice.createdAt).toLocaleDateString('en-CA')}</p>
+                <div style={{ textAlign: 'center', margin: '0 auto' }}>
+                  {companyLogo ? (<img src={companyLogo} alt="Logo" style={{ width: '120px', height: '120px', objectFit: 'contain', marginBottom: '10px', display: 'block', margin: '0 auto 10px auto' }} />) : null}
+                  <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
+                  <p style={{ margin: '3px 0', fontSize: '13px', color: '#64748b' }}>المملكة العربية السعودية - جدة</p>
                 </div>
+                <div></div>
               </div>
 
-              {/* بطاقة معلومات العميل وحالة السداد */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-                <div style={{ background: '#f8fafc', padding: '14px 18px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                  <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#d97706', fontWeight: 'bold' }}>📍 بيانات العميل:</h4>
-                  <p style={{ margin: '3px 0', fontSize: '13px' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
-                  <p style={{ margin: '3px 0', fontSize: '13px' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
-                  <p style={{ margin: '3px 0', fontSize: '13px' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
-                </div>
-                <div style={{ background: '#f8fafc', padding: '14px 18px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <p style={{ margin: '3px 0', fontSize: '13px' }}><strong>حالة الفاتورة:</strong> <span style={{ color: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#ef4444' : '#10b981', fontWeight: 'bold', padding: '2px 8px', background: printingInvoice.paymentStatus === 'غير مدفوعة' ? '#fee2e2' : '#d1fae5', borderRadius: '6px' }}>{printingInvoice.paymentStatus || 'مدفوعة'}</span></p>
-                  <p style={{ margin: '5px 0', fontSize: '13px' }}><strong>طريقة الدفع:</strong> <span style={{ color: '#0284c7', fontWeight: 'bold' }}>{printingInvoice.paymentMethod || 'نقد'}</span></p>
-                  {printingInvoice.dueDate && (<p style={{ margin: '3px 0', fontSize: '12px', color: '#ef4444' }}><strong>مدة الاستحقاق:</strong> {printingInvoice.dueDate}</p>)}
-                </div>
+              <div style={{ background: '#f8fafc', padding: '12px 15px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', border: '1px solid #e2e8f0' }}>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: '#0f172a' }}>بيانات العميل:</h4>
+                <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
+                <p style={{ margin: '3px 0' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
+                <p style={{ margin: '3px 0' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
               </div>
 
-              {/* جدول المنتجات الفاخر والمضغوط لاستغلال المساحات بأفضل شكل */}
-              <div style={{ overflowX: 'auto', marginBottom: '20px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
-                  <thead>
-                    <tr style={{ background: '#0f172a', color: '#fff', textAlign: 'right' }}>
-                      <th style={{ padding: '10px 12px', width: '5%' }}>#</th>
-                      <th style={{ padding: '10px 12px', width: '45%' }}>{t.itemDesc}</th>
-                      <th style={{ padding: '10px 12px', textAlign: 'center', width: '15%' }}>{t.itemQuantity}</th>
-                      <th style={{ padding: '10px 12px', textAlign: 'center', width: '15%' }}>{t.unitPriceCol}</th>
-                      <th style={{ padding: '10px 12px', textAlign: 'left', width: '20%' }}>{t.totalCol}</th>
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ background: '#0f172a', color: '#fff' }}>
+                    <th style={{ padding: '10px', textAlign: 'right' }}>{t.itemDesc}</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>{t.itemQuantity}</th>
+                    <th style={{ padding: '10px', textAlign: 'center' }}>{t.unitPriceCol}</th>
+                    <th style={{ padding: '10px', textAlign: 'left' }}>{t.totalCol}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(printingInvoice.items || []).map((it, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '10px', textAlign: 'right' }}>{it.product?.name || it.name || 'خدمة عامة'}</td>
+                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.quantity} {it.unitType ? `(${it.unitType})` : ''}</td>
+                      <td style={{ padding: '10px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
+                      <td style={{ padding: '10px', textAlign: 'left', fontWeight: 'bold' }}>{it.subtotal} {t.currency}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {(printingInvoice.items || []).map((it, idx) => (
-                      <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', background: idx % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                        <td style={{ padding: '8px 12px', color: '#64748b' }}>{idx + 1}</td>
-                        <td style={{ padding: '8px 12px', fontWeight: 'bold', color: '#0f172a' }}>{it.product?.name || it.name || 'خدمة عامة'}</td>
-                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>{it.quantity} {it.unitType ? `(${it.unitType})` : ''}</td>
-                        <td style={{ padding: '8px 12px', textAlign: 'center' }}>{it.unitPrice} {t.currency}</td>
-                        <td style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 'bold', color: '#047857' }}>{it.subtotal} {t.currency}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
 
-              {/* قسم QR والملخص المالي النهائي */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e2e8f0', paddingTop: '15px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                  <img src={generateZatcaQR(printingInvoice, businessName)} alt="ZATCA QR" style={{ width: '95px', height: '95px', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '3px' }} />
-                  <div style={{ fontSize: '11px', color: '#64748b', maxWidth: '220px', lineHeight: '1.5' }}>
-                    <span>QR Code معتمد متوافق مع متطلبات هيئة الزكاة والضريبة والجمارك (ZATCA).</span>
-                  </div>
-                </div>
-                <div style={{ textAlign: 'left', fontSize: '13.5px', minWidth: '250px', background: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '5px 0' }}><span style={{ color: '#64748b' }}>{t.subtotal}</span><strong>{printingInvoice.subtotal} {t.currency}</strong></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '5px 0' }}><span style={{ color: '#64748b' }}>{t.vatAmount}</span><strong>{printingInvoice.taxAmount} {t.currency}</strong></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '2px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#d97706', fontWeight: '900' }}><span>{t.totalDue}</span><span>{printingInvoice.totalAmount} {t.currency}</span></div>
+                <img src={generateZatcaQR(printingInvoice, businessName)} alt="ZATCA QR" style={{ width: '100px', height: '100px' }} />
+                <div style={{ textAlign: 'left', fontSize: '14px', minWidth: '220px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span style={{ color: '#64748b' }}>{t.subtotal}</span><strong>{printingInvoice.subtotal} {t.currency}</strong></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span style={{ color: '#64748b' }}>{t.vatAmount}</span><strong>{printingInvoice.taxAmount} {t.currency}</strong></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '1px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#d97706' }}><strong>{t.totalDue}</strong><strong>{printingInvoice.totalAmount} {t.currency}</strong></div>
                 </div>
               </div>
 
-              <div style={{ textAlign: 'center', marginTop: '25px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '12px' }}>{t.invoiceFooterNote}</div>
+              <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>{t.invoiceFooterNote}</div>
             </div>
           </div>
         </div>
