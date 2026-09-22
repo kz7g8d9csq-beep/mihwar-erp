@@ -1037,7 +1037,6 @@ function App() {
     } catch (e) { alert('Failed'); }
   };
 
-  // دالة حذف الحساب نهائياً مع إشعار تأكيد الحذف
   const handleDeleteAccount = () => {
     if (!window.confirm('⚠️ تنبيه هام: هل أنت متأكد تماماً من رغبتك في حذف الحساب نهائياً ومسح كافة البيانات من النظام؟')) {
       return;
@@ -1962,7 +1961,7 @@ function App() {
                 </form>
               </div>
 
-              {/* إضافة خيار حذف الحساب هنا */}
+              {/* إضافة خيار حذف الحساب في الإعدادات مع إشعار التأكيد */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid #7f1d1d`, padding: '22px', gridColumn: '1 / -1' }}>
                 <h3 style={{ margin: '0 0 5px 0', fontSize: '17px', color: '#ef4444' }}>{t.deleteAccountTitle}</h3>
                 <p style={{ fontSize: '12px', color: theme.textMuted, margin: '0 0 15px 0' }}>{t.deleteAccountDesc}</p>
