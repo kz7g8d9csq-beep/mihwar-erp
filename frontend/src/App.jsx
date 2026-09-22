@@ -325,16 +325,17 @@ function App() {
   const [editProdStock, setEditProdStock] = useState('');
   const [editItemCode, setEditItemCode] = useState('');
 
-  // العملاء
+  // العملاء (مع إضافة البريد الإلكتروني email)
   const [customers, setCustomers] = useState(() => {
     const saved = localStorage.getItem('mihwar_customers');
     return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'شركة الرائد لقطع غيار السيارات', nationalId: '25559451496', phone: '0562453535', address: 'جدة - حي بني مالك', gracePeriod: '30 يوم' }
+      { id: 1, name: 'شركة الرائد لقطع غيار السيارات', nationalId: '25559451496', phone: '0562453535', email: 'alraed@gmail.com', address: 'جدة - حي بني مالك', gracePeriod: '30 يوم' }
     ];
   });
   const [custName, setCustName] = useState('');
   const [custNationalId, setCustNationalId] = useState('');
   const [custPhone, setCustPhone] = useState('');
+  const [custEmail, setCustEmail] = useState('');
   const [custAddress, setCustAddress] = useState('');
   const [custGracePeriod, setCustGracePeriod] = useState('');
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
@@ -343,6 +344,7 @@ function App() {
   const [editCustName, setEditCustName] = useState('');
   const [editCustNationalId, setEditCustNationalId] = useState('');
   const [editCustPhone, setEditCustPhone] = useState('');
+  const [editCustEmail, setEditCustEmail] = useState('');
   const [editCustAddress, setEditCustAddress] = useState('');
   const [editCustGracePeriod, setEditCustGracePeriod] = useState('');
 
@@ -484,6 +486,9 @@ function App() {
   useEffect(() => {
     if (user) {
       setBusinessName(user.businessName || 'نظام محور');
+      if (user.role === 'cashier' && activeTab !== 'pos') {
+        setActiveTab('pos');
+      }
     }
   }, [user]);
 
@@ -508,7 +513,7 @@ function App() {
   }, [purchaseInvoices]);
 
   const filteredInventory = inventory.filter(i => safeLower(i.name).includes(safeLower(inventorySearchQuery)) || safeLower(i.itemCode).includes(safeLower(inventorySearchQuery)));
-  const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)) || safeLower(c.address).includes(safeLower(customerSearchQuery)));
+  const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)) || safeLower(c.email).includes(safeLower(customerSearchQuery)) || safeLower(c.address).includes(safeLower(customerSearchQuery)));
   const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)) || safeLower(s.address).includes(safeLower(supplierSearchQuery)));
   const filteredInvoices = invoices.filter(inv => safeLower(inv.invoiceNo).includes(safeLower(invoiceSearchQuery)) || safeLower(inv.customer?.name).includes(safeLower(invoiceSearchQuery)));
   const filteredPurchaseInvoices = purchaseInvoices.filter(pi => safeLower(pi.invoiceNo || pi.id).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.productName).includes(safeLower(purchaseInvoicesListSearch)) || safeLower(pi.supplier?.name).includes(safeLower(purchaseInvoicesListSearch)));
@@ -618,6 +623,7 @@ function App() {
     setEditCustName(cust.name || '');
     setEditCustNationalId(cust.nationalId || '');
     setEditCustPhone(cust.phone || '');
+    setEditCustEmail(cust.email || '');
     setEditCustAddress(cust.address || '');
     setEditCustGracePeriod(cust.gracePeriod || '');
     setShowEditCustModal(true);
@@ -631,6 +637,7 @@ function App() {
       name: editCustName.trim(),
       nationalId: editCustNationalId.trim(),
       phone: editCustPhone.trim(),
+      email: editCustEmail.trim(),
       address: editCustAddress.trim(),
       gracePeriod: editCustGracePeriod.trim()
     } : c);
@@ -972,13 +979,14 @@ function App() {
       name: custName.trim(),
       nationalId: custNationalId.trim(),
       phone: custPhone.trim(),
+      email: custEmail.trim(),
       address: custAddress.trim(),
       gracePeriod: custGracePeriod.trim()
     };
     const updated = [newCust, ...customers];
     setCustomers(updated);
     localStorage.setItem('mihwar_customers', JSON.stringify(updated));
-    setCustName(''); setCustNationalId(''); setCustPhone(''); setCustAddress(''); setCustGracePeriod('');
+    setCustName(''); setCustNationalId(''); setCustPhone(''); setCustEmail(''); setCustAddress(''); setCustGracePeriod('');
   };
 
   const handleAddSupplier = (e) => {
@@ -1030,7 +1038,7 @@ function App() {
     } catch (e) { alert('Failed'); }
   };
 
-  // تعديل تسجيل الدخول ليتطلب (البريد الإلكتروني، كلمة المرور، رقم الهاتف فقط)
+  // دالة تسجيل الدخول المحدثة (البريد، كلمة المرور، رقم الهاتف فقط)
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     if (authMode === 'register') {
@@ -1051,7 +1059,6 @@ function App() {
         alert(err.response?.data?.error || 'حدث خطأ أثناء فتح الحساب');
       }
     } else {
-      // تسجيل الدخول (البريد الإلكتروني، كلمة المرور، رقم الهاتف فقط)
       if (!authEmail || !authPassword || !authPhone) {
         alert('❌ يرجى إدخال البريد الإلكتروني، كلمة المرور ورقم الهاتف!');
         return;
@@ -1066,7 +1073,6 @@ function App() {
           API.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
         }
       } catch (err) {
-        // Fallback محلي في حال لم تتطلب الباك إند رقم الهاتف للدخول مباشرة
         if (authEmail && authPassword && authPhone) {
           const fakeUser = { name: authCompanyName || 'مالك النظام', email: authEmail, role: loginType, businessName: authCompanyName || 'نظام محور' };
           setUser(fakeUser);
@@ -1113,11 +1119,12 @@ function App() {
   const handleExportCustomers = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'دليل_العملاء' : 'Clients_Directory';
-    const headers = isAr ? ['الاسم', 'الهوية / السجل', 'الهاتف', 'العنوان', 'فترة السماح'] : ['Name', 'ID', 'Phone', 'Address', 'Grace Period'];
+    const headers = isAr ? ['الاسم', 'الهوية / السجل', 'الهاتف', 'البريد الإلكتروني', 'العنوان', 'فترة السماح'] : ['Name', 'ID', 'Phone', 'Email', 'Address', 'Grace Period'];
     const rows = filteredCustomers.map(c => [
       c.name,
       c.nationalId || '-',
       c.phone || '-',
+      c.email || '-',
       c.address || '-',
       c.gracePeriod || '-'
     ]);
@@ -1730,6 +1737,7 @@ function App() {
                   <input type="text" placeholder="اسم العميل / المؤسسة *" value={custName} onChange={e=>setCustName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="رقم الهوية / السجل التجاري" value={custNationalId} onChange={e=>setCustNationalId(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="رقم الهاتف" value={custPhone} onChange={e=>setCustPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <input type="email" placeholder="البريد الإلكتروني" value={custEmail} onChange={e=>setCustEmail(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="العنوان (مثال: جدة - حي الروضة)" value={custAddress} onChange={e=>setCustAddress(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={custGracePeriod} onChange={e=>setCustGracePeriod(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ العميل</button>
@@ -1739,18 +1747,19 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <h3 style={{ margin: 0, fontSize: '17px' }}>دليل العملاء</h3>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input type="text" value={customerSearchQuery} onChange={e => setCustomerSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الهوية، الهاتف أو العنوان..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} />
+                    <input type="text" value={customerSearchQuery} onChange={e => setCustomerSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم، الهوية، الهاتف أو البريد..." style={{ padding: '6px 10px', borderRadius: '6px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} />
                     <button onClick={handleExportCustomers} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>تصدير Excel</button>
                   </div>
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>الاسم</th><th style={{ padding: '10px' }}>الهوية / السجل</th><th style={{ padding: '10px' }}>الهاتف</th><th style={{ padding: '10px' }}>العنوان</th><th style={{ padding: '10px' }}>فترة السماح</th><th style={{ padding: '10px' }}>الإجراءات</th></tr></thead>
+                  <thead><tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}><th style={{ padding: '10px' }}>الاسم</th><th style={{ padding: '10px' }}>الهوية / السجل</th><th style={{ padding: '10px' }}>الهاتف</th><th style={{ padding: '10px' }}>البريد الإلكتروني</th><th style={{ padding: '10px' }}>العنوان</th><th style={{ padding: '10px' }}>فترة السماح</th><th style={{ padding: '10px' }}>الإجراءات</th></tr></thead>
                   <tbody>
                     {filteredCustomers.map(c => (
                       <tr key={c.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
                         <td style={{ padding: '10px', fontWeight: 'bold' }}>{c.name}</td>
                         <td style={{ padding: '10px' }}>{c.nationalId || '-'}</td>
                         <td style={{ padding: '10px' }}>{c.phone || '-'}</td>
+                        <td style={{ padding: '10px' }}>{c.email || '-'}</td>
                         <td style={{ padding: '10px' }}>{c.address || '-'}</td>
                         <td style={{ padding: '10px', color: '#38bdf8', fontWeight: 'bold' }}>{c.gracePeriod || '-'}</td>
                         <td style={{ padding: '10px' }}>
@@ -2023,6 +2032,7 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>اسم العميل</label><input type="text" value={editCustName} onChange={e=>setEditCustName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهوية أو السجل التجاري</label><input type="text" value={editCustNationalId} onChange={e=>setEditCustNationalId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editCustPhone} onChange={e=>setEditCustPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>البريد الإلكتروني</label><input type="email" value={editCustEmail} onChange={e=>setEditCustEmail(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editCustAddress} onChange={e=>setEditCustAddress(e.target.value)} placeholder="مثال: جدة - حي الروضة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editCustGracePeriod} onChange={e=>setEditCustGracePeriod(e.target.value)} placeholder="مثال: 30 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
