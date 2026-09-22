@@ -288,11 +288,9 @@ function App() {
   const [showLanding, setShowLanding] = useState(true);
   
   const [authMode, setAuthMode] = useState('login');
-  const [loginType, setLoginType] = useState('admin');
   
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
-  const [authAdminSecret, setAuthAdminSecret] = useState('');
   const [authPhone, setAuthPhone] = useState('');
   const [authCompanyName, setAuthCompanyName] = useState('');
 
@@ -481,9 +479,6 @@ function App() {
   useEffect(() => {
     if (user) {
       setBusinessName(user.businessName || 'نظام محور');
-      if (user.role === 'cashier' && activeTab !== 'pos') {
-        setActiveTab('pos');
-      }
     }
   }, [user]);
 
@@ -1030,7 +1025,7 @@ function App() {
     } catch (e) { alert('Failed'); }
   };
 
-  // تعديل فتح الحساب وتسجيل الدخول بالشروط الجديدة بدقة
+  // تعديل وظيفة فتح الحساب وتسجيل الدخول بالمعلومات الـ 3 المطلوبة فقط
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     if (authMode === 'register') {
@@ -1051,9 +1046,9 @@ function App() {
         alert(err.response?.data?.error || 'حدث خطأ أثناء فتح الحساب');
       }
     } else {
-      // تسجيل الدخول
-      if (loginType === 'admin' && authAdminSecret !== 'MihwarAdmin2026!') {
-        alert('❌ خطأ أمني: كلمة دخول مالك النظام غير صحيحة!');
+      // تسجيل الدخول (البريد الإلكتروني، كلمة المرور، رقم الهاتف فقط)
+      if (!authEmail || !authPassword || !authPhone) {
+        alert('❌ يرجى إدخال البريد الإلكتروني، كلمة المرور ورقم الهاتف!');
         return;
       }
       try {
@@ -1066,7 +1061,7 @@ function App() {
           API.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
         }
       } catch (err) {
-        alert(err.response?.data?.error || 'خطأ في البريد الإلكتروني أو كلمة المرور');
+        alert(err.response?.data?.error || 'خطأ في البيانات المدخلة');
       }
     }
   };
@@ -1079,7 +1074,6 @@ function App() {
     setAuthMode('login');
     setAuthEmail('');
     setAuthPassword('');
-    setAuthAdminSecret('');
     setAuthPhone('');
     setAuthCompanyName('');
   };
@@ -1182,7 +1176,6 @@ function App() {
 
           <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             
-            {/* الشروط الـ 4 لفتح الحساب فقط */}
             {authMode === 'register' ? (
               <>
                 <div>
@@ -1205,21 +1198,19 @@ function App() {
             ) : (
               <>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>البريد الإلكتروني *</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>1. البريد الإلكتروني *</label>
                   <input type="email" placeholder="name@example.com" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>كلمة المرور *</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>2. كلمة المرور *</label>
                   <input type="password" placeholder="••••••••" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
 
-                {loginType === 'admin' && (
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#ef4444' }}>🔑 كلمة تسجيل دخول مالك النظام *</label>
-                    <input type="password" placeholder="أدخل كلمة سر مالك النظام" value={authAdminSecret} onChange={e=>setAuthAdminSecret(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #ef4444', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                  </div>
-                )}
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>3. رقم الهاتف *</label>
+                  <input type="text" placeholder="05xxxxxxxx" value={authPhone} onChange={e=>setAuthPhone(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
               </>
             )}
 
