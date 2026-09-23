@@ -428,7 +428,7 @@ function App() {
   const [purchaseBoxCost, setPurchaseBoxCost] = useState('');
 
   // الموارد البشرية والتبويبات والبحث الداخلي
-  const [hrSubTab, setHrSubTab] = useState('employees'); // 'employees' | 'payroll' | 'alerts'
+  const [hrSubTab, setHrSubTab] = useState('employees');
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [];
@@ -531,14 +531,12 @@ function App() {
   const filteredEmployeesForHrDeduct = employees.filter(emp => safeLower(emp.name).includes(safeLower(hrDeductSearchQuery)) || safeLower(emp.idNumber).includes(safeLower(hrDeductSearchQuery)));
   const filteredEmployees = employees.filter(emp => safeLower(emp.name).includes(safeLower(hrSearchQuery)) || safeLower(emp.idNumber).includes(safeLower(hrSearchQuery)));
 
-  // فلترة سجل الخصومات في قسم الرواتب بالاسم أو الهوية
   const filteredDeductions = deductionsList.filter(d => {
     const emp = employees.find(e => e.name === d.empName);
     return safeLower(d.empName).includes(safeLower(hrPayrollSearchQuery)) ||
            safeLower(emp?.idNumber || '').includes(safeLower(hrPayrollSearchQuery));
   });
 
-  // استخراج قائمة التنبيهات
   const documentAlerts = [];
   employees.forEach(emp => {
     if (emp.contractEnd && emp.contractEnd !== '-') {
@@ -585,7 +583,6 @@ function App() {
   documentAlerts.sort((a, b) => a.daysDiff - b.daysDiff);
   const urgentAlertsCount = documentAlerts.filter(a => a.daysDiff <= 30).length;
 
-  // فلترة التنبيهات بالاسم أو الهوية
   const filteredAlerts = documentAlerts.filter(a =>
     safeLower(a.empName).includes(safeLower(hrAlertsSearchQuery)) ||
     safeLower(a.empIdNumber || '').includes(safeLower(hrAlertsSearchQuery))
@@ -1456,8 +1453,8 @@ function App() {
   const allTabs = [
     { id: 'dashboard', label: t.dashboard, adminOnly: true, icon: '📊' },
     { id: 'pos', label: t.pos, adminOnly: false, icon: '🛒' },
-    { id: 'sales', label: t.sales, adminOnly: true, icon: '🧾' },
-    { id: 'invoicesList', label: t.invoicesList, adminOnly: true, icon: '📑' },
+    { id: 'sales', label: t.sales, adminOnly: false, icon: '🧾' },
+    { id: 'invoicesList', label: t.invoicesList, adminOnly: false, icon: '📑' },
     { id: 'purchaseInvoicesList', label: t.purchaseInvoicesList, adminOnly: true, icon: '📥' },
     { id: 'purchases', label: t.purchases, adminOnly: true, icon: '📝' },
     { id: 'customers', label: t.customers, adminOnly: true, icon: '👥' },
@@ -1686,8 +1683,8 @@ function App() {
             </div>
           )}
 
-          {/* TAB 3: Sales */}
-          {activeTab === 'sales' && user.role !== 'cashier' && (
+          {/* TAB 3: Sales (متاح الآن للكاشير ولمدير النظام معاً) */}
+          {activeTab === 'sales' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
                 <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#d97706' }}>⚡ إصدار فاتورة بيع جديدة</h2>
@@ -1785,8 +1782,8 @@ function App() {
             </div>
           )}
 
-          {/* TAB 4: Sales Invoices List */}
-          {activeTab === 'invoicesList' && user.role !== 'cashier' && (
+          {/* TAB 4: Sales Invoices List (متاح الآن للكاشير ولمدير النظام معاً) */}
+          {activeTab === 'invoicesList' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <h2 style={{ margin: 0, fontSize: '18px' }}>📑 سجل فواتير المبيعات</h2>
@@ -2005,8 +2002,8 @@ function App() {
                   <input type="text" placeholder="اسم المورد / الشركة *" value={suppName} onChange={e=>setSuppName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="الرقم الضريبي" value={suppTaxNumber} onChange={e=>setSuppTaxNumber(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="رقم الهاتف" value={suppPhone} onChange={e=>setSuppPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-                  <input type="text" placeholder="العنوان (مثال: جدة - المنطقة الصناعية)" value={suppAddress} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={suppGracePeriod} onChange={e=>setSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
+                  <input type="text" placeholder="العنوان (مثال: جدة - المنطقة الصناعية)" value={suppAddress} onChange={e=>setSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={suppGracePeriod} onChange={e=>setSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ المورد</button>
                 </form>
               </div>
@@ -2102,7 +2099,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 11: HR (الموارد البشرية مع محركات البحث المحدثة) */}
+          {/* TAB 11: HR */}
           {activeTab === 'hr' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -2147,7 +2144,6 @@ function App() {
                 </button>
               </div>
 
-              {/* بطاقات الإحصاء العام */}
               {hrSubTab !== 'alerts' && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
                   <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي الموظفين</p><h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '24px' }}>{employees.length} موظف</h2></div>
@@ -2200,7 +2196,7 @@ function App() {
                 </div>
               )}
 
-              {/* 2: تبويب الرواتب والخصومات (مع إضافة خيار البحث بالاسم أو الهوية) */}
+              {/* 2: تبويب الرواتب والخصومات */}
               {hrSubTab === 'payroll' && (
                 <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -2239,7 +2235,7 @@ function App() {
                 </div>
               )}
 
-              {/* 3: تبويب الوثائق والتنبيهات (مع إضافة خيار البحث بالاسم أو الهوية) */}
+              {/* 3: تبويب الوثائق والتنبيهات */}
               {hrSubTab === 'alerts' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -2401,7 +2397,7 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الرقم الضريبي</label><input type="text" value={editSuppTaxNumber} onChange={e=>setEditSuppTaxNumber(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editSuppPhone} onChange={e=>setEditSuppPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editSuppAddress} onChange={e=>setEditSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث المورد</button>
                 <button type="button" onClick={() => setShowEditSuppModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
