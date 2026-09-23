@@ -272,6 +272,20 @@ const getDaysDiff = (dateStr) => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
+// دالة تحويل التاريخ إلى صيغة يومية بتوقيت مكة المكرمة (Asia/Riyadh)
+const getMakkahDateString = (dateObj = new Date()) => {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Riyadh',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(dateObj);
+  } catch {
+    return new Date(dateObj).toISOString().slice(0, 10);
+  }
+};
+
 function App() {
   const [lang, setLang] = useState('ar');
   const [isDark, setIsDark] = useState(true);
@@ -427,7 +441,7 @@ function App() {
   const [purchasePieceCost, setPurchasePieceCost] = useState('');
   const [purchaseBoxCost, setPurchaseBoxCost] = useState('');
 
-  // الموارد البشرية والتبويبات والبحث الداخلي
+  // الموارد البشرية
   const [hrSubTab, setHrSubTab] = useState('employees');
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
@@ -467,9 +481,14 @@ function App() {
   const [hrDeductAmount, setHrDeductAmount] = useState('');
   const [hrDeductReason, setHrDeductReason] = useState('');
 
+  // الحد الأدنى للمخزون مع خيار الوحدة (قطعة أو كرتون)
   const [lowStockThreshold, setLowStockThreshold] = useState(() => {
     const saved = localStorage.getItem('mihwar_low_stock_threshold');
     return saved ? Number(saved) : 30;
+  });
+
+  const [lowStockUnit, setLowStockUnit] = useState(() => {
+    return localStorage.getItem('mihwar_low_stock_unit') || 'قطعة';
   });
 
   const [printingInvoice, setPrintingInvoice] = useState(null);
@@ -587,6 +606,24 @@ function App() {
     safeLower(a.empName).includes(safeLower(hrAlertsSearchQuery)) ||
     safeLower(a.empIdNumber || '').includes(safeLower(hrAlertsSearchQuery))
   );
+
+  // حساب الأصناف التي وصلت للحد الأدنى (حسب الوحدة المختارة: قطعة أو كرتون)
+  const lowStockItems = inventory.filter(i => {
+    const boxSize = Number(i.boxSize || 12);
+    if (lowStockUnit === 'كرتون') {
+      const availableCartons = i.stock / boxSize;
+      return availableCartons <= lowStockThreshold;
+    }
+    return i.stock <= lowStockThreshold;
+  });
+
+  // حساب مبيعات اليوم بتوقيت مكة المكرمة وتحديثها التلقائي
+  const todayMakkahString = getMakkahDateString();
+  const todayInvoices = invoices.filter(inv => {
+    if (!inv.createdAt) return false;
+    return getMakkahDateString(new Date(inv.createdAt)) === todayMakkahString;
+  });
+  const todaySalesVal = todayInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
 
   const handleSaveEmployee = (e) => {
     e.preventDefault();
@@ -1027,7 +1064,6 @@ function App() {
   const totalPurchasesVal = purchaseInvoices.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
   const netProfitVal = totalSalesVal - totalPurchasesVal;
   
-  const lowStockItems = inventory.filter(i => i.stock <= lowStockThreshold);
   const totalPayroll = employees.reduce((sum, e) => sum + Number(e.salary || 0), 0);
 
   const currentYear = new Date().getFullYear();
@@ -1531,27 +1567,71 @@ function App() {
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <div><h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.welcome} {user.name} 👋</h2><p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>مرحباً بك في لوحة التحكم المركزية لنظام محور.</p></div>
               </div>
+              
+              {/* شبكة البطاقات المالية الإحصائية متضمنة إجمالي مبيعات اليوم بتوقيت مكة */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.invValue}</p><h2 style={{ color: '#d97706', margin: '8px 0 0 0', fontSize: '22px' }}>{inventoryVal.toLocaleString()} {t.currency}</h2></div>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.salesTotal}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{totalSalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.purchasesTotal}</p><h2 style={{ color: '#f59e0b', margin: '8px 0 0 0', fontSize: '22px' }}>{totalPurchasesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
                 <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.netProfit}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
+                
+                {/* بطاقة إجمالي مبيعات اليوم (توقيت مكة المكرمة وتحديث كل 24 ساعة) */}
+                <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid #38bdf844` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي مبيعات اليوم (شامل الضريبة)</p>
+                    <span style={{ fontSize: '11px', background: '#0284c722', color: '#38bdf8', padding: '2px 8px', borderRadius: '6px', fontWeight: 'bold' }}>توقيت مكة 🕋</span>
+                  </div>
+                  <h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '22px' }}>{todaySalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2>
+                  <span style={{ fontSize: '11px', color: theme.textMuted, marginTop: '4px', display: 'block' }}>({todayInvoices.length} فواتير تم إصدارها اليوم)</span>
+                </div>
               </div>
+
+              {/* بطاقة فحص مستويات المخزون مع تحديد الوحدة (قطعة / كرتون) */}
               <div style={{ background: lowStockItems.length > 0 ? '#7f1d1d22' : theme.cardBg, borderRadius: '16px', border: `1px solid ${lowStockItems.length > 0 ? '#7f1d1d' : theme.border}`, padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <div>
                   <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#fca5a5' : theme.textDark }}>
-                    {lowStockItems.length > 0 ? `⚠️ تنبيه: يوجد ${lowStockItems.length} صنف وصل للحد الأدنى للمخزون (${lowStockThreshold} قطع أو أقل)` : t.lowStockClean}
+                    {lowStockItems.length > 0 ? `⚠️ تنبيه: يوجد ${lowStockItems.length} صنف وصل للحد الأدنى للمخزون (${lowStockThreshold} ${lowStockUnit} أو أقل)` : t.lowStockClean}
                   </h3>
                   {lowStockItems.length > 0 && (
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
-                      {lowStockItems.map(item => (<span key={item.id} style={{ background: '#7f1d1d', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>{item.name} (المتبقي: {item.stock})</span>))}
+                      {lowStockItems.map(item => {
+                        const bSize = Number(item.boxSize || 12);
+                        const remainingText = lowStockUnit === 'كرتون' ? `${(item.stock / bSize).toFixed(1)} كرتون` : `${item.stock} حبة`;
+                        return (
+                          <span key={item.id} style={{ background: '#7f1d1d', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>
+                            {item.name} (المتبقي: {remainingText})
+                          </span>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
-                <div style={{ background: theme.bgMain, padding: '12px 18px', borderRadius: '10px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                
+                {/* مدخل الرقم واختيار الوحدة (قطعة / كرتون) */}
+                <div style={{ background: theme.bgMain, padding: '10px 16px', borderRadius: '10px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontSize: '13px', fontWeight: 'bold' }}>تحديد الحد الأدنى:</span>
-                  <input type="number" value={lowStockThreshold} onChange={e => { const val = Number(e.target.value); setLowStockThreshold(val); localStorage.setItem('mihwar_low_stock_threshold', val); }} style={{ width: '65px', padding: '6px', borderRadius: '6px', border: '1px solid #d97706', background: theme.cardBg, color: theme.textDark, textAlign: 'center', fontWeight: 'bold', fontSize: '14px', outline: 'none' }} />
-                  <span style={{ fontSize: '12px', color: theme.textMuted }}>قطعة</span>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    value={lowStockThreshold} 
+                    onChange={e => { 
+                      const val = Number(e.target.value); 
+                      setLowStockThreshold(val); 
+                      localStorage.setItem('mihwar_low_stock_threshold', val); 
+                    }} 
+                    style={{ width: '65px', padding: '6px', borderRadius: '6px', border: '1px solid #d97706', background: theme.cardBg, color: theme.textDark, textAlign: 'center', fontWeight: 'bold', fontSize: '14px', outline: 'none' }} 
+                  />
+                  <select 
+                    value={lowStockUnit} 
+                    onChange={e => { 
+                      const u = e.target.value; 
+                      setLowStockUnit(u); 
+                      localStorage.setItem('mihwar_low_stock_unit', u); 
+                    }} 
+                    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #d97706', background: theme.cardBg, color: theme.textDark, fontWeight: 'bold', fontSize: '12px', outline: 'none', cursor: 'pointer' }}>
+                    <option value="قطعة">قطعة</option>
+                    <option value="كرتون">كرتون</option>
+                  </select>
                 </div>
               </div>
 
@@ -1683,7 +1763,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 3: Sales (متاح الآن للكاشير ولمدير النظام معاً) */}
+          {/* TAB 3: Sales */}
           {activeTab === 'sales' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
@@ -1782,7 +1862,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 4: Sales Invoices List (متاح الآن للكاشير ولمدير النظام معاً) */}
+          {/* TAB 4: Sales Invoices List */}
           {activeTab === 'invoicesList' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -2003,7 +2083,7 @@ function App() {
                   <input type="text" placeholder="الرقم الضريبي" value={suppTaxNumber} onChange={e=>setSuppTaxNumber(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="رقم الهاتف" value={suppPhone} onChange={e=>setSuppPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="العنوان (مثال: جدة - المنطقة الصناعية)" value={suppAddress} onChange={e=>setSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={suppGracePeriod} onChange={e=>setSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={suppGracePeriod} onChange={e=>setSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ المورد</button>
                 </form>
               </div>
@@ -2269,7 +2349,7 @@ function App() {
                             {alert.empName}
                           </h4>
                           <span style={{ fontSize: '13px', color: theme.textMuted }}>
-                            {alert.docType}
+                            {alert.docType} (هوية: {alert.empIdNumber})
                           </span>
                         </div>
                         <div>
@@ -2397,7 +2477,7 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الرقم الضريبي</label><input type="text" value={editSuppTaxNumber} onChange={e=>setEditSuppTaxNumber(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editSuppPhone} onChange={e=>setEditSuppPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editSuppAddress} onChange={e=>setEditSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث المورد</button>
                 <button type="button" onClick={() => setShowEditSuppModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
