@@ -1422,6 +1422,49 @@ function App() {
                   <span style={{ fontSize: '12px', color: theme.textMuted }}>قطعة</span>
                 </div>
               </div>
+
+              {/* حركة المبيعات الشهرية خلال السنة الحالية */}
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: theme.textDark }}>
+                  📅 حركة المبيعات الشهرية خلال عام {currentYear}
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px' }}>
+                  {monthlyData.map((m, idx) => (
+                    <div key={idx} style={{ background: theme.bgMain, padding: '14px', borderRadius: '10px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 'bold', display: 'block', color: theme.textMuted }}>{m.monthName}</span>
+                      <strong style={{ fontSize: '16px', color: '#10b981', display: 'block', margin: '6px 0' }}>{m.total.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</strong>
+                      <span style={{ fontSize: '11px', color: theme.textMuted }}>{m.count} فواتير</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* المقارنة المالية السنوية (آخر 10 سنوات) */}
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: theme.textDark }}>
+                  📈 المقارنة المالية السنوية (آخر 10 سنوات)
+                </h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
+                      <th style={{ padding: '12px', textAlign: 'right' }}>السنة</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>عدد الفواتير</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>إجمالي المبيعات</th>
+                      <th style={{ padding: '12px', textAlign: 'center' }}>صافي الأرباح التقديري</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pastYearsData.map((y, idx) => (
+                      <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
+                        <td style={{ padding: '12px', fontWeight: 'bold', color: '#d97706' }}>عام {y.year}</td>
+                        <td style={{ padding: '12px', textAlign: 'center' }}>{y.count}</td>
+                        <td style={{ padding: '12px', textAlign: 'center', color: '#10b981', fontWeight: 'bold' }}>{y.totalSales.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</td>
+                        <td style={{ padding: '12px', textAlign: 'center', color: '#38bdf8', fontWeight: 'bold' }}>{y.totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -1872,7 +1915,7 @@ function App() {
                     <input type="text" placeholder="رقم الصنف (مثال: SKU-001)" value={newItemCode} onChange={e=>setNewItemCode(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                     <input type="text" placeholder={t.prodName} value={newProdName} onChange={e=>setNewProdName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                     <input type="number" placeholder={t.prodPrice} value={newProdPrice} onChange={e=>setNewProdPrice(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-                    <input type="number" placeholder={t.prodStock} value={newProdStock} onChange={e=>setNewProdStock(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                    <input type="number" placeholder={t.prodStock} value={newProdStock} onChange={e=>setNewProdStock(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                     <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.saveProd}</button>
                   </form>
                 </div>
@@ -2093,7 +2136,7 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الرقم الضريبي</label><input type="text" value={editSuppTaxNumber} onChange={e=>setEditSuppTaxNumber(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editSuppPhone} onChange={e=>setEditSuppPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editSuppAddress} onChange={e=>setEditSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث المورد</button>
                 <button type="button" onClick={() => setShowEditSuppModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
