@@ -265,26 +265,14 @@ function App() {
   const [lang, setLang] = useState('ar');
   const [isDark, setIsDark] = useState(true);
 
-  // تهيئة الحسابات المسجلة لضمان التحقق من وجود الحساب
-  useEffect(() => {
-    const accounts = localStorage.getItem('mihwar_registered_accounts');
-    if (!accounts) {
-      const savedUser = localStorage.getItem('mihwar_user');
-      if (savedUser) {
-        try {
-          const u = JSON.parse(savedUser);
-          if (u && u.email) {
-            localStorage.setItem('mihwar_registered_accounts', JSON.stringify([{
-              email: u.email.trim().toLowerCase(),
-              password: '',
-              phone: '',
-              businessName: u.businessName || u.name || 'نظام محور'
-            }]));
-          }
-        } catch (e) {}
-      }
+  // استرجاع الحسابات المسجلة
+  const getRegisteredAccounts = () => {
+    try {
+      return JSON.parse(localStorage.getItem('mihwar_registered_accounts') || '[]');
+    } catch {
+      return [];
     }
-  }, []);
+  };
 
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('mihwar_user');
@@ -311,7 +299,6 @@ function App() {
   const [authPhone, setAuthPhone] = useState('');
   const [authCompanyName, setAuthCompanyName] = useState('');
 
-  // حالات نافذة التحقق الصارم عبر EmailJS
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [enteredOtp, setEnteredOtp] = useState('');
   const [generatedOtp, setGeneratedOtp] = useState('');
@@ -330,9 +317,7 @@ function App() {
   // المخزون
   const [inventory, setInventory] = useState(() => {
     const saved = localStorage.getItem('mihwar_inventory');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'مطارة A10', price: 300, stock: 50, boxSize: 12, itemCode: 'SKU-001' }
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
@@ -349,9 +334,7 @@ function App() {
   // العملاء
   const [customers, setCustomers] = useState(() => {
     const saved = localStorage.getItem('mihwar_customers');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'شركة الرائد لقطع غيار السيارات', nationalId: '25559451496', phone: '0562453535', email: 'alraed@gmail.com', address: 'جدة - حي بني مالك', gracePeriod: '30 يوم' }
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
   const [custName, setCustName] = useState('');
   const [custNationalId, setCustNationalId] = useState('');
@@ -372,9 +355,7 @@ function App() {
   // الموردين
   const [suppliers, setSuppliers] = useState(() => {
     const saved = localStorage.getItem('mihwar_suppliers');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'شركة العالم للتوريد', taxNumber: '300123456700003', phone: '0501112233', address: 'جدة - المنطقة الصناعية', gracePeriod: '15 يوم' }
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
   const [suppName, setSuppName] = useState('');
   const [suppTaxNumber, setSuppTaxNumber] = useState('');
@@ -416,7 +397,7 @@ function App() {
   const [showPosPayModal, setShowPosPayModal] = useState(false);
   const [posPaymentMethod, setPosPaymentMethod] = useState('نقد');
 
-  // نافذة تأكيد طريقة السداد في سجل الفواتير
+  // تأكيد طريقة السداد
   const [showPayConfirmModal, setShowPayConfirmModal] = useState(false);
   const [payTargetInvoiceId, setPayTargetInvoiceId] = useState(null);
   const [payConfirmMethod, setPayConfirmMethod] = useState('نقد');
@@ -441,18 +422,13 @@ function App() {
   // الموارد البشرية
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, name: 'أحمد حلمي محمد', idNumber: '799032458578', empNo: '20', role: 'مندوب جملة', dept: 'مبيعات وتوزيع', phone: '0530044627', salary: 4577, deductions: 120, vacations: 14, insurance: 'شامل الفئة أ', status: 'نشط', iqamaEnd: '2027-05-12', healthEnd: '2027-03-01', contractEnd: '2028-04-10' },
-      { id: 2, name: 'محمد عبدالله الزهراني', idNumber: '288145789632', empNo: '21', role: 'مشرف خط إنتاج', dept: 'إنتاج وتعبئة', phone: '0501234567', salary: 5050, deductions: 50, vacations: 21, insurance: 'شامل الفئة ب', status: 'نشط', iqamaEnd: '2026-10-15', healthEnd: '2026-08-20', contractEnd: '2027-01-01' }
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
   const [hrSearchQuery, setHrSearchQuery] = useState('');
 
   const [deductionsList, setDeductionsList] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_deductions');
-    return saved ? JSON.parse(saved) : [
-      { id: 1, empName: 'أحمد حلمي محمد', amount: 120, reason: 'تأخير عن الدوام الرسمي', date: new Date().toISOString().slice(0, 10) }
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [showAddEmpModal, setShowAddEmpModal] = useState(false);
@@ -512,24 +488,24 @@ function App() {
   }, [user]);
 
   useEffect(() => {
-    localStorage.setItem('mihwar_customers', JSON.stringify(customers));
-  }, [customers]);
+    if (user) localStorage.setItem('mihwar_customers', JSON.stringify(customers));
+  }, [customers, user]);
 
   useEffect(() => {
-    localStorage.setItem('mihwar_suppliers', JSON.stringify(suppliers));
-  }, [suppliers]);
+    if (user) localStorage.setItem('mihwar_suppliers', JSON.stringify(suppliers));
+  }, [suppliers, user]);
 
   useEffect(() => {
-    localStorage.setItem('mihwar_inventory', JSON.stringify(inventory));
-  }, [inventory]);
+    if (user) localStorage.setItem('mihwar_inventory', JSON.stringify(inventory));
+  }, [inventory, user]);
 
   useEffect(() => {
-    localStorage.setItem('mihwar_invoices', JSON.stringify(invoices));
-  }, [invoices]);
+    if (user) localStorage.setItem('mihwar_invoices', JSON.stringify(invoices));
+  }, [invoices, user]);
 
   useEffect(() => {
-    localStorage.setItem('mihwar_purchases', JSON.stringify(purchaseInvoices));
-  }, [purchaseInvoices]);
+    if (user) localStorage.setItem('mihwar_purchases', JSON.stringify(purchaseInvoices));
+  }, [purchaseInvoices, user]);
 
   const filteredInventory = inventory.filter(i => safeLower(i.name).includes(safeLower(inventorySearchQuery)) || safeLower(i.itemCode).includes(safeLower(inventorySearchQuery)));
   const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)) || safeLower(c.email).includes(safeLower(customerSearchQuery)) || safeLower(c.address).includes(safeLower(customerSearchQuery)));
@@ -638,28 +614,13 @@ function App() {
   };
 
   const handleOpenEditCustomer = (cust) => {
-    setEditingCustId(cust.id);
-    setEditCustName(cust.name || '');
-    setEditCustNationalId(cust.nationalId || '');
-    setEditCustPhone(cust.phone || '');
-    setEditCustEmail(cust.email || '');
-    setEditCustAddress(cust.address || '');
-    setEditCustGracePeriod(cust.gracePeriod || '');
-    setShowEditCustModal(true);
+    setEditingCustId(cust.id); setEditCustName(cust.name || ''); setEditCustNationalId(cust.nationalId || ''); setEditCustPhone(cust.phone || ''); setEditCustEmail(cust.email || ''); setEditCustAddress(cust.address || ''); setEditCustGracePeriod(cust.gracePeriod || ''); setShowEditCustModal(true);
   };
 
   const handleUpdateCustomer = (e) => {
     e.preventDefault();
     if (!editCustName.trim()) return;
-    const updated = customers.map(c => c.id === editingCustId ? {
-      ...c,
-      name: editCustName.trim(),
-      nationalId: editCustNationalId.trim(),
-      phone: editCustPhone.trim(),
-      email: editCustEmail.trim(),
-      address: editCustAddress.trim(),
-      gracePeriod: editCustGracePeriod.trim()
-    } : c);
+    const updated = customers.map(c => c.id === editingCustId ? { ...c, name: editCustName.trim(), nationalId: editCustNationalId.trim(), phone: editCustPhone.trim(), email: editCustEmail.trim(), address: editCustAddress.trim(), gracePeriod: editCustGracePeriod.trim() } : c);
     setCustomers(updated);
     localStorage.setItem('mihwar_customers', JSON.stringify(updated));
     setShowEditCustModal(false);
@@ -675,26 +636,13 @@ function App() {
   };
 
   const handleOpenEditSupplier = (supp) => {
-    setEditingSuppId(supp.id);
-    setEditSuppName(supp.name || '');
-    setEditSuppTaxNumber(supp.taxNumber || '');
-    setEditSuppPhone(supp.phone || '');
-    setEditSuppAddress(supp.address || '');
-    setEditSuppGracePeriod(supp.gracePeriod || '');
-    setShowEditSuppModal(true);
+    setEditingSuppId(supp.id); setEditSuppName(supp.name || ''); setEditSuppTaxNumber(supp.taxNumber || ''); setEditSuppPhone(supp.phone || ''); setEditSuppAddress(supp.address || ''); setEditSuppGracePeriod(supp.gracePeriod || ''); setShowEditSuppModal(true);
   };
 
   const handleUpdateSupplier = (e) => {
     e.preventDefault();
     if (!editSuppName.trim()) return;
-    const updated = suppliers.map(s => s.id === editingSuppId ? {
-      ...s,
-      name: editSuppName.trim(),
-      taxNumber: editSuppTaxNumber.trim(),
-      phone: editSuppPhone.trim(),
-      address: editSuppAddress.trim(),
-      gracePeriod: editSuppGracePeriod.trim()
-    } : s);
+    const updated = suppliers.map(s => s.id === editingSuppId ? { ...s, name: editSuppName.trim(), taxNumber: editSuppTaxNumber.trim(), phone: editSuppPhone.trim(), address: editSuppAddress.trim(), gracePeriod: editSuppGracePeriod.trim() } : s);
     setSuppliers(updated);
     localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
     setShowEditSuppModal(false);
@@ -710,9 +658,7 @@ function App() {
   };
 
   const handleOpenPayConfirm = (invoiceId) => {
-    setPayTargetInvoiceId(invoiceId);
-    setPayConfirmMethod('نقد');
-    setShowPayConfirmModal(true);
+    setPayTargetInvoiceId(invoiceId); setPayConfirmMethod('نقد'); setShowPayConfirmModal(true);
   };
 
   const handleExecutePayment = () => {
@@ -742,7 +688,6 @@ function App() {
 
     const existing = cartItems.find(it => it.productId === product.id && it.unitPrice === price && it.unitType === salesUnitType);
     const reqQ = (existing ? existing.quantity : 0) + qty;
-    
     const multiplier = salesUnitType === 'كرتون' ? (product.boxSize || 12) : 1;
     const totalPiecesReq = reqQ * multiplier;
 
@@ -931,11 +876,7 @@ function App() {
       });
     } catch (e) {}
 
-    setSelectedPurchaseProdId('');
-    setPurchasePieceCost('');
-    setPurchaseBoxCost('');
-    setWeightInputValue('');
-    setUnitGramOrKilo('لا يوجد');
+    setSelectedPurchaseProdId(''); setPurchasePieceCost(''); setPurchaseBoxCost(''); setWeightInputValue(''); setUnitGramOrKilo('لا يوجد');
     setPrintingPurchaseInvoice(newPurchaseInvoice);
     setActiveTab('purchaseInvoicesList');
   };
@@ -993,15 +934,7 @@ function App() {
   const handleAddCustomer = (e) => {
     e.preventDefault();
     if (!custName.trim()) return;
-    const newCust = {
-      id: Date.now(),
-      name: custName.trim(),
-      nationalId: custNationalId.trim(),
-      phone: custPhone.trim(),
-      email: custEmail.trim(),
-      address: custAddress.trim(),
-      gracePeriod: custGracePeriod.trim()
-    };
+    const newCust = { id: Date.now(), name: custName.trim(), nationalId: custNationalId.trim(), phone: custPhone.trim(), email: custEmail.trim(), address: custAddress.trim(), gracePeriod: custGracePeriod.trim() };
     const updated = [newCust, ...customers];
     setCustomers(updated);
     localStorage.setItem('mihwar_customers', JSON.stringify(updated));
@@ -1011,14 +944,7 @@ function App() {
   const handleAddSupplier = (e) => {
     e.preventDefault();
     if (!suppName.trim()) return;
-    const newSupp = {
-      id: Date.now(),
-      name: suppName.trim(),
-      taxNumber: suppTaxNumber.trim(),
-      phone: suppPhone.trim(),
-      address: suppAddress.trim(),
-      gracePeriod: suppGracePeriod.trim()
-    };
+    const newSupp = { id: Date.now(), name: suppName.trim(), taxNumber: suppTaxNumber.trim(), phone: suppPhone.trim(), address: suppAddress.trim(), gracePeriod: suppGracePeriod.trim() };
     const updated = [newSupp, ...suppliers];
     setSuppliers(updated);
     localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
@@ -1048,13 +974,13 @@ function App() {
     }
   };
 
-  // تسجيل الخروج فقط (الاحتفاظ بكافة البيانات في النظام لإعادة الدخول لاحقاً)
+  // تسجيل الخروج فقط (الاحتفاظ بالبيانات)
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('mihwar_user');
     localStorage.removeItem('mihwar_token');
     if (API.defaults) delete API.defaults.headers.common['Authorization'];
-    setShowLanding(true);
+    setShowLanding(false);
     setAuthMode('login');
     setAuthEmail('');
     setAuthPassword('');
@@ -1062,12 +988,30 @@ function App() {
     setAuthCompanyName('');
   };
 
-  // حذف الحساب بشكل نهائي ومسح جميع البيانات والنسيان الكامل
+  // حذف الحساب بشكل نهائي ومسح جميع البيانات والنسيان الكامل مع إمكانية إعادة فتح حساب جديد فوراً
   const handleDeleteAccountPermanently = () => {
-    const confirmed = window.confirm('⚠️ تحذير نهائي: هل أنت متأكد تماماً من رغبتك في حذف الحساب ومسح جميع البيانات بشكل نهائي؟\n\nسيتم نسيان الحساب ومسح كافة الفواتير والمنتجات والعملاء ولن تتمكن من تسجيل الدخول إلا بإنشاء حساب جديد تماماً.');
+    const confirmed = window.confirm('⚠️ تحذير نهائي: هل أنت متأكد تماماً من رغبتك في حذف الحساب ومسح جميع البيانات بشكل نهائي؟\n\nسيتم مسح كافة البيانات ولن يمكن استرجاعها، ولكن يمكنك فتح حساب جديد بنفس البريد لاحقاً.');
     if (!confirmed) return;
 
-    localStorage.clear();
+    const currentEmail = user?.email?.trim().toLowerCase();
+    const accounts = getRegisteredAccounts();
+    const remainingAccounts = accounts.filter(a => a.email !== currentEmail);
+
+    // تصفير كل مفاتيح المنشأة من التخزين المحلي
+    localStorage.removeItem('mihwar_user');
+    localStorage.removeItem('mihwar_token');
+    localStorage.removeItem('mihwar_business_name');
+    localStorage.removeItem('mihwar_company_logo');
+    localStorage.setItem('mihwar_registered_accounts', JSON.stringify(remainingAccounts));
+    localStorage.setItem('mihwar_inventory', JSON.stringify([]));
+    localStorage.setItem('mihwar_customers', JSON.stringify([]));
+    localStorage.setItem('mihwar_suppliers', JSON.stringify([]));
+    localStorage.setItem('mihwar_invoices', JSON.stringify([]));
+    localStorage.setItem('mihwar_purchases', JSON.stringify([]));
+    localStorage.setItem('mihwar_hr_employees', JSON.stringify([]));
+    localStorage.setItem('mihwar_hr_deductions', JSON.stringify([]));
+
+    // تصفير كل الحالات البرمجية
     setUser(null);
     if (API.defaults) delete API.defaults.headers.common['Authorization'];
     setBusinessName('نظام محور');
@@ -1079,18 +1023,17 @@ function App() {
     setPurchaseInvoices([]);
     setEmployees([]);
     setDeductionsList([]);
-    setShowLanding(true);
-    setAuthMode('register');
     setAuthEmail('');
     setAuthPassword('');
     setAuthPhone('');
     setAuthCompanyName('');
-    alert('✅ تم حذف الحساب وجميع البيانات نهائياً من النظام. يتطلب منك الآن إنشاء حساب جديد للدخول.');
+    setShowLanding(false);
+    setAuthMode('register');
+
+    alert('✅ تم حذف الحساب وجميع البيانات نهائياً! يمكنك الآن فتح حساب جديد في أي وقت بنفس البريد أو ببريد مختلف.');
   };
 
-  // -------------------------------------------------------------
-  // نظام إرسال رمز التحقق (OTP) الفعلي المعتمد عبر EmailJS
-  // -------------------------------------------------------------
+  // نظام إرسال رمز التحقق (OTP)
   const handleTriggerOtp = (e) => {
     e.preventDefault();
     
@@ -1105,11 +1048,11 @@ function App() {
         return;
       }
 
-      // التحقق من وجود الحساب المسجل في النظام
-      const registeredAccounts = JSON.parse(localStorage.getItem('mihwar_registered_accounts') || '[]');
-      const account = registeredAccounts.find(a => a.email === authEmail.trim().toLowerCase());
+      // التحقق من الحساب المسجل
+      const accounts = getRegisteredAccounts();
+      const account = accounts.find(a => a.email === authEmail.trim().toLowerCase());
       if (!account) {
-        alert('❌ هذا الحساب غير موجود في النظام أو تم حذفه نهائياً!\nيرجى اختيار "فتح حساب" لإنشاء حسابك أولاً.');
+        alert('❌ هذا الحساب غير موجود أو تم حذفه نهائياً!\nيرجى الانتقال لتبويب "فتح حساب" لإنشاء الحساب.');
         setAuthMode('register');
         return;
       }
@@ -1128,11 +1071,9 @@ function App() {
 
     setIsSendingOtp(true);
 
-    // توليد رمز مكون من 6 أرقام عشوائية
     const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedOtp(randomOtp);
 
-    // بارامترات القالب في EmailJS
     const templateParams = {
       email: authEmail,
       to_email: authEmail,
@@ -1144,10 +1085,9 @@ function App() {
       "وقت": '15 دقيقة'
     };
 
-    // المعرفات الثلاثة المؤكدة بدقة من صور حسابك[cite: 6, 7, 8]
-    const SERVICE_ID = 'service_wlj45av';       // من صورة خدمات البريد[cite: 8]
-    const TEMPLATE_ID = 'template_foajm36';     // من صورة قوالب البريد[cite: 6]
-    const PUBLIC_KEY = 'H5wice2-sjrNZHBQX';     // من صورة مفاتيح واجهة برمجة التطبيقات[cite: 7]
+    const SERVICE_ID = 'service_wlj45av';
+    const TEMPLATE_ID = 'template_foajm36';
+    const PUBLIC_KEY = 'H5wice2-sjrNZHBQX';
 
     emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY)
       .then((response) => {
@@ -1172,25 +1112,50 @@ function App() {
       setEnteredOtp('');
 
       if (authMode === 'register') {
-        const registeredAccounts = JSON.parse(localStorage.getItem('mihwar_registered_accounts') || '[]');
+        const accounts = getRegisteredAccounts();
+        const cleanEmail = pendingAuthData.email.trim().toLowerCase();
         const newAccount = {
-          email: pendingAuthData.email.trim().toLowerCase(),
+          email: cleanEmail,
           password: pendingAuthData.password,
           phone: pendingAuthData.phone,
           businessName: pendingAuthData.businessName
         };
-        const filtered = registeredAccounts.filter(a => a.email !== newAccount.email);
-        filtered.push(newAccount);
-        localStorage.setItem('mihwar_registered_accounts', JSON.stringify(filtered));
+        const updatedAccounts = accounts.filter(a => a.email !== cleanEmail);
+        updatedAccounts.push(newAccount);
+        localStorage.setItem('mihwar_registered_accounts', JSON.stringify(updatedAccounts));
         localStorage.setItem('mihwar_business_name', newAccount.businessName);
+
+        // تصفير كل البيانات لتبدأ بحساب نظيف وخالٍ تماماً من أي سجلات قديمة
+        localStorage.setItem('mihwar_inventory', JSON.stringify([]));
+        localStorage.setItem('mihwar_customers', JSON.stringify([]));
+        localStorage.setItem('mihwar_suppliers', JSON.stringify([]));
+        localStorage.setItem('mihwar_invoices', JSON.stringify([]));
+        localStorage.setItem('mihwar_purchases', JSON.stringify([]));
+        localStorage.setItem('mihwar_hr_employees', JSON.stringify([]));
+        localStorage.setItem('mihwar_hr_deductions', JSON.stringify([]));
+
+        setInventory([]);
+        setCustomers([]);
+        setSuppliers([]);
+        setInvoices([]);
+        setPurchaseInvoices([]);
+        setEmployees([]);
+        setDeductionsList([]);
         setBusinessName(newAccount.businessName);
 
-        alert('✅ تم التحقق وفتح الحساب بنجاح! يمكنك الآن تسجيل الدخول.');
-        setAuthMode('login');
-        setAuthPassword('');
+        // تسجيل الدخول مباشرة فور نجاح فتح الحساب
+        const loggedUser = { 
+          name: newAccount.businessName, 
+          email: newAccount.email, 
+          role: 'admin', 
+          businessName: newAccount.businessName 
+        };
+        setUser(loggedUser);
+        localStorage.setItem('mihwar_user', JSON.stringify(loggedUser));
+        alert('✅ تم فتح الحساب وتفعيله بنجاح! تم تسجيل دخولك مباشرة.');
       } else {
-        const registeredAccounts = JSON.parse(localStorage.getItem('mihwar_registered_accounts') || '[]');
-        const account = registeredAccounts.find(a => a.email === pendingAuthData.email.trim().toLowerCase());
+        const accounts = getRegisteredAccounts();
+        const account = accounts.find(a => a.email === pendingAuthData.email.trim().toLowerCase());
         const bName = (account && account.businessName) || pendingAuthData.businessName || 'نظام محور';
         
         const loggedUser = { 
@@ -1233,14 +1198,7 @@ function App() {
     const isAr = lang === 'ar';
     const title = isAr ? 'دليل_العملاء' : 'Clients_Directory';
     const headers = isAr ? ['الاسم', 'الهوية / السجل', 'الهاتف', 'البريد الإلكتروني', 'العنوان', 'فترة السماح'] : ['Name', 'ID', 'Phone', 'Email', 'Address', 'Grace Period'];
-    const rows = filteredCustomers.map(c => [
-      c.name,
-      c.nationalId || '-',
-      c.phone || '-',
-      c.email || '-',
-      c.address || '-',
-      c.gracePeriod || '-'
-    ]);
+    const rows = filteredCustomers.map(c => [c.name, c.nationalId || '-', c.phone || '-', c.email || '-', c.address || '-', c.gracePeriod || '-']);
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -1248,13 +1206,7 @@ function App() {
     const isAr = lang === 'ar';
     const title = isAr ? 'دليل_الموردين' : 'Suppliers_Directory';
     const headers = isAr ? ['اسم المورد', 'الرقم الضريبي', 'الهاتف', 'العنوان', 'فترة السماح'] : ['Supplier Name', 'Tax No', 'Phone', 'Address', 'Grace Period'];
-    const rows = filteredSuppliers.map(s => [
-      s.name,
-      s.taxNumber || '-',
-      s.phone || '-',
-      s.address || '-',
-      s.gracePeriod || '-'
-    ]);
+    const rows = filteredSuppliers.map(s => [s.name, s.taxNumber || '-', s.phone || '-', s.address || '-', s.gracePeriod || '-']);
     exportToExcel(title, headers, rows, lang);
   };
 
@@ -1270,16 +1222,21 @@ function App() {
             )}
             <span style={{ fontWeight: '900', color: '#f8fafc', fontSize: '18px' }}>نظام محور</span>
           </div>
-          <button onClick={() => setShowLanding(false)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '10px 22px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+          <button onClick={() => { setShowLanding(false); setAuthMode('register'); }} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '10px 22px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
             {t.enterAppBtn}
           </button>
         </header>
         <main style={{ padding: '80px 20px', maxWidth: '1100px', margin: 'auto', textAlign: 'center' }}>
           <h1 style={{ fontSize: '44px', fontWeight: '900', margin: '0 0 20px 0', color: '#f8fafc' }}>نظام إدارة الموارد المؤسسية</h1>
           <p style={{ fontSize: '17px', color: '#94a3b8', maxWidth: '750px', margin: '0 auto 40px auto', lineHeight: '1.7' }}>إدارة متكاملة للمبيعات، المخزون، الحسابات، والموارد البشرية برؤية تقنية متطورة.</p>
-          <button onClick={() => { setShowLanding(false); setAuthMode('login'); }} style={{ background: '#d97706', color: '#fff', padding: '14px 30px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
-            تسجيل الدخول 🔑
-          </button>
+          <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+            <button onClick={() => { setShowLanding(false); setAuthMode('login'); }} style={{ background: '#d97706', color: '#fff', padding: '14px 30px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
+              تسجيل الدخول 🔑
+            </button>
+            <button onClick={() => { setShowLanding(false); setAuthMode('register'); }} style={{ background: '#10b981', color: '#fff', padding: '14px 30px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
+              فتح حساب جديد ✨
+            </button>
+          </div>
         </main>
       </div>
     );
@@ -1485,7 +1442,7 @@ function App() {
                 </div>
               </div>
 
-              {/* حركة المبيعات الشهرية خلال السنة الحالية */}
+              {/* حركة المبيعات الشهرية */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: theme.textDark }}>
                   📅 حركة المبيعات الشهرية خلال عام {currentYear}
@@ -1501,7 +1458,7 @@ function App() {
                 </div>
               </div>
 
-              {/* المقارنة المالية السنوية (آخر 10 سنوات) */}
+              {/* المقارنة المالية السنوية */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: theme.textDark }}>
                   📈 المقارنة المالية السنوية (آخر 10 سنوات)
@@ -1588,7 +1545,7 @@ function App() {
             </div>
           )}
 
-          {/* نافذة اختيار طريقة الدفع في نقطة البيع السريعة */}
+          {/* نافذة اختيار طريقة الدفع في POS */}
           {showPosPayModal && (
             <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3100, padding: '15px' }}>
               <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '420px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -1758,7 +1715,7 @@ function App() {
           {activeTab === 'purchaseInvoicesList' && user.role !== 'cashier' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                <h2 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>📥 سجل فواتير الشراء</h2>
+                <h2 style={{ margin: 0, fontSize: '18px' }}>📥 سجل فواتير الشراء</h2>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                   <input type="text" value={purchaseInvoicesListSearch} onChange={e => setPurchaseInvoicesListSearch(e.target.value)} placeholder="🔍 ابحث برقم الفاتورة أو المنتج أو المورد..." style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '280px' }} />
                   <button onClick={handleExportPurchaseInvoices} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير إلى Excel 📥</button>
@@ -1886,7 +1843,7 @@ function App() {
                   <input type="text" placeholder="رقم الهاتف" value={custPhone} onChange={e=>setCustPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="email" placeholder="البريد الإلكتروني" value={custEmail} onChange={e=>setCustEmail(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="العنوان (مثال: جدة - حي الروضة)" value={custAddress} onChange={e=>setCustAddress(e.target.value)} placeholder="مثال: جدة - حي الروضة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={custGracePeriod} onChange={e=>setCustGracePeriod(e.target.value)} placeholder="مثال: 30 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={custGracePeriod} onChange={e=>setCustGracePeriod(e.target.value)} placeholder="مثال: 30 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ العميل</button>
                 </form>
               </div>
@@ -1933,7 +1890,7 @@ function App() {
                   <input type="text" placeholder="الرقم الضريبي" value={suppTaxNumber} onChange={e=>setSuppTaxNumber(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="رقم الهاتف" value={suppPhone} onChange={e=>setSuppPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="العنوان (مثال: جدة - المنطقة الصناعية)" value={suppAddress} onChange={e=>setSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={suppGracePeriod} onChange={e=>setSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={suppGracePeriod} onChange={e=>setSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ المورد</button>
                 </form>
               </div>
@@ -2088,13 +2045,13 @@ function App() {
                 </table>
               </div>
 
-              {/* سجل الخصومات التفصيلي مع زر الإعفاء */}
+              {/* سجل الخصومات */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: '#fca5a5' }}>🔻 سجل الخصومات التفصيلي (السبب، القيمة، والتاريخ التلقائي)</h3>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: '#fca5a5' }}>🔻 سجل الخصومات التفصيلي</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
                   <thead>
                     <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                      <th style={{ padding: '10px' }}>اسم الموظف</th><th style={{ padding: '10px' }}>قيمة الخصم</th><th style={{ padding: '10px' }}>سبب الخصم</th><th style={{ padding: '10px' }}>تاريخ التسجيل (تلقائي)</th><th style={{ padding: '10px' }}>الإجراءات</th>
+                      <th style={{ padding: '10px' }}>اسم الموظف</th><th style={{ padding: '10px' }}>قيمة الخصم</th><th style={{ padding: '10px' }}>سبب الخصم</th><th style={{ padding: '10px' }}>تاريخ التسجيل</th><th style={{ padding: '10px' }}>الإجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2146,12 +2103,12 @@ function App() {
                 </div>
               </div>
 
-              {/* بطاقة إدارة الحساب والجلسة (تسجيل خروج أو حذف نهائي) */}
+              {/* بطاقة إدارة الحساب والجلسة */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '15px' }}>
                 <div>
                   <h3 style={{ margin: '0 0 6px 0', fontSize: '17px', color: theme.textDark }}>🔒 إدارة الحساب والجلسة</h3>
                   <p style={{ fontSize: '12px', color: theme.textMuted, margin: 0, lineHeight: '1.6' }}>
-                    تسجيل الخروج يحفظ كامل بياناتك، أما الحذف النهائي فيمسح الحساب وجميع البيانات تماماً من النظام.
+                    تسجيل الخروج يحفظ كامل بياناتك، أما الحذف النهائي فيمسح الحساب وجميع البيانات تماماً مع إمكانية إنشاء حساب جديد لاحقاً.
                   </p>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -2316,7 +2273,7 @@ function App() {
         </div>
       )}
 
-      {/* نافذة تأكيد طريقة السداد في سجل الفواتير */}
+      {/* Pay Confirm Modal */}
       {showPayConfirmModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3100, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '420px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
