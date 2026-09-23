@@ -1077,12 +1077,16 @@ function App() {
     const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedOtp(randomOtp);
 
-    // بارامترات القالب في EmailJS
+    // بارامترات القالب في EmailJS (تمرير المتغيرات بالعربية والإنجليزية لمطابقة القالب بدقة)
     const templateParams = {
       email: authEmail,
       to_email: authEmail,
+      "البريد الإلكتروني": authEmail,
       passcode: randomOtp,
-      time: '15 دقيقة'
+      otp: randomOtp,
+      "رمز المرور": randomOtp,
+      time: '15 دقيقة',
+      "وقت": '15 دقيقة'
     };
 
     // المعرفات الثلاثة المؤكدة بدقة من صور حسابك[cite: 6, 7, 8]
