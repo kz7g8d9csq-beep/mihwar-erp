@@ -261,7 +261,6 @@ const safeLower = (val) => {
   return String(val).toLowerCase();
 };
 
-// حساب الأيام المتبقية أو المنتهية للتنبيهات
 const getDaysDiff = (dateStr) => {
   if (!dateStr || dateStr === '-') return null;
   const target = new Date(dateStr);
@@ -428,13 +427,15 @@ function App() {
   const [purchasePieceCost, setPurchasePieceCost] = useState('');
   const [purchaseBoxCost, setPurchaseBoxCost] = useState('');
 
-  // الموارد البشرية والتبويبات الداخلية
+  // الموارد البشرية والتبويبات والبحث الداخلي
   const [hrSubTab, setHrSubTab] = useState('employees'); // 'employees' | 'payroll' | 'alerts'
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_employees');
     return saved ? JSON.parse(saved) : [];
   });
   const [hrSearchQuery, setHrSearchQuery] = useState('');
+  const [hrPayrollSearchQuery, setHrPayrollSearchQuery] = useState('');
+  const [hrAlertsSearchQuery, setHrAlertsSearchQuery] = useState('');
 
   const [deductionsList, setDeductionsList] = useState(() => {
     const saved = localStorage.getItem('mihwar_hr_deductions');
@@ -458,8 +459,6 @@ function App() {
   const [empIqamaEnd, setEmpIqamaEnd] = useState('');
   const [empHealthEnd, setEmpHealthEnd] = useState('');
   const [empContractEnd, setEmpContractEnd] = useState('');
-  
-  // الحقول الجديدة المطلوبة في الموظف
   const [empCommission, setEmpCommission] = useState('');
   const [empAllowances, setEmpAllowances] = useState('');
 
@@ -532,7 +531,14 @@ function App() {
   const filteredEmployeesForHrDeduct = employees.filter(emp => safeLower(emp.name).includes(safeLower(hrDeductSearchQuery)) || safeLower(emp.idNumber).includes(safeLower(hrDeductSearchQuery)));
   const filteredEmployees = employees.filter(emp => safeLower(emp.name).includes(safeLower(hrSearchQuery)) || safeLower(emp.idNumber).includes(safeLower(hrSearchQuery)));
 
-  // استخراج قائمة التنبيهات لجميع الوثائق
+  // فلترة سجل الخصومات في قسم الرواتب بالاسم أو الهوية
+  const filteredDeductions = deductionsList.filter(d => {
+    const emp = employees.find(e => e.name === d.empName);
+    return safeLower(d.empName).includes(safeLower(hrPayrollSearchQuery)) ||
+           safeLower(emp?.idNumber || '').includes(safeLower(hrPayrollSearchQuery));
+  });
+
+  // استخراج قائمة التنبيهات
   const documentAlerts = [];
   employees.forEach(emp => {
     if (emp.contractEnd && emp.contractEnd !== '-') {
@@ -541,6 +547,7 @@ function App() {
         documentAlerts.push({
           id: `${emp.id}-contract`,
           empName: emp.name,
+          empIdNumber: emp.idNumber || '-',
           docType: 'العقد',
           expiryDate: emp.contractEnd,
           daysDiff: diff
@@ -553,6 +560,7 @@ function App() {
         documentAlerts.push({
           id: `${emp.id}-health`,
           empName: emp.name,
+          empIdNumber: emp.idNumber || '-',
           docType: 'الشهادة الصحية',
           expiryDate: emp.healthEnd,
           daysDiff: diff
@@ -565,6 +573,7 @@ function App() {
         documentAlerts.push({
           id: `${emp.id}-iqama`,
           empName: emp.name,
+          empIdNumber: emp.idNumber || '-',
           docType: 'الإقامة',
           expiryDate: emp.iqamaEnd,
           daysDiff: diff
@@ -573,9 +582,14 @@ function App() {
     }
   });
 
-  // الترتيب بحسب الأقرب للانتهاء أو الأكثر انتهاءً أولاً
   documentAlerts.sort((a, b) => a.daysDiff - b.daysDiff);
   const urgentAlertsCount = documentAlerts.filter(a => a.daysDiff <= 30).length;
+
+  // فلترة التنبيهات بالاسم أو الهوية
+  const filteredAlerts = documentAlerts.filter(a =>
+    safeLower(a.empName).includes(safeLower(hrAlertsSearchQuery)) ||
+    safeLower(a.empIdNumber || '').includes(safeLower(hrAlertsSearchQuery))
+  );
 
   const handleSaveEmployee = (e) => {
     e.preventDefault();
@@ -2088,7 +2102,7 @@ function App() {
             </div>
           )}
 
-          {/* TAB 11: HR (الموارد البشرية مع قسم الوثائق والتنبيهات المخصص) */}
+          {/* TAB 11: HR (الموارد البشرية مع محركات البحث المحدثة) */}
           {activeTab === 'hr' && user.role !== 'cashier' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -2106,7 +2120,7 @@ function App() {
                 </div>
               </div>
 
-              {/* شريط التبويبات الفرعية لقسم الموارد البشرية كما في الصورة */}
+              {/* شريط التبويبات الفرعية */}
               <div style={{ display: 'flex', gap: '8px', background: theme.cardBg, padding: '6px', borderRadius: '12px', border: `1px solid ${theme.border}`, width: 'fit-content' }}>
                 <button 
                   type="button" 
@@ -2133,7 +2147,7 @@ function App() {
                 </button>
               </div>
 
-              {/* بطاقات الإحصاء العام (تظهر في تبويب الموظفون والرواتب) */}
+              {/* بطاقات الإحصاء العام */}
               {hrSubTab !== 'alerts' && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
                   <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي الموظفين</p><h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '24px' }}>{employees.length} موظف</h2></div>
@@ -2141,7 +2155,7 @@ function App() {
                 </div>
               )}
 
-              {/* 1: عرض تبويب الموظفون */}
+              {/* 1: تبويب الموظفون */}
               {hrSubTab === 'employees' && (
                 <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
@@ -2186,10 +2200,19 @@ function App() {
                 </div>
               )}
 
-              {/* 2: عرض تبويب الرواتب والخصومات */}
+              {/* 2: تبويب الرواتب والخصومات (مع إضافة خيار البحث بالاسم أو الهوية) */}
               {hrSubTab === 'payroll' && (
                 <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-                  <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: '#fca5a5' }}>🔻 سجل الخصومات وإدارتها</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                    <h3 style={{ margin: 0, fontSize: '17px', color: '#fca5a5' }}>🔻 سجل الخصومات وإدارتها</h3>
+                    <input 
+                      type="text" 
+                      value={hrPayrollSearchQuery} 
+                      onChange={e => setHrPayrollSearchQuery(e.target.value)} 
+                      placeholder="🔍 ابحث بالاسم أو رقم الهوية..." 
+                      style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '260px' }} 
+                    />
+                  </div>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
                     <thead>
                       <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
@@ -2197,7 +2220,7 @@ function App() {
                       </tr>
                     </thead>
                     <tbody>
-                      {deductionsList.map(d => (
+                      {filteredDeductions.map(d => (
                         <tr key={d.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
                           <td style={{ padding: '10px', fontWeight: 'bold' }}>{d.empName}</td>
                           <td style={{ padding: '10px', color: '#ef4444', fontWeight: 'bold' }}>{d.amount} {t.currency}</td>
@@ -2208,18 +2231,29 @@ function App() {
                           </td>
                         </tr>
                       ))}
-                      {!deductionsList.length && (
-                        <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لا توجد خصومات مسجلة حالياً.</td></tr>
+                      {!filteredDeductions.length && (
+                        <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لا توجد نتائج مطابقة للبحث.</td></tr>
                       )}
                     </tbody>
                   </table>
                 </div>
               )}
 
-              {/* 3: عرض تبويب الوثائق والتنبيهات (مثل صورة التصميم المطلوبة 100%) */}
+              {/* 3: تبويب الوثائق والتنبيهات (مع إضافة خيار البحث بالاسم أو الهوية) */}
               {hrSubTab === 'alerts' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {documentAlerts.map(alert => {
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                    <h3 style={{ margin: 0, fontSize: '17px', color: theme.textDark }}>🔔 قائمة تنبيهات وثائق الموظفين</h3>
+                    <input 
+                      type="text" 
+                      value={hrAlertsSearchQuery} 
+                      onChange={e => setHrAlertsSearchQuery(e.target.value)} 
+                      placeholder="🔍 ابحث بالاسم أو رقم الهوية..." 
+                      style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '260px' }} 
+                    />
+                  </div>
+                  
+                  {filteredAlerts.map(alert => {
                     const isExpired = alert.daysDiff < 0;
                     return (
                       <div 
@@ -2258,9 +2292,11 @@ function App() {
                       </div>
                     );
                   })}
-                  {documentAlerts.length === 0 && (
+                  {filteredAlerts.length === 0 && (
                     <div style={{ background: theme.cardBg, padding: '35px', borderRadius: '14px', textAlign: 'center', color: theme.textMuted, border: `1px solid ${theme.border}` }}>
-                      ✅ جميع وثائق الموظفين (الإقامة، الشهادة الصحية، العقود) سارية ومحدثة ولا توجد تنبيهات منتهية!
+                      {documentAlerts.length === 0
+                        ? '✅ جميع وثائق الموظفين (الإقامة، الشهادة الصحية، العقود) سارية ومحدثة ولا توجد تنبيهات منتهية!'
+                        : 'لا توجد نتائج مطابقة للبحث في التنبيهات.'}
                     </div>
                   )}
                 </div>
@@ -2365,7 +2401,7 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الرقم الضريبي</label><input type="text" value={editSuppTaxNumber} onChange={e=>setEditSuppTaxNumber(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editSuppPhone} onChange={e=>setEditSuppPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editSuppAddress} onChange={e=>setEditSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث المورد</button>
                 <button type="button" onClick={() => setShowEditSuppModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
@@ -2397,7 +2433,7 @@ function App() {
         </div>
       )}
 
-      {/* نافذة إضافة / تعديل الموظف مع حقول العمولة والبدلات والوثائق */}
+      {/* Add/Edit Employee Modal */}
       {showAddEmpModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '720px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -2420,7 +2456,7 @@ function App() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empSalary}</label><input type="number" value={empSalary} onChange={e=>setEmpSalary(e.target.value)} required placeholder="4000" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empVacations}</label><input type="number" value={empVacations} onChange={e=>setEmpVacations(e.target.value)} placeholder="21" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empVacations}</label><input type="number" value={empVacations} onChange={e=>setEmpVacations(e.target.value)} placeholder="21" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               </div>
 
               {/* حقلي العمولة والبدلات */}
@@ -2435,7 +2471,7 @@ function App() {
                 </div>
               </div>
 
-              {/* تواريخ انتهاء الوثائق للربط المباشر مع التنبيهات */}
+              {/* تواريخ انتهاء الوثائق */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', background: theme.bgMain, padding: '12px', borderRadius: '10px', border: `1px solid ${theme.border}` }}>
                 <div>
                   <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>انتهاء الإقامة</label>
