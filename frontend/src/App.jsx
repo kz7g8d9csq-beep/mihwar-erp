@@ -332,13 +332,19 @@ function App() {
     return localStorage.getItem('mihwar_business_name') || 'نظام محور';
   });
 
-  // عنوان ومقر المنشأة المخصص للفواتير
+  // عنوان ومقر المنشأة للفاتورة
   const [companyAddress, setCompanyAddress] = useState(() => {
     return localStorage.getItem('mihwar_company_address') || 'المملكة العربية السعودية - جدة';
   });
 
   const [companyLogo, setCompanyLogo] = useState(() => {
     return localStorage.getItem('mihwar_company_logo') || '';
+  });
+
+  // حجم الشعار في الفاتورة (بالبكسل)
+  const [invoiceLogoSize, setInvoiceLogoSize] = useState(() => {
+    const saved = localStorage.getItem('mihwar_invoice_logo_size');
+    return saved ? Number(saved) : 110;
   });
 
   // المخزون
@@ -699,7 +705,7 @@ function App() {
     setEmpStatus(emp.status || 'نشط');
     setEmpIqamaEnd(emp.iqamaEnd || '');
     setEmpHealthEnd(emp.healthEnd || '');
-    setContractEnd: setEmpContractEnd(emp.contractEnd || '');
+    setEmpContractEnd(emp.contractEnd || '');
     setEmpCommission(emp.commission !== undefined ? emp.commission : '');
     setEmpAllowances(emp.allowances !== undefined ? emp.allowances : '');
     setShowAddEmpModal(true);
@@ -802,7 +808,7 @@ function App() {
   const handleUpdateSupplier = (e) => {
     e.preventDefault();
     if (!editSuppName.trim()) return;
-    const updated = suppliers.map(s => s.id === editingSuppId ? { ...s, name: editSuppName.trim(), taxNumber: editSuppTaxNumber.trim(), phone: editSuppPhone.trim(), address: editSuppAddress.trim(), gracePeriod: editSuppGracePeriod.trim() } : s);
+    const updated = suppliers.map(s => s.id === editingSuppId ? { ...s, name: editSuppName.trim(), taxNumber: editSuppTaxNumber.trim(), phone: editSuppPhone.trim(), address: editSuppAddress.trim(), gracePeriod: editSuppGracePeriod.trim() } : c);
     setSuppliers(updated);
     localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
     setShowEditSuppModal(false);
@@ -1159,6 +1165,7 @@ function App() {
     localStorage.removeItem('mihwar_business_name');
     localStorage.removeItem('mihwar_company_logo');
     localStorage.removeItem('mihwar_company_address');
+    localStorage.removeItem('mihwar_invoice_logo_size');
     localStorage.setItem('mihwar_registered_accounts', JSON.stringify(remainingAccounts));
     localStorage.setItem('mihwar_inventory', JSON.stringify([]));
     localStorage.setItem('mihwar_customers', JSON.stringify([]));
@@ -1173,6 +1180,7 @@ function App() {
     setBusinessName('نظام محور');
     setCompanyAddress('المملكة العربية السعودية - جدة');
     setCompanyLogo('');
+    setInvoiceLogoSize(110);
     setInventory([]);
     setCustomers([]);
     setSuppliers([]);
@@ -2033,7 +2041,7 @@ function App() {
                   <input type="text" placeholder="رقم الهوية / السجل التجاري" value={custNationalId} onChange={e=>setCustNationalId(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="رقم الهاتف" value={custPhone} onChange={e=>setCustPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="email" placeholder="البريد الإلكتروني" value={custEmail} onChange={e=>setCustEmail(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-                  <input type="text" placeholder="العنوان (مثال: جدة - حي الروضة)" value={custAddress} placeholder="مثال: جدة - حي الروضة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  <input type="text" placeholder="العنوان (مثال: جدة - حي الروضة)" value={custAddress} onChange={e=>setCustAddress(e.target.value)} placeholder="مثال: جدة - حي الروضة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
                   <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={custGracePeriod} onChange={e=>setCustGracePeriod(e.target.value)} placeholder="مثال: 30 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ العميل</button>
                 </form>
@@ -2393,17 +2401,37 @@ function App() {
                 </div>
               </div>
 
-              {/* بطاقة رفع شعار المنشأة والنظام وتعديل العنوان المطبوع على الفاتورة */}
+              {/* بطاقة رفع شعار المنشأة والنظام وتعديل الحجم والعنوان المطبوع */}
               <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
                 <h3 style={{ margin: '0 0 5px 0', fontSize: '17px' }}>{t.companyLogoTitle}</h3>
                 <p style={{ fontSize: '12px', color: theme.textMuted, margin: '0 0 12px 0' }}>{t.companyLogoDesc}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#d97706', marginBottom: '4px' }}>{t.logoUrlLabel}</label>
                     <input type="file" accept="image/png, image/jpeg, image/jpg" onChange={handleLogoFileChange} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', cursor: 'pointer', width: '100%', boxSizing: 'border-box' }} />
                   </div>
                   
-                  {/* حقل تعديل عنوان ومقر المنشأة المطبوع على الفاتورة */}
+                  {/* خيار تكبير وتحديد حجم الشعار في الفاتورة المطبوعة */}
+                  <div style={{ background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#d97706' }}>حجم / تكبير الشعار في الفاتورة:</label>
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#10b981' }}>{invoiceLogoSize} بكسل</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="70" 
+                      max="250" 
+                      step="5"
+                      value={invoiceLogoSize} 
+                      onChange={e => {
+                        const val = Number(e.target.value);
+                        setInvoiceLogoSize(val);
+                        localStorage.setItem('mihwar_invoice_logo_size', val);
+                      }} 
+                      style={{ width: '100%', accentColor: '#d97706', cursor: 'pointer' }} 
+                    />
+                  </div>
+
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#d97706', marginBottom: '4px' }}>عنوان / مقر المنشأة المطبوع على الفاتورة:</label>
                     <input 
@@ -2493,7 +2521,7 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الرقم الضريبي</label><input type="text" value={editSuppTaxNumber} onChange={e=>setEditSuppTaxNumber(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editSuppPhone} onChange={e=>setEditSuppPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editSuppAddress} onChange={e=>setEditSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث المورد</button>
                 <button type="button" onClick={() => setShowEditSuppModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
@@ -2525,7 +2553,7 @@ function App() {
         </div>
       )}
 
-      {/* Invoice Print Modal (ترتيب الفاتورة بدقة: اليمين: المنشأة والعنوان المخصص | الوسط: الشعار متمركز | اليسار: تفاصيل الفاتورة) */}
+      {/* Invoice Print Modal (مع دعم تكبير الشعار ديناميكياً) */}
       {printingInvoice && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '10px' }}>
           <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '750px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -2538,26 +2566,35 @@ function App() {
 
             <div id="zatca-printable-invoice" style={{ background: '#fff', color: '#000', padding: '20px', boxSizing: 'border-box', fontFamily: 'Cairo, Tahoma, sans-serif' }}>
               
-              {/* الترويسة العلوية الجديدة: اليمين (المنشأة والعنوان) - الوسط (الشعار) - اليسار (الفاتورة وتفاصيلها) */}
+              {/* الترويسة العلوية: اليمين (المنشأة والعنوان) - الوسط (الشعار بحجمه المخصص) - اليسار (تفاصيل الفاتورة) */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px' }}>
                 
-                {/* 1. أقصى اليمين: اسم المنشأة والعنوان */}
+                {/* 1. أقصى اليمين: اسم المنشأة والعنوان المخصص */}
                 <div style={{ flex: 1, textAlign: 'right' }}>
                   <h2 style={{ margin: '0 0 4px 0', fontSize: '20px', fontWeight: '900', color: '#0f172a' }}>{businessName}</h2>
                   <p style={{ margin: '2px 0', fontSize: '13px', color: '#64748b', fontWeight: 'bold' }}>{companyAddress}</p>
                   <p style={{ margin: '2px 0', fontSize: '11px', color: '#94a3b8' }}>سجل تجاري / ضريبي معتمد</p>
                 </div>
 
-                {/* 2. الوسط بالضبط: الشعار بحجم أكبر وبدون أي ميلان */}
+                {/* 2. الوسط بالضبط: الشعار بحجم يتم التحكم به وتكبيره عبر الإعدادات */}
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                   {companyLogo ? (
-                    <img src={companyLogo} alt="Logo" style={{ width: '105px', height: '105px', objectFit: 'contain', display: 'block' }} />
+                    <img 
+                      src={companyLogo} 
+                      alt="Logo" 
+                      style={{ 
+                        width: `${invoiceLogoSize}px`, 
+                        height: `${invoiceLogoSize}px`, 
+                        objectFit: 'contain', 
+                        display: 'block' 
+                      }} 
+                    />
                   ) : (
-                    <div style={{ width: '75px', height: '75px', borderRadius: '12px', background: '#d97706', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '26px' }}>مح</div>
+                    <div style={{ width: `${Math.max(60, invoiceLogoSize * 0.7)}px`, height: `${Math.max(60, invoiceLogoSize * 0.7)}px`, borderRadius: '12px', background: '#d97706', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: '26px' }}>مح</div>
                   )}
                 </div>
 
-                {/* 3. أقصى اليسار: فاتورة ضريبية ورقم الفاتورة والحالة وتاريخ الإصدار */}
+                {/* 3. أقصى اليسار: فاتورة ضريبية ورقم الفاتورة والتفاصيل */}
                 <div style={{ flex: 1, textAlign: 'left', direction: 'rtl' }}>
                   <h3 style={{ margin: '0 0 6px 0', fontSize: '18px', color: '#d97706', fontWeight: '900' }}>{t.taxInvoiceTitle}</h3>
                   <p style={{ margin: '3px 0', fontSize: '12.5px' }}><strong>رقم الفاتورة:</strong> <span style={{ direction: 'ltr', display: 'inline-block' }}>INV-{printingInvoice.invoiceNo}</span></p>
