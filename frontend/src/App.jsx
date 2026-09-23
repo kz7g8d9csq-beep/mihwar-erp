@@ -285,7 +285,6 @@ const getMakkahDateString = (dateObj = new Date()) => {
   }
 };
 
-// دالة حساب الأيام المتبقية الآمنة ضد الأخطاء
 const getDueDateDaysLeft = (dueDateStr) => {
   if (!dueDateStr || dueDateStr === '-' || dueDateStr === '') return null;
   try {
@@ -567,7 +566,6 @@ function App() {
   const filteredCustomers = customers.filter(c => safeLower(c.name).includes(safeLower(customerSearchQuery)) || safeLower(c.nationalId).includes(safeLower(customerSearchQuery)) || safeLower(c.phone).includes(safeLower(customerSearchQuery)) || safeLower(c.email).includes(safeLower(customerSearchQuery)) || safeLower(c.address).includes(safeLower(customerSearchQuery)));
   const filteredSuppliers = suppliers.filter(s => safeLower(s.name).includes(safeLower(supplierSearchQuery)) || safeLower(s.taxNumber).includes(safeLower(supplierSearchQuery)) || safeLower(s.phone).includes(safeLower(supplierSearchQuery)) || safeLower(s.address).includes(safeLower(supplierSearchQuery)));
   
-  // فلترة الفواتير الآمنة
   const filteredInvoices = invoices.filter(inv => {
     try {
       const query = safeLower(invoiceSearchQuery);
@@ -659,20 +657,20 @@ function App() {
   });
   const todaySalesVal = todayInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
 
-  // إرسال رسالة الواتساب وفق لغة النظام وتتضمن معلومات الفاتورة
+  // إرسال رسالة الواتساب وفق لغة النظام وتتضمن النص المطلوب بدقة
   const handleSendWhatsAppReminder = (inv) => {
     let phone = (inv?.customer?.phone || '').replace(/[^0-9]/g, '');
     if (phone.startsWith('05')) phone = '966' + phone.slice(1);
     else if (phone.startsWith('5')) phone = '966' + phone;
 
     const isAr = lang === 'ar';
-    const clientName = inv?.customer?.name || (isAr ? 'Ahmed helmy' : 'Ahmed helmy');
+    const clientName = inv?.customer?.name || 'Ahmed helmy';
     
     let text = '';
     if (isAr) {
       text = `أهلاً بك ${clientName}\nرقم الفاتورة:#${inv?.invoiceNo}\nالإجمالي النهائي: ${inv?.totalAmount} ر.س\nشكراً لتعاملك معنا في نظام محور.`;
     } else {
-      text = `Hello ${clientName}\nInvoice Number: #${inv?.invoiceNo}\nTotal Amount Due: ${inv?.totalAmount} SAR\nThank you for your business with Mihwar ERP.`;
+      text = `Hello ${clientName}\nInvoice Number:#${inv?.invoiceNo}\nTotal Amount Due: ${inv?.totalAmount} SAR\nThank you for your business with Mihwar ERP.`;
     }
 
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
@@ -853,7 +851,7 @@ function App() {
   const handleUpdateSupplier = (e) => {
     e.preventDefault();
     if (!editSuppName.trim()) return;
-    const updated = suppliers.map(s => s.id === editingSuppId ? { ...s, name: editSuppName.trim(), taxNumber: editSuppTaxNumber.trim(), phone: editSuppPhone.trim(), address: editSuppAddress.trim(), gracePeriod: editSuppGracePeriod.trim() } : s);
+    const updated = suppliers.map(s => s.id === editingSuppId ? { ...s, name: editSuppName.trim(), taxNumber: editSuppTaxNumber.trim(), phone: editSuppPhone.trim(), address: editSuppAddress.trim(), gracePeriod: editSuppGracePeriod.trim() } : c);
     setSuppliers(updated);
     localStorage.setItem('mihwar_suppliers', JSON.stringify(updated));
     setShowEditSuppModal(false);
@@ -886,7 +884,7 @@ function App() {
     setInvoices(updated);
     localStorage.setItem('mihwar_invoices', JSON.stringify(updated));
     setShowPayConfirmModal(false);
-    alert(`✅ تم تأكيد السداد بطريقة (${payConfirmMethod}) وتحويل الفاتورة إلى مدفوعة!`);
+    alert(`✅ تم تأكيد السداد وإيقاف تذكيرات الواتساب بنجاح!`);
   };
 
   const handleAddItemToSalesCart = () => {
@@ -1260,7 +1258,7 @@ function App() {
       const accounts = getRegisteredAccounts();
       const account = accounts.find(a => a.email === authEmail.trim().toLowerCase());
       if (!account) {
-        alert('❌ هذا الحساب غير موجود أو تم حذفه نهائياً!\nيرجى الانتقال لتبويب "فتح حساب" لإنشاء الحساب.');
+        alert('❌ هذا الحساب غير موجود أو تم حذفه نهائياً!\nيرجى الانتقال لفتح الحساب.');
         setAuthMode('register');
         return;
       }
@@ -1415,162 +1413,6 @@ function App() {
     const rows = filteredSuppliers.map(s => [s.name, s.taxNumber || '-', s.phone || '-', s.address || '-', s.gracePeriod || '-']);
     exportToExcel(title, headers, rows, lang);
   };
-
-  // عدد الفواتير المستحقة خلال 3 أيام وغير مدفوعة
-  const dueSoonInvoicesCount = invoices.filter(inv => {
-    try {
-      const isUnpaid = inv?.paymentStatus === 'غير مدفوعة';
-      const daysLeft = getDueDateDaysLeft(inv?.dueDate);
-      return isUnpaid && daysLeft !== null && daysLeft <= 3;
-    } catch {
-      return false;
-    }
-  }).length;
-
-  if (!user && showLanding) {
-    return (
-      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', minHeight: '100vh', color: '#f8fafc', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        <header style={{ background: '#1b2230', borderBottom: '1px solid #263147', padding: '18px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {companyLogo ? (
-              <img src={companyLogo} alt="Logo" style={{ width: '36px', height: '36px', objectFit: 'contain', borderRadius: '8px', background: '#fff', padding: '2px' }} />
-            ) : (
-              <div style={{ background: '#d97706', color: '#fff', padding: '6px 14px', borderRadius: '8px', fontWeight: '900', fontSize: '14px' }}>مح</div>
-            )}
-            <span style={{ fontWeight: '900', color: '#f8fafc', fontSize: '18px' }}>نظام محور</span>
-          </div>
-          <button onClick={() => { setShowLanding(false); setAuthMode('register'); }} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '10px 22px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
-            {t.enterAppBtn}
-          </button>
-        </header>
-        <main style={{ padding: '80px 20px', maxWidth: '1100px', margin: 'auto', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '44px', fontWeight: '900', margin: '0 0 20px 0', color: '#f8fafc' }}>نظام إدارة الموارد المؤسسية</h1>
-          <p style={{ fontSize: '17px', color: '#94a3b8', maxWidth: '750px', margin: '0 auto 40px auto', lineHeight: '1.7' }}>إدارة متكاملة للمبيعات، المخزون، الحسابات، والموارد البشرية برؤية تقنية متطورة.</p>
-          <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
-            <button onClick={() => { setShowLanding(false); setAuthMode('login'); }} style={{ background: '#d97706', color: '#fff', padding: '14px 30px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
-              تسجيل الدخول 🔑
-            </button>
-            <button onClick={() => { setShowLanding(false); setAuthMode('register'); }} style={{ background: '#10b981', color: '#fff', padding: '14px 30px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
-              فتح حساب جديد ✨
-            </button>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', minHeight: '100vh', color: '#f8fafc', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-        <div style={{ width: '100%', maxWidth: '460px', background: '#1b2230', padding: '35px', borderRadius: '20px', border: '1px solid #263147', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4)' }}>
-          
-          <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-            <h2 style={{ color: '#f8fafc', fontSize: '24px', fontWeight: '900', margin: '0 0 8px 0' }}>{authMode === 'login' ? 'تسجيل الدخول' : 'فتح حساب جديد'}</h2>
-            <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0 }}>نظام محور ERP - الإدارة المتكاملة</p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px', background: '#141824', padding: '5px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #263147' }}>
-            <button type="button" onClick={() => setAuthMode('login')} style={{ flex: 1, padding: '8px', background: authMode === 'login' ? '#d97706' : 'transparent', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>تسجيل الدخول</button>
-            <button type="button" onClick={() => setAuthMode('register')} style={{ flex: 1, padding: '8px', background: authMode === 'register' ? '#d97706' : 'transparent', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>فتح حساب</button>
-          </div>
-
-          {authMode === 'login' && (
-            <div style={{ background: '#141824', padding: '10px', borderRadius: '10px', border: '1px solid #263147', marginBottom: '15px' }}>
-              <label style={{ fontSize: '11px', color: '#d97706', display: 'block', marginBottom: '6px', fontWeight: 'bold' }}>اختر صلاحية الدخول:</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button type="button" onClick={() => setLoginType('admin')} style={{ flex: 1, padding: '8px', background: loginType === 'admin' ? '#d97706' : 'transparent', color: '#fff', border: '1px solid #263147', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>مدير النظام الكامل</button>
-                <button type="button" onClick={() => setLoginType('cashier')} style={{ flex: 1, padding: '8px', background: loginType === 'cashier' ? '#d97706' : 'transparent', color: '#fff', border: '1px solid #263147', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>كاشير فقط</button>
-              </div>
-            </div>
-          )}
-
-          <form onSubmit={handleTriggerOtp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            
-            {authMode === 'register' ? (
-              <>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>1. البريد الإلكتروني *</label>
-                  <input type="email" placeholder="name@example.com" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>2. كلمة المرور *</label>
-                  <input type="password" placeholder="••••••••" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>3. رقم الهاتف *</label>
-                  <input type="text" placeholder="05xxxxxxxx" value={authPhone} onChange={e=>setAuthPhone(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>4. اسم المؤسسة أو الشركة أو المنشأة *</label>
-                  <input type="text" placeholder="مثال: مؤسسة مانويل التجارية" value={authCompanyName} onChange={e=>setAuthCompanyName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>1. البريد الإلكتروني *</label>
-                  <input type="email" placeholder="name@example.com" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>2. كلمة المرور *</label>
-                  <input type="password" placeholder="••••••••" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>3. رقم الهاتف *</label>
-                  <input type="text" placeholder="05xxxxxxxx" value={authPhone} onChange={e=>setAuthPhone(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-              </>
-            )}
-
-            <button type="submit" disabled={isSendingOtp} style={{ background: '#d97706', color: '#fff', padding: '13px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', marginTop: '5px' }}>
-              {isSendingOtp ? 'جاري الإرسال عبر البريد...' : (authMode === 'login' ? 'متابعة وإرسال رمز التحقق عبر الإيميل 🔐' : 'إرسال رمز التحقق وفتح الحساب 🔐')}
-            </button>
-          </form>
-        </div>
-
-        {/* نافذة التحقق الأمني OTP Modal */}
-        {showOtpModal && (
-          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4000, padding: '15px' }}>
-            <div style={{ background: '#1b2230', color: '#f8fafc', padding: '35px', borderRadius: '20px', maxWidth: '400px', width: '100%', border: '1px solid #d97706', boxSizing: 'border-box', textAlign: 'center' }}>
-              <h3 style={{ margin: '0 0 10px 0', fontSize: '20px', fontWeight: '900', color: '#d97706' }}>رمز التحقق الأمني (OTP)</h3>
-              <p style={{ fontSize: '13px', color: '#94a3b8', margin: '0 0 20px 0', lineHeight: '1.6' }}>
-                تم إرسال رمز التحقق المكون من 6 أرقام إلى بريدك الإلكتروني بنجاح. أدخله أدناه:
-              </p>
-              
-              <form onSubmit={handleVerifyOtpAndProceed} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                <input type="text" maxLength="6" placeholder="------" value={enteredOtp} onChange={e=>setEnteredOtp(e.target.value)} required style={{ padding: '14px', borderRadius: '10px', border: '2px solid #d97706', background: '#141824', color: '#fff', textAlign: 'center', fontSize: '22px', letterSpacing: '6px', fontWeight: 'bold', outline: 'none' }} />
-                
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button type="submit" style={{ flex: 1, background: '#10b981', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>تأكيد التحقق ✓</button>
-                  <button type="button" onClick={() => setShowOtpModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>إلغاء</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  const allTabs = [
-    { id: 'dashboard', label: t.dashboard, adminOnly: true, icon: '📊' },
-    { id: 'pos', label: t.pos, adminOnly: false, icon: '🛒' },
-    { id: 'sales', label: t.sales, adminOnly: false, icon: '🧾' },
-    { id: 'invoicesList', label: t.invoicesList, adminOnly: false, icon: '📑' },
-    { id: 'purchaseInvoicesList', label: t.purchaseInvoicesList, adminOnly: true, icon: '📥' },
-    { id: 'purchases', label: t.purchases, adminOnly: true, icon: '📝' },
-    { id: 'customers', label: t.customers, adminOnly: true, icon: '👥' },
-    { id: 'suppliers', label: t.suppliers, adminOnly: true, icon: '🏭' },
-    { id: 'inventory', label: t.inventory, adminOnly: false, icon: '📦' },
-    { id: 'hr', label: t.hr, adminOnly: true, icon: '👔' },
-    { id: 'settings', label: t.settings, adminOnly: false, icon: '⚙️' }
-  ];
-
-  const availableTabs = user.role === 'cashier' 
-    ? allTabs.filter(tab => !tab.adminOnly || tab.id === 'pos' || tab.id === 'sales' || tab.id === 'invoicesList' || tab.id === 'settings') 
-    : allTabs;
 
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark, display: 'flex' }}>
@@ -1924,21 +1766,10 @@ function App() {
             </div>
           )}
 
-          {/* TAB 4: Sales Invoices List (مع ميزة تذكير الواتساب المباشرة والآمنة) */}
+          {/* TAB 4: Sales Invoices List */}
           {activeTab === 'invoicesList' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
               
-              {dueSoonInvoicesCount > 0 && (
-                <div style={{ background: '#064e3b22', border: '1px solid #25D366', padding: '12px 18px', borderRadius: '10px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '18px' }}>🔔</span>
-                    <span style={{ fontSize: '13px', color: '#25D366', fontWeight: 'bold' }}>
-                      نظام تذكيرات الواتساب: يوجد {dueSoonInvoicesCount} فواتير غير مدفوعة ومتبقي على استحقاقها 3 أيام أو أقل. يمكنك إرسال التذكيرات مباشرة ولن تتوقف حتى تضغط "تم الدفع".
-                    </span>
-                  </div>
-                </div>
-              )}
-
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <h2 style={{ margin: 0, fontSize: '18px' }}>📑 سجل فواتير المبيعات</h2>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -1983,7 +1814,7 @@ function App() {
                           {isDueSoon && (
                             <div style={{ marginTop: '4px' }}>
                               <span style={{ background: '#064e3b44', color: '#25D366', border: '1px solid #25D366', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' }}>
-                                تذكير واتساب نشط 📲
+                                تذكير مستحق 🔔
                               </span>
                             </div>
                           )}
@@ -1992,7 +1823,8 @@ function App() {
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                             <button onClick={() => setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>معاينة وطباعة 👁️</button>
                             
-                            {isDueSoon && (
+                            {/* زر الواتساب النشط لجميع الفواتير غير المدفوعة لحين سدادها */}
+                            {isUnpaid && (
                               <button 
                                 type="button"
                                 onClick={() => handleSendWhatsAppReminder(inv)}
@@ -2147,7 +1979,7 @@ function App() {
                   <input type="text" placeholder="رقم الهوية / السجل التجاري" value={custNationalId} onChange={e=>setCustNationalId(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="رقم الهاتف" value={custPhone} onChange={e=>setCustPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="email" placeholder="البريد الإلكتروني" value={custEmail} onChange={e=>setCustEmail(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-                  <input type="text" placeholder="العنوان (مثال: جدة - حي الروضة)" value={custAddress} placeholder="مثال: جدة - حي الروضة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  <input type="text" placeholder="العنوان (مثال: جدة - حي الروضة)" value={custAddress} placeholder="مثال: جدة - حي الروضة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
                   <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={custGracePeriod} onChange={e=>setCustGracePeriod(e.target.value)} placeholder="مثال: 30 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ العميل</button>
                 </form>
@@ -2626,7 +2458,7 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>اسم المورد / الشركة</label><input type="text" value={editSuppName} onChange={e=>setEditSuppName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الرقم الضريبي</label><input type="text" value={editSuppTaxNumber} onChange={e=>setEditSuppTaxNumber(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editSuppPhone} onChange={e=>setEditSuppPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editSuppAddress} onChange={e=>setEditSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editSuppAddress} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث المورد</button>
@@ -2659,7 +2491,7 @@ function App() {
         </div>
       )}
 
-      {/* نافذة إضافة وتعديل الموظف */}
+      {/* Add/Edit Employee Modal */}
       {showAddEmpModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '720px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -2722,7 +2554,7 @@ function App() {
         </div>
       )}
 
-      {/* نافذة تسجيل خصم على موظف */}
+      {/* Add Deduction Modal */}
       {showDeductModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '520px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -2746,7 +2578,7 @@ function App() {
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>سبب الخصم</label>
-                <input type="text" value={hrDeductReason} onChange={e=>setHrDeductReason(e.target.value)} placeholder="مثال: تأخير عن الدوام الرسمي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
+                <input type="text" value={hrDeductReason} onChange={e=>setHrDeductReason(e.target.value)} placeholder="مثال: تأخير عن الدوام الرسمي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
               </div>
               <div style={{ background: theme.bgMain, padding: '10px', borderRadius: '8px', fontSize: '12px', color: theme.textMuted }}>
                 📅 تاريخ الخصم: <strong>{new Date().toISOString().slice(0, 10)}</strong>
