@@ -285,17 +285,6 @@ const getMakkahDateString = (dateObj = new Date()) => {
   }
 };
 
-const getDueDateDaysLeft = (dueDateStr) => {
-  if (!dueDateStr) return null;
-  const clean = String(dueDateStr).trim().replace(/\//g, '-');
-  const target = new Date(clean);
-  if (isNaN(target.getTime())) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  target.setHours(0, 0, 0, 0);
-  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-};
-
 function App() {
   const [lang, setLang] = useState('ar');
   const [isDark, setIsDark] = useState(true);
@@ -642,25 +631,6 @@ function App() {
   });
   const todaySalesVal = todayInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount || 0), 0);
 
-  // إرسال رسالة الواتساب وفق لغة النظام المختارة (عربي / إنجليزي)
-  const handleSendWhatsAppReminder = (inv) => {
-    let phone = (inv.customer?.phone || '').replace(/[^0-9]/g, '');
-    if (phone.startsWith('05')) phone = '966' + phone.slice(1);
-    else if (phone.startsWith('5')) phone = '966' + phone;
-
-    const isAr = lang === 'ar';
-    const clientName = inv.customer?.name || (isAr ? 'عميلنا العزيز' : 'Valued Customer');
-    
-    let text = '';
-    if (isAr) {
-      text = `أهلاً بك ${clientName}\nرقم الفاتورة: #${inv.invoiceNo}\nالإجمالي النهائي: ${inv.totalAmount} ر.س\nتاريخ الاستحقاق: ${inv.dueDate || 'فوري'}\nنود تذكيركم بسداد المبلغ المستحق.\nشكراً لتعاملك معنا في نظام محور.`;
-    } else {
-      text = `Hello ${clientName}\nInvoice Number: #${inv.invoiceNo}\nTotal Amount Due: ${inv.totalAmount} SAR\nDue Date: ${inv.dueDate || 'Immediate'}\nKindly settle the pending payment.\nThank you for your business with Mihwar ERP.`;
-    }
-
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
-  };
-
   const handleSaveEmployee = (e) => {
     e.preventDefault();
     if (!empName.trim()) return;
@@ -869,7 +839,7 @@ function App() {
     setInvoices(updated);
     localStorage.setItem('mihwar_invoices', JSON.stringify(updated));
     setShowPayConfirmModal(false);
-    alert(`✅ تم تأكيد السداد بطريقة (${payConfirmMethod}) وتحويل الفاتورة إلى مدفوعة وإيقاف التذكيرات!`);
+    alert(`✅ تم تأكيد السداد بطريقة (${payConfirmMethod}) وتحويل الفاتورة إلى مدفوعة!`);
   };
 
   const handleAddItemToSalesCart = () => {
@@ -1899,18 +1869,6 @@ function App() {
           {/* TAB 4: Sales Invoices List */}
           {activeTab === 'invoicesList' && (
             <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
-              
-              {dueSoonInvoicesCount > 0 && (
-                <div style={{ background: '#064e3b22', border: '1px solid #25D366', padding: '12px 18px', borderRadius: '10px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '18px' }}>🔔</span>
-                    <span style={{ fontSize: '13px', color: '#25D366', fontWeight: 'bold' }}>
-                      نظام تذكيرات الواتساب: يوجد {dueSoonInvoicesCount} فواتير غير مدفوعة ومتبقي على استحقاقها 3 أيام أو أقل. يمكنك إرسال التذكيرات مباشرة ولن تتوقف حتى تضغط "تم الدفع".
-                    </span>
-                  </div>
-                </div>
-              )}
-
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <h2 style={{ margin: 0, fontSize: '18px' }}>📑 سجل فواتير المبيعات</h2>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -1918,71 +1876,33 @@ function App() {
                   <button onClick={handleExportSales} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>تصدير إلى Excel 📥</button>
                 </div>
               </div>
-
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '750px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                    <th style={{ padding: '12px' }}>رقم الفاتورة</th>
-                    <th style={{ padding: '12px' }}>العميل</th>
-                    <th style={{ padding: '12px' }}>المبلغ الإجمالي</th>
-                    <th style={{ padding: '12px' }}>حالة الدفع والاستحقاق</th>
-                    <th style={{ padding: '12px' }}>الإجراءات</th>
+                    <th style={{ padding: '12px' }}>رقم الفاتورة</th><th style={{ padding: '12px' }}>العميل</th><th style={{ padding: '12px' }}>المبلغ الإجمالي</th><th style={{ padding: '12px' }}>حالة الدفع</th><th style={{ padding: '12px' }}>الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredInvoices.map(inv => {
                     const isUnpaid = inv.paymentStatus === 'غير مدفوعة';
-                    const daysLeft = getDueDateDaysLeft(inv.dueDate);
-                    const isDueSoon = isUnpaid && daysLeft !== null && daysLeft <= 3;
-
                     return (
                       <tr key={inv.id} style={{ borderBottom: `1px solid ${theme.border}` }}>
                         <td style={{ padding: '12px', fontWeight: 'bold' }}>#{inv.invoiceNo}</td>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{ fontWeight: 'bold' }}>{inv.customer?.name || 'عميل نقدي'}</span>
-                          {inv.customer?.phone && <div style={{ fontSize: '11px', color: theme.textMuted }}>{inv.customer.phone}</div>}
-                        </td>
+                        <td style={{ padding: '12px' }}>{inv.customer?.name || 'عميل نقدي'}</td>
                         <td style={{ padding: '12px', color: '#10b981', fontWeight: 'bold' }}>{inv.totalAmount} {t.currency}</td>
                         <td style={{ padding: '12px' }}>
-                          <span style={{ background: isUnpaid ? '#7f1d1d' : '#065f46', color: isUnpaid ? '#fca5a5' : '#6ee7b7', padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px' }}>
-                            {inv.paymentStatus || 'مدفوعة'}
-                          </span>
-                          {isUnpaid && inv.dueDate && (
-                            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '3px' }}>
-                              الاستحقاق: {inv.dueDate} {daysLeft !== null && <span style={{ color: daysLeft <= 0 ? '#ef4444' : '#38bdf8', fontWeight: 'bold' }}>({daysLeft <= 0 ? 'مستحقة' : `متبقي ${daysLeft} يوم`})</span>}
-                            </div>
-                          )}
-                          {isDueSoon && (
-                            <div style={{ marginTop: '4px' }}>
-                              <span style={{ background: '#064e3b44', color: '#25D366', border: '1px solid #25D366', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' }}>
-                                تذكير واتساب نشط 📲
-                              </span>
-                            </div>
-                          )}
+                          <span style={{ background: isUnpaid ? '#7f1d1d' : '#065f46', color: isUnpaid ? '#fca5a5' : '#6ee7b7', padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px' }}>{inv.paymentStatus || 'مدفوعة'}</span>
+                          {isUnpaid && inv.dueDate && <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>الاستحقاق: {inv.dueDate}</div>}
                         </td>
                         <td style={{ padding: '12px' }}>
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             <button onClick={() => setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>معاينة وطباعة 👁️</button>
-                            
-                            {isDueSoon && (
-                              <button 
-                                type="button"
-                                onClick={() => handleSendWhatsAppReminder(inv)}
-                                title="إرسال تذكير الفاتورة عبر واتساب"
-                                style={{ background: '#25D366', color: '#fff', border: 'none', padding: '6px 11px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span>واتساب 💬</span>
-                              </button>
-                            )}
-
                             {isUnpaid && (<button onClick={() => handleOpenPayConfirm(inv.id)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>تم الدفع ✓</button>)}
                           </div>
                         </td>
                       </tr>
                     );
                   })}
-                  {!filteredInvoices.length && (
-                    <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لا توجد فواتير مبيعات مسجلة بعد.</td></tr>
-                  )}
                 </tbody>
               </table>
             </div>
@@ -2119,8 +2039,8 @@ function App() {
                   <input type="text" placeholder="رقم الهوية / السجل التجاري" value={custNationalId} onChange={e=>setCustNationalId(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="رقم الهاتف" value={custPhone} onChange={e=>setCustPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="email" placeholder="البريد الإلكتروني" value={custEmail} onChange={e=>setCustEmail(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-                  <input type="text" placeholder="العنوان (مثال: جدة - حي الروضة)" value={custAddress} placeholder="مثال: جدة - حي الروضة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={custGracePeriod} onChange={e=>setCustGracePeriod(e.target.value)} placeholder="مثال: 30 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  <input type="text" placeholder="العنوان (مثال: جدة - حي الروضة)" value={custAddress} placeholder="مثال: جدة - حي الروضة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={custGracePeriod} onChange={e=>setCustGracePeriod(e.target.value)} placeholder="مثال: 30 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ العميل</button>
                 </form>
               </div>
@@ -2166,8 +2086,8 @@ function App() {
                   <input type="text" placeholder="اسم المورد / الشركة *" value={suppName} onChange={e=>setSuppName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="الرقم الضريبي" value={suppTaxNumber} onChange={e=>setSuppTaxNumber(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="رقم الهاتف" value={suppPhone} onChange={e=>setSuppPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-                  <input type="text" placeholder="العنوان (مثال: جدة - المنطقة الصناعية)" value={suppAddress} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={suppGracePeriod} onChange={e=>setSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  <input type="text" placeholder="العنوان (مثال: جدة - المنطقة الصناعية)" value={suppAddress} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={suppGracePeriod} onChange={e=>setSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ المورد</button>
                 </form>
               </div>
@@ -2575,7 +2495,7 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهوية أو السجل التجاري</label><input type="text" value={editCustNationalId} onChange={e=>setEditCustNationalId(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editCustPhone} onChange={e=>setEditCustPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>البريد الإلكتروني</label><input type="email" value={editCustEmail} onChange={e=>setEditCustEmail(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editCustAddress} onChange={e=>setEditCustAddress(e.target.value)} placeholder="مثال: جدة - حي الروضة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editCustAddress} onChange={e=>setEditCustAddress(e.target.value)} placeholder="مثال: جدة - حي الروضة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editCustGracePeriod} onChange={e=>setEditCustGracePeriod(e.target.value)} placeholder="مثال: 30 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث العميل</button>
@@ -2598,7 +2518,7 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>اسم المورد / الشركة</label><input type="text" value={editSuppName} onChange={e=>setEditSuppName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الرقم الضريبي</label><input type="text" value={editSuppTaxNumber} onChange={e=>setEditSuppTaxNumber(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editSuppPhone} onChange={e=>setEditSuppPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editSuppAddress} onChange={e=>setEditSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editSuppAddress} onChange={e=>setEditSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث المورد</button>
@@ -2631,7 +2551,7 @@ function App() {
         </div>
       )}
 
-      {/* نافذة إضافة وتعديل الموظف */}
+      {/* نافذة إضافة وتعديل الموظف (تم استعادتها وتفعيلها بالكامل) */}
       {showAddEmpModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '720px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
@@ -2694,7 +2614,7 @@ function App() {
         </div>
       )}
 
-      {/* نافذة تسجيل خصم على موظف */}
+      {/* نافذة تسجيل خصم على موظف (تم استعادتها وتفعيلها بالكامل) */}
       {showDeductModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '520px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
