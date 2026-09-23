@@ -59,7 +59,7 @@ const HrTab = ({
 
       {hrSubTab !== 'alerts' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-          <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t(`إجمالي الموظفين`)}</p><h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '24px' }}>{employees.length} موظف</h2></div>
+          <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t(`إجمالي الموظفين`)}</p><h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '24px' }}>{employees.length} {t(`موظف`)}</h2></div>
           <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t(`إجمالي الرواتب الأساسية`)}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '24px' }}>{totalPayroll.toLocaleString()} {t.currency}</h2></div>
         </div>
       )}
@@ -85,14 +85,14 @@ const HrTab = ({
                   <td style={{ padding: '12px' }}>{emp.role} <br/><span style={{ color: '#2dd4bf', fontSize: '11px' }}>{emp.dept}</span></td>
                   <td style={{ padding: '12px' }}>
                     <span style={{ color: '#10b981', fontWeight: 'bold' }}>{emp.salary} {t.currency}</span>
-                    <br/><span style={{ color: '#ef4444', fontSize: '11px' }}>خصم: {emp.deductions} {t.currency}</span>
+                    <br/><span style={{ color: '#ef4444', fontSize: '11px' }}>{t(`خصم:`)} {emp.deductions} {t.currency}</span>
                     <div style={{ fontSize: '11px', color: '#d97706', marginTop: '3px' }}>
-                      {emp.commission ? `عمولة: ${emp.commission}% ` : ''}
-                      {emp.allowances ? `| بدلات: ${emp.allowances}` : ''}
+                      {emp.commission ? `${t(`عمولة:`)} ${emp.commission}% ` : ''}
+                      {emp.allowances ? `| ${t(`بدلات:`)} ${emp.allowances}` : ''}
                     </div>
                   </td>
-                  <td style={{ padding: '12px' }}><span>{emp.insurance}</span><br/><span style={{ color: '#38bdf8', fontSize: '11px' }}>أجازات: {emp.vacations} يوم</span></td>
-                  <td style={{ padding: '12px', fontSize: '11px' }}>إقامة: {emp.iqamaEnd} <br/>صحي: {emp.healthEnd} <br/>عقد: {emp.contractEnd}</td>
+                  <td style={{ padding: '12px' }}><span>{emp.insurance}</span><br/><span style={{ color: '#38bdf8', fontSize: '11px' }}>{t(`أجازات:`)} {emp.vacations} {t(`يوم`)}</span></td>
+                  <td style={{ padding: '12px', fontSize: '11px' }}>{t(`إقامة:`)} {emp.iqamaEnd} <br/>{t(`صحي:`)} {emp.healthEnd} <br/>{t(`عقد:`)} {emp.contractEnd}</td>
                   <td style={{ padding: '12px' }}>
                     <div style={{ display: 'flex', gap: '6px' }}>
                       <button onClick={() => handleOpenEditEmp(emp)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>{t(`تعديل ✏️`)}</button>
@@ -182,7 +182,7 @@ const HrTab = ({
                     {alert.empName}
                   </h4>
                   <span style={{ fontSize: '13px', color: theme.textMuted }}>
-                    {alert.docType} (هوية: {alert.empIdNumber})
+                    {alert.docType} ({t(`هوية:`)} {alert.empIdNumber})
                   </span>
                 </div>
                 <div>
@@ -195,7 +195,7 @@ const HrTab = ({
                     fontWeight: 'bold',
                     display: 'inline-block'
                   }}>
-                    {isExpired ? `منتهي منذ ${Math.abs(alert.daysDiff)} يوم` : `يتبقى ${alert.daysDiff} يوم`}
+                    {isExpired ? `${t(`منتهي منذ`)} ${Math.abs(alert.daysDiff)} ${t(`يوم`)}` : `${t(`يتبقى`)} ${alert.daysDiff} ${t(`يوم`)}`}
                   </span>
                 </div>
               </div>
@@ -204,8 +204,8 @@ const HrTab = ({
           {filteredAlerts.length === 0 && (
             <div style={{ background: theme.cardBg, padding: '35px', borderRadius: '14px', textAlign: 'center', color: theme.textMuted, border: `1px solid ${theme.border}` }}>
               {documentAlerts.length === 0
-                ? '✅ جميع وثائق الموظفين (الإقامة، الشهادة الصحية، العقود) سارية ومحدثة ولا توجد تنبيهات منتهية!'
-                : 'لا توجد نتائج مطابقة للبحث في التنبيهات.'}
+                ? t(`✅ جميع وثائق الموظفين (الإقامة، الشهادة الصحية، العقود) سارية ومحدثة ولا توجد تنبيهات منتهية!`)
+                : t(`لا توجد نتائج مطابقة للبحث في التنبيهات.`)}
             </div>
           )}
         </div>

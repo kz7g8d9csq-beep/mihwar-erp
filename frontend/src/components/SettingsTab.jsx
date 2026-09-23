@@ -36,7 +36,7 @@ const SettingsTab = ({
           <div style={{ background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
               <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#d97706' }}>{t(`حجم / تكبير الشعار في الفاتورة:`)}</label>
-              <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#10b981' }}>{invoiceLogoSize} بكسل</span>
+              <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#10b981' }}>{invoiceLogoSize} {t(`بكسل`)}</span>
             </div>
             <input 
               type="range" 

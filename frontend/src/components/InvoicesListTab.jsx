@@ -17,7 +17,7 @@ const InvoicesListTab = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '18px' }}>🔔</span>
             <span style={{ fontSize: '13px', color: '#25D366', fontWeight: 'bold' }}>
-              نظام تذكيرات الواتساب: يوجد {dueSoonInvoicesCount} فواتير غير مدفوعة ومتبقي على استحقاقها 3 أيام أو أقل. يمكنك إرسال التذكيرات مباشرة ولن تتوقف حتى تضغط "تم الدفع".
+              {t(`نظام تذكيرات الواتساب: يوجد`)} {dueSoonInvoicesCount} {t(`فواتير غير مدفوعة ومتبقي على استحقاقها 3 أيام أو أقل. يمكنك إرسال التذكيرات مباشرة ولن تتوقف حتى تضغط "تم الدفع".`)}
             </span>
           </div>
         </div>
@@ -61,7 +61,7 @@ const InvoicesListTab = ({
                   </span>
                   {isUnpaid && inv?.dueDate && (
                     <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '3px' }}>
-                      الاستحقاق: {inv.dueDate} {daysLeft !== null && <span style={{ color: daysLeft <= 0 ? '#ef4444' : '#38bdf8', fontWeight: 'bold' }}>({daysLeft <= 0 ? 'مستحقة' : `متبقي ${daysLeft} يوم`})</span>}
+                      {t(`الاستحقاق:`)} {inv.dueDate} {daysLeft !== null && <span style={{ color: daysLeft <= 0 ? '#ef4444' : '#38bdf8', fontWeight: 'bold' }}>({daysLeft <= 0 ? t(`مستحقة`) : `${t(`متبقي`)} ${daysLeft} ${t(`يوم`)}`})</span>}
                     </div>
                   )}
                   {isDueSoon && (

@@ -53,7 +53,7 @@ const InventoryTab = ({
                   <td style={{ padding: '10px' }}>{i.name}</td>
                   
                   <td style={{ padding: '10px', color: '#10b981', fontWeight: 'bold' }}>
-                    {i.stock} حبة <span style={{ color: '#38bdf8', fontSize: '11px', fontWeight: 'normal' }}>({cartons} كرتون)</span>
+                    {i.stock} {t(`حبة`)} <span style={{ color: '#38bdf8', fontSize: '11px', fontWeight: 'normal' }}>({cartons} {t(`كرتون`)})</span>
                   </td>
                   <td style={{ padding: '10px' }}>
                     <div style={{ display: 'flex', gap: '6px' }}>

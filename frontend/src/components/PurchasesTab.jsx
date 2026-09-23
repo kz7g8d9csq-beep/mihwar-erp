@@ -29,7 +29,7 @@ const PurchasesTab = ({
         <input type="text" value={purchaseProductSearch} onChange={e => setPurchaseProductSearch(e.target.value)} placeholder={t(`ابحث عن اسم المنتج للفلترة...`)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '8px', boxSizing: 'border-box', fontSize: '13px' }} />
         <select value={selectedPurchaseProdId} onChange={e=>setSelectedPurchaseProdId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
           <option value="">{t(`-- اختر المنتج المستهدف --`)}</option>
-          {filteredProductsForPurchase.map(p=><option key={p.id} value={p.id}>{p.name} (المتوفر الحالي: {p.stock})</option>)}
+          {filteredProductsForPurchase.map(p=><option key={p.id} value={p.id}>{p.name} ({t(`المتوفر الحالي:`)} {p.stock})</option>)}
         </select>
       </div>
 

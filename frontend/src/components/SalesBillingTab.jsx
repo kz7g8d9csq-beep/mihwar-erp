@@ -32,7 +32,7 @@ const SalesBillingTab = ({
             <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>{t(`اختيار المنتج`)}</label>
             <select value={selectedProductId} onChange={e => { setSelectedProductId(e.target.value); const p = inventory.find(x => x.id === Number(e.target.value)); if (p) setItemPrice(p.price); }} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
               <option value="">{t(`-- اختر المنتج --`)}</option>
-              {inventory.map(p=><option key={p.id} value={p.id}>{p.name} (متوفر: {p.stock})</option>)}
+              {inventory.map(p=><option key={p.id} value={p.id}>{p.name} ({t(`متوفر:`)} {p.stock})</option>)}
             </select>
           </div>
           <div>

@@ -20,7 +20,7 @@ const DashboardTab = ({
         <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid #38bdf844` }}>
           <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t(`إجمالي مبيعات اليوم (شامل الضريبة)`)}</p>
           <h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '22px' }}>{todaySalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2>
-          <span style={{ fontSize: '11px', color: theme.textMuted, marginTop: '4px', display: 'block' }}>({todayInvoices?.length || 0} فواتير تم إصدارها اليوم)</span>
+          <span style={{ fontSize: '11px', color: theme.textMuted, marginTop: '4px', display: 'block' }}>({todayInvoices?.length || 0} {t(`فواتير تم إصدارها اليوم`)})</span>
         </div>
       </div>
 
@@ -28,16 +28,16 @@ const DashboardTab = ({
       <div style={{ background: lowStockItems.length > 0 ? '#7f1d1d22' : theme.cardBg, borderRadius: '16px', border: `1px solid ${lowStockItems.length > 0 ? '#7f1d1d' : theme.border}`, padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', color: lowStockItems.length > 0 ? '#fca5a5' : theme.textDark }}>
-            {lowStockItems.length > 0 ? `⚠️ تنبيه: يوجد ${lowStockItems.length} صنف وصل للحد الأدنى للمخزون (${lowStockThreshold} ${lowStockUnit} أو أقل)` : t.lowStockClean}
+            {lowStockItems.length > 0 ? `⚠️ ${t(`تنبيه: يوجد`)} ${lowStockItems.length} ${t(`صنف وصل للحد الأدنى للمخزون`)} (${lowStockThreshold} ${lowStockUnit} ${t(`أو أقل`)})` : t.lowStockClean}
           </h3>
           {lowStockItems.length > 0 && (
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
               {lowStockItems.map(item => {
                 const bSize = Number(item.boxSize || 12);
-                const remainingText = lowStockUnit === 'كرتون' ? `${(item.stock / bSize).toFixed(1)} كرتون` : `${item.stock} حبة`;
+                const remainingText = lowStockUnit === 'كرتون' ? `${(item.stock / bSize).toFixed(1)} ${t(`كرتون`)}` : `${item.stock} ${t(`حبة`)}`;
                 return (
                   <span key={item.id} style={{ background: '#7f1d1d', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>
-                    {item.name} (المتبقي: {remainingText})
+                    {item.name} ({t(`المتبقي:`)} {remainingText})
                   </span>
                 );
               })}
@@ -75,14 +75,14 @@ const DashboardTab = ({
       {/* حركة المبيعات الشهرية */}
       <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
         <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: theme.textDark }}>
-          📅 حركة المبيعات الشهرية خلال عام {currentYear}
+          📅 {t(`حركة المبيعات الشهرية خلال عام`)} {currentYear}
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px' }}>
           {monthlyData.map((m, idx) => (
             <div key={idx} style={{ background: theme.bgMain, padding: '14px', borderRadius: '10px', border: `1px solid ${theme.border}`, textAlign: 'center' }}>
               <span style={{ fontSize: '13px', fontWeight: 'bold', display: 'block', color: theme.textMuted }}>{m.monthName}</span>
               <strong style={{ fontSize: '16px', color: '#10b981', display: 'block', margin: '6px 0' }}>{m.total.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</strong>
-              <span style={{ fontSize: '11px', color: theme.textMuted }}>{m.count} فواتير</span>
+              <span style={{ fontSize: '11px', color: theme.textMuted }}>{m.count} {t(`فواتير`)}</span>
             </div>
           ))}
         </div>
@@ -105,7 +105,7 @@ const DashboardTab = ({
           <tbody>
             {pastYearsData.map((y, idx) => (
               <tr key={idx} style={{ borderBottom: `1px solid ${theme.border}` }}>
-                <td style={{ padding: '12px', fontWeight: 'bold', color: '#d97706' }}>عام {y.year}</td>
+                <td style={{ padding: '12px', fontWeight: 'bold', color: '#d97706' }}>{t(`عام`)} {y.year}</td>
                 <td style={{ padding: '12px', textAlign: 'center' }}>{y.count}</td>
                 <td style={{ padding: '12px', textAlign: 'center', color: '#10b981', fontWeight: 'bold' }}>{y.totalSales.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</td>
                 <td style={{ padding: '12px', textAlign: 'center', color: '#38bdf8', fontWeight: 'bold' }}>{y.totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</td>
