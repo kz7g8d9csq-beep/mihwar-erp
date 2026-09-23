@@ -36,19 +36,19 @@ const HrTab = ({
           type="button" 
           onClick={() => setHrSubTab('employees')}
           style={{ padding: '8px 18px', borderRadius: '8px', border: 'none', background: hrSubTab === 'employees' ? '#d97706' : 'transparent', color: '#fff', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
-          الموظفون
+          {t(`الموظفون`)}
         </button>
         <button 
           type="button" 
           onClick={() => setHrSubTab('payroll')}
           style={{ padding: '8px 18px', borderRadius: '8px', border: 'none', background: hrSubTab === 'payroll' ? '#d97706' : 'transparent', color: '#fff', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
-          الرواتب
+          {t(`الرواتب`)}
         </button>
         <button 
           type="button" 
           onClick={() => setHrSubTab('alerts')}
           style={{ padding: '8px 18px', borderRadius: '8px', border: 'none', background: hrSubTab === 'alerts' ? '#d97706' : 'transparent', color: '#fff', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>الوثائق والتنبيهات</span>
+          <span>{t(`الوثائق والتنبيهات`)}</span>
           {urgentAlertsCount > 0 && (
             <span style={{ background: '#ef4444', color: '#fff', padding: '1px 6px', borderRadius: '10px', fontSize: '11px', fontWeight: 'bold' }}>
               {urgentAlertsCount}
@@ -59,8 +59,8 @@ const HrTab = ({
 
       {hrSubTab !== 'alerts' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-          <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي الموظفين</p><h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '24px' }}>{employees.length} موظف</h2></div>
-          <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي الرواتب الأساسية</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '24px' }}>{totalPayroll.toLocaleString()} {t.currency}</h2></div>
+          <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t(`إجمالي الموظفين`)}</p><h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '24px' }}>{employees.length} موظف</h2></div>
+          <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t(`إجمالي الرواتب الأساسية`)}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '24px' }}>{totalPayroll.toLocaleString()} {t.currency}</h2></div>
         </div>
       )}
 
@@ -68,13 +68,13 @@ const HrTab = ({
       {hrSubTab === 'employees' && (
         <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-            <h3 style={{ margin: 0, fontSize: '17px' }}>📋 سجل الموظفين وبيانات العمل والبدلات والعمولات</h3>
-            <input type="text" value={hrSearchQuery} onChange={e => setHrSearchQuery(e.target.value)} placeholder="🔍 ابحث بالاسم أو رقم الهوية..." style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '260px' }} />
+            <h3 style={{ margin: 0, fontSize: '17px' }}>{t(`📋 سجل الموظفين وبيانات العمل والبدلات والعمولات`)}</h3>
+            <input type="text" value={hrSearchQuery} onChange={e => setHrSearchQuery(e.target.value)} placeholder={t(`🔍 ابحث بالاسم أو رقم الهوية...`)} style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '260px' }} />
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '950px' }}>
             <thead>
               <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                <th style={{ padding: '12px' }}>الموظف</th><th style={{ padding: '12px' }}>رقم الإقامة / الهوية</th><th style={{ padding: '12px' }}>المسمى والقسم</th><th style={{ padding: '12px' }}>الراتب والعمولات والبدلات</th><th style={{ padding: '12px' }}>التأمين والأجازات</th><th style={{ padding: '12px' }}>انتهاء الوثائق</th><th style={{ padding: '12px' }}>الإجراءات</th>
+                <th style={{ padding: '12px' }}>{t(`الموظف`)}</th><th style={{ padding: '12px' }}>{t(`رقم الإقامة / الهوية`)}</th><th style={{ padding: '12px' }}>{t(`المسمى والقسم`)}</th><th style={{ padding: '12px' }}>{t(`الراتب والعمولات والبدلات`)}</th><th style={{ padding: '12px' }}>{t(`التأمين والأجازات`)}</th><th style={{ padding: '12px' }}>{t(`انتهاء الوثائق`)}</th><th style={{ padding: '12px' }}>{t(`الإجراءات`)}</th>
               </tr>
             </thead>
             <tbody>
@@ -95,14 +95,14 @@ const HrTab = ({
                   <td style={{ padding: '12px', fontSize: '11px' }}>إقامة: {emp.iqamaEnd} <br/>صحي: {emp.healthEnd} <br/>عقد: {emp.contractEnd}</td>
                   <td style={{ padding: '12px' }}>
                     <div style={{ display: 'flex', gap: '6px' }}>
-                      <button onClick={() => handleOpenEditEmp(emp)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>تعديل ✏️</button>
-                      <button onClick={() => handleDeleteEmployee(emp.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>حذف 🗑️</button>
+                      <button onClick={() => handleOpenEditEmp(emp)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>{t(`تعديل ✏️`)}</button>
+                      <button onClick={() => handleDeleteEmployee(emp.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>{t(`حذف 🗑️`)}</button>
                     </div>
                   </td>
                 </tr>
               ))}
               {!filteredEmployees.length && (
-                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لا توجد نتائج مطابقة للبحث.</td></tr>
+                <tr><td colSpan="8" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>{t(`لا توجد نتائج مطابقة للبحث.`)}</td></tr>
               )}
             </tbody>
           </table>
@@ -113,19 +113,19 @@ const HrTab = ({
       {hrSubTab === 'payroll' && (
         <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-            <h3 style={{ margin: 0, fontSize: '17px', color: '#fca5a5' }}>🔻 سجل الخصومات وإدارتها</h3>
+            <h3 style={{ margin: 0, fontSize: '17px', color: '#fca5a5' }}>{t(`🔻 سجل الخصومات وإدارتها`)}</h3>
             <input 
               type="text" 
               value={hrPayrollSearchQuery} 
               onChange={e => setHrPayrollSearchQuery(e.target.value)} 
-              placeholder="🔍 ابحث بالاسم أو رقم الهوية..." 
+              placeholder={t(`🔍 ابحث بالاسم أو رقم الهوية...`)} 
               style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '260px' }} 
             />
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
             <thead>
               <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-                <th style={{ padding: '10px' }}>اسم الموظف</th><th style={{ padding: '10px' }}>قيمة الخصم</th><th style={{ padding: '10px' }}>سبب الخصم</th><th style={{ padding: '10px' }}>تاريخ التسجيل</th><th style={{ padding: '10px' }}>الإجراءات</th>
+                <th style={{ padding: '10px' }}>{t(`اسم الموظف`)}</th><th style={{ padding: '10px' }}>{t(`قيمة الخصم`)}</th><th style={{ padding: '10px' }}>{t(`سبب الخصم`)}</th><th style={{ padding: '10px' }}>{t(`تاريخ التسجيل`)}</th><th style={{ padding: '10px' }}>{t(`الإجراءات`)}</th>
               </tr>
             </thead>
             <tbody>
@@ -136,12 +136,12 @@ const HrTab = ({
                   <td style={{ padding: '10px' }}>{d.reason}</td>
                   <td style={{ padding: '10px', color: theme.textMuted }}>{d.date}</td>
                   <td style={{ padding: '10px' }}>
-                    <button onClick={() => handleRemoveDeduction(d.id, d.empName, d.amount)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>إعفاء الخصم ↩️</button>
+                    <button onClick={() => handleRemoveDeduction(d.id, d.empName, d.amount)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>{t(`إعفاء الخصم ↩️`)}</button>
                   </td>
                 </tr>
               ))}
               {!filteredDeductions.length && (
-                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>لا توجد نتائج مطابقة للبحث.</td></tr>
+                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>{t(`لا توجد نتائج مطابقة للبحث.`)}</td></tr>
               )}
             </tbody>
           </table>
@@ -152,12 +152,12 @@ const HrTab = ({
       {hrSubTab === 'alerts' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <div style={{ background: theme.cardBg, borderRadius: '14px', border: `1px solid ${theme.border}`, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-            <h3 style={{ margin: 0, fontSize: '17px', color: theme.textDark }}>🔔 قائمة تنبيهات وثائق الموظفين</h3>
+            <h3 style={{ margin: 0, fontSize: '17px', color: theme.textDark }}>{t(`🔔 قائمة تنبيهات وثائق الموظفين`)}</h3>
             <input 
               type="text" 
               value={hrAlertsSearchQuery} 
               onChange={e => setHrAlertsSearchQuery(e.target.value)} 
-              placeholder="🔍 ابحث بالاسم أو رقم الهوية..." 
+              placeholder={t(`🔍 ابحث بالاسم أو رقم الهوية...`)} 
               style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '260px' }} 
             />
           </div>

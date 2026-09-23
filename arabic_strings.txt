@@ -1,0 +1,213 @@
+فتح حساب عميل جديد
+اسم العميل / المؤسسة *
+رقم الهوية / السجل التجاري
+رقم الهاتف
+البريد الإلكتروني
+العنوان (مثال: جدة - حي الروضة)
+فترة السماح (مثال: 15 يوم / 30 يوم)
+حفظ العميل
+دليل العملاء
+setCustomerSearchQuery(e.target.value)} placeholder={t(`🔍 ابحث بالاسم، الهوية، الهاتف أو البريد...
+تصدير Excel
+الاسم
+الهوية / السجل
+الهاتف
+العنوان
+فترة السماح
+الإجراءات
+handleOpenEditCustomer(c)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>تعديل ✏️
+handleDeleteCustomer(c.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>حذف 🗑️
+مرحباً بك في لوحة التحكم المركزية لنظام محور.
+إجمالي مبيعات اليوم (شامل الضريبة)
+({todayInvoices?.length || 0} فواتير تم إصدارها اليوم)
+{/* بطاقة فحص مستويات المخزون مع تحديد الوحدة */}
+كرتون
+{item.name} (المتبقي: {remainingText})
+تحديد الحد الأدنى:
+قطعة
+{/* حركة المبيعات الشهرية */}
+📅 حركة المبيعات الشهرية خلال عام {currentYear}
+{m.count} فواتير
+{/* المقارنة المالية السنوية */}
+📈 المقارنة المالية السنوية (آخر 10 سنوات)
+السنة
+عدد الفواتير
+إجمالي المبيعات
+صافي الأرباح التقديري
+عام {y.year}
+{/* شريط التبويبات الفرعية */}
+الوثائق والتنبيهات
+إجمالي الموظفين
+{employees.length} موظف
+إجمالي الرواتب الأساسية
+إجمالي العمولات
+إجمالي الحوافز
+📋 سجل الموظفين وبيانات العمل والبدلات والعمولات
+setHrSearchQuery(e.target.value)} placeholder={t(`🔍 ابحث بالاسم أو رقم الهوية...
+الموظف
+رقم الإقامة / الهوية
+المسمى الوظيفي والقسم
+الراتب والعمولات والبدلات
+التأمين الصحي
+الأجازات
+انتهاء الوثائق
+أساسي: {emp.salary} {t.currency}
+خصم: {emp.deductions} {t.currency}
+حوافز: {emp.incentives} {t.currency}
+عمولة: {emp.commission} {emp.commissionType ? `(${emp.commissionType})` : ''}
+سكن: {emp.housingAllowance} {t.currency}
+مواصلات: {emp.transportAllowance} {t.currency}
+بدلات أخرى: {emp.allowances} {t.currency}
+{emp.vacations} يوم
+إقامة:
+تأمين صحي:
+عقد وظيفي:
+handleOpenEditEmp(emp)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>تعديل ✏️
+handleDeleteEmployee(emp.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>حذف 🗑️
+لا توجد نتائج مطابقة للبحث.
+🔻 سجل الخصومات وإدارتها
+🔍 ابحث بالاسم أو رقم الهوية...
+اسم الموظف
+قيمة الخصم
+سبب الخصم
+تاريخ التسجيل
+handleRemoveDeduction(d.id, d.empName, d.amount)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>إعفاء الخصم ↩️
+🔔 قائمة تنبيهات وثائق الموظفين
+{alert.docType} (هوية: {alert.empIdNumber})
+{isExpired ? `منتهي منذ ${Math.abs(alert.daysDiff)} يوم` : `يتبقى ${alert.daysDiff} يوم`}
+✅ جميع وثائق الموظفين (الإقامة، الشهادة الصحية، العقود) سارية ومحدثة ولا توجد تنبيهات منتهية!
+لا توجد نتائج مطابقة للبحث في التنبيهات.
+➕ إضافة منتج
+رقم الصنف (مثال: SKU-001)
+setInventorySearchQuery(e.target.value)} placeholder={t(`🔍 ابحث برقم الصنف أو الاسم...
+رقم الصنف
+المخزون بالحبة وبالكرتون
+{i.stock} حبة
+({cartons} كرتون)
+handleOpenEditProduct(i)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>تعديل ✏️
+handleDeleteProduct(i.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>حذف 🗑️
+نظام تذكيرات الواتساب: يوجد {dueSoonInvoicesCount} فواتير غير مدفوعة ومتبقي على استحقاقها 3 أيام أو أقل. يمكنك إرسال التذكيرات مباشرة ولن تتوقف حتى تضغط t(`تم الدفع
+📑 سجل فواتير المبيعات
+setInvoiceSearchQuery(e.target.value)} placeholder={t(`🔍 ابحث برقم الفاتورة أو العميل...
+تصدير إلى Excel 📥
+رقم الفاتورة
+العميل
+المبلغ الإجمالي
+حالة الدفع والاستحقاق
+غير مدفوعة
+{inv?.customer?.name || t(`عميل نقدي
+{inv?.paymentStatus || t(`مدفوعة
+الاستحقاق: {inv.dueDate} {daysLeft !== null &&
+مستحقة
+تذكير واتساب نشط 📲
+setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>معاينة وطباعة 👁️
+إرسال تذكير الفاتورة عبر واتساب
+واتساب 💬
+handleOpenPayConfirm(inv?.id)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>تم الدفع ✓
+لا توجد فواتير مبيعات مسجلة بعد.
+🛒 نقطة البيع السريعة
+🔍 البحث واختيار العميل للفاتورة:
+setPosCustomerSearch(e.target.value)} placeholder={t(`ابحث باسم المنشأة، السجل التجاري، الرقم الضريبي...
+-- عميل نقدي عام (افتراضي) --
+{c.name} ({c.nationalId || c.phone || t(`نقدي
+محتويات السلة
+الإجمالي المستحق:
+setShowPosPayModal(true)} disabled={!cartItems.length} style={{ width: '100%', background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إتمام الدفع وإصدار الفاتورة 💳
+اختيار طريقة الدفع السريع
+طريقة الدفع (نقداً أو شبكة):
+نقد
+نقداً
+شبكة
+تأكيد وإصدار الفاتورة 🚀
+setShowPosPayModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إلغاء
+📥 سجل فواتير الشراء
+setPurchaseInvoicesListSearch(e.target.value)} placeholder={t(`🔍 ابحث برقم الفاتورة أو المنتج أو المورد...
+المورد
+المنتج
+الوحدة
+الكمية
+الإجمالي
+التاريخ
+{pi.supplier?.name || t(`توريد نقدي مباشر
+{pi.unitType || t(`قطعة
+setPrintingPurchaseInvoice(pi)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>معاينة وطباعة 👁️
+لا توجد فواتير شراء مسجلة بعد.
+تسجيل فاتورة شراء وتوريد بضاعة
+توريد نقدي مباشر
+🔍 بحث واختيار المنتج:
+setPurchaseProductSearch(e.target.value)} placeholder={t(`ابحث عن اسم المنتج للفلترة...
+-- اختر المنتج المستهدف --
+{p.name} (المتوفر الحالي: {p.stock})
+وحدة التوريد
+الكمية الموردة
+{purchaseUnitType === t(`كرتون
+كم قطعة بداخل الكرتون؟ (إدخال يدوي):
+مثال: 12 أو 24
+إضافة وحدة وزن (اختياري):
+لا يوجد
+-- بدون وزن --
+جرام
+كيلوجرام
+مل
+لتر
+{unitGramOrKilo !== t(`لا يوجد
+اكتب الوزن (مثال: 10 جرام أو 16 كيلو):
+اكتب هنا يدوياً...
+تكلفة القطعة الواحدة (ر.س)
+سعر القطعة
+تكلفة الكرتون (ر.س)
+سعر الكرتون
+اعتماد التوريد وزيادة المخزون 📦
+⚡ إصدار فاتورة بيع جديدة
+🔍 بحث واختيار العميل:
+setSalesCustomerSearch(e.target.value)} placeholder={t(`اكتب اسم المنشأة أو العميل للبحث السريع...
+اختيار المنتج
+-- اختر المنتج --
+{p.name} (متوفر: {p.stock})
+السعر (ر.س)
+setItemPrice(e.target.value)} placeholder={t(`السعر
+➕ إضافة
+حالة الدفع:
+مدفوعة
+setInvoiceStatus(t(`مدفوعة
+setInvoiceStatus(t(`غير مدفوعة
+{invoiceStatus === t(`مدفوعة
+طريقة الدفع:
+حوالة
+مدة الاستحقاق:
+setDueDateInput(e.target.value)} placeholder={t(`مثال: 2026/10/01
+🛒 محتويات الفاتورة الحالية
+السعر
+المجموع
+{it.unitType || t(`قطعة
+لم يتم إضافة أي صنف للفاتورة بعد.
+إتمام الدفع وإصدار الفاتورة 💳
+ملخص الحسبة التلقائية
+المبلغ الخاضع للضريبة:
+ضريبة القيمة المضافة (15%):
+الإجمالي النهائي:
+setLang('ar')} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: lang==='ar'?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🇸🇦 العربية
+setIsDark(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: !isDark?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>☀️ النهاري
+setIsDark(true)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: isDark?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🌙 الداكن
+{/* بطاقة رفع شعار المنشأة والنظام وتعديل الحجم والعنوان المطبوع */}
+{/* خيار تكبير وتحديد حجم الشعار في الفاتورة المطبوعة */}
+حجم / تكبير الشعار في الفاتورة:
+{invoiceLogoSize} بكسل
+عنوان / مقر المنشأة المطبوع على الفاتورة:
+مثال: المملكة العربية السعودية - الرياض أو جدة أو الخبر
+{ setCompanyLogo(''); localStorage.removeItem('mihwar_company_logo'); }} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}>حذف الشعار واستعادة الافتراضي
+{/* بطاقة إدارة الحساب والجلسة */}
+🔒 إدارة الحساب والجلسة
+تسجيل الخروج يحفظ كامل بياناتك، أما الحذف النهائي فيمسح الحساب وجميع البيانات تماماً مع إمكانية إنشاء حساب جديد لاحقاً.
+تسجيل الخروج
+حذف الحساب بشكل نهائي
+فتح حساب مورد جديد
+اسم المورد / الشركة *
+الرقم الضريبي
+العنوان (مثال: جدة - المنطقة الصناعية)
+حفظ المورد
+دليل الموردين
+setSupplierSearchQuery(e.target.value)} placeholder={t(`🔍 ابحث بالاسم، الرقم الضريبي أو العنوان...
+اسم المورد
+handleOpenEditSupplier(s)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>تعديل ✏️
+handleDeleteSupplier(s.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '5px 8px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>حذف 🗑️

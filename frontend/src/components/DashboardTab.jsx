@@ -8,7 +8,7 @@ const DashboardTab = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
       <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-        <div><h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.welcome} {user?.name} 👋</h2><p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>مرحباً بك في لوحة التحكم المركزية لنظام محور.</p></div>
+        <div><h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900' }}>{t.welcome} {user?.name} 👋</h2><p style={{ margin: 0, color: theme.textMuted, fontSize: '14px' }}>{t(`مرحباً بك في لوحة التحكم المركزية لنظام محور.`)}</p></div>
       </div>
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
@@ -18,7 +18,7 @@ const DashboardTab = ({
         <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t.netProfit}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '22px' }}>{netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2></div>
         
         <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid #38bdf844` }}>
-          <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>إجمالي مبيعات اليوم (شامل الضريبة)</p>
+          <p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t(`إجمالي مبيعات اليوم (شامل الضريبة)`)}</p>
           <h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '22px' }}>{todaySalesVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {t.currency}</h2>
           <span style={{ fontSize: '11px', color: theme.textMuted, marginTop: '4px', display: 'block' }}>({todayInvoices?.length || 0} فواتير تم إصدارها اليوم)</span>
         </div>
@@ -46,7 +46,7 @@ const DashboardTab = ({
         </div>
         
         <div style={{ background: theme.bgMain, padding: '10px 16px', borderRadius: '10px', border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '13px', fontWeight: 'bold' }}>تحديد الحد الأدنى:</span>
+          <span style={{ fontSize: '13px', fontWeight: 'bold' }}>{t(`تحديد الحد الأدنى:`)}</span>
           <input 
             type="number" 
             min="1" 
@@ -66,8 +66,8 @@ const DashboardTab = ({
               localStorage.setItem('mihwar_low_stock_unit', u); 
             }} 
             style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #d97706', background: theme.cardBg, color: theme.textDark, fontWeight: 'bold', fontSize: '12px', outline: 'none', cursor: 'pointer' }}>
-            <option value="قطعة">قطعة</option>
-            <option value="كرتون">كرتون</option>
+            <option value="قطعة">{t(`قطعة`)}</option>
+            <option value="كرتون">{t(`كرتون`)}</option>
           </select>
         </div>
       </div>
@@ -91,15 +91,15 @@ const DashboardTab = ({
       {/* المقارنة المالية السنوية */}
       <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
         <h3 style={{ margin: '0 0 15px 0', fontSize: '17px', color: theme.textDark }}>
-          📈 المقارنة المالية السنوية (آخر 10 سنوات)
+          {t(`📈 المقارنة المالية السنوية (آخر 10 سنوات)`)}
         </h3>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '600px' }}>
           <thead>
             <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme.border}` }}>
-              <th style={{ padding: '12px', textAlign: 'right' }}>السنة</th>
-              <th style={{ padding: '12px', textAlign: 'center' }}>عدد الفواتير</th>
-              <th style={{ padding: '12px', textAlign: 'center' }}>إجمالي المبيعات</th>
-              <th style={{ padding: '12px', textAlign: 'center' }}>صافي الأرباح التقديري</th>
+              <th style={{ padding: '12px', textAlign: 'right' }}>{t(`السنة`)}</th>
+              <th style={{ padding: '12px', textAlign: 'center' }}>{t(`عدد الفواتير`)}</th>
+              <th style={{ padding: '12px', textAlign: 'center' }}>{t(`إجمالي المبيعات`)}</th>
+              <th style={{ padding: '12px', textAlign: 'center' }}>{t(`صافي الأرباح التقديري`)}</th>
             </tr>
           </thead>
           <tbody>

@@ -529,7 +529,90 @@ function App() {
   const [printingInvoice, setPrintingInvoice] = useState(null);
   const [printingPurchaseInvoice, setPrintingPurchaseInvoice] = useState(null);
 
-  const t = dict[lang];
+    const t = (key) => {
+    if (lang === 'ar') return dict['ar'][key] || key;
+    if (dict['en'][key]) return dict['en'][key];
+    
+    // Auto translation map fallback
+    const autoMap = {
+        "?????? ?? ?? ???? ?????? ???????? ????? ????.": "Welcome to the Mihwar Central Dashboard.",
+        "?????? ?????? ????? (???? ???????)": "Today's Total Sales (Tax Incl.)",
+        "??????? ??????? / ??????": "Available Stock / Balance",
+        "????? ??????": "Light Mode",
+        "??? ??????": "Unpaid",
+        "??????? ?????? ??????? (??? ?? ???? ??????)": "Low Stock Alerts (Below Minimum)",
+        "??????? ??????? ??????? ?? ???? ????? ????? ??? ??????.": "Stock levels are optimal, no items are running low.",
+        "????? ???????? ??????? ????": "Monthly Sales Analysis for Year",
+        "???? ????????? ???????? ??????? (??? 10 ?????)": "Annual Revenue and Profit Summary (Last 10 Years)",
+        "?????": "OK",
+        "??? ????????": "Pay Invoice",
+        "?????? ????????": "Total Commissions",
+        "???? ????? ????????": "Estimated Net Profit",
+        "??????": "Paid",
+        "????? ?????": "Confirm Payment",
+        "????? ????????": "Cancel Invoice",
+        "????? ?????? ????????": "Export Sales Invoices",
+        "??? ?????? ??????": "Purchase Invoices List",
+        "????? ?????? ??????": "Edit Employee Details",
+        "????? ???? ????": "Add New Employee",
+        "???": "Cash",
+        "????? ?????? ???? ?????": "Issue New Purchase Invoice",
+        "????? ?????? ??? ?????": "Issue New Sales Invoice",
+        "?????? ??????": "Select Product",
+        "????? (?.?)": "Price (SAR)",
+        "??????? (15%)": "VAT (15%)",
+        "????????": "Vacations",
+        "????? ???????": "Tax Number",
+        "???????": "Address",
+        "?????? ??": "WhatsApp ??",
+        "?? ????? ?": "Paid ?",
+        "??? ?????????": "Save Changes",
+        "??????? ??????": "System Settings",
+        "??????? ?????": "Health Insurance",
+        "??? ???????": "Company Name",
+        "????? ?????????": "Due Date",
+        "?????????": "Actions",
+        "?????? ??????? ????????": "Total Basic Salaries",
+        "?????? ???????": "Documents Expiry",
+        "??? ??????? / ??????": "Iqama / ID Number",
+        "?????? ??????? ??????": "Job Title & Dept",
+        "?????? ????????? ????????": "Salary, Commissions & Allowances",
+        "????": "Card",
+        "????? ????": "Bank Transfer",
+        "??? (???)": "Credit"
+    };
+    
+    if (autoMap[key]) return autoMap[key];
+    
+    // Word by word fallback
+    let en = String(key);
+    const wordsMap = {
+      '?????': 'Add', '???': 'Save', '?????': 'Edit', '???': 'Delete', '?????': 'Close', '?????': 'Cancel',
+      '???': 'Search', '????': 'Search', '?????': 'OK', '???': 'Yes', '??': 'No',
+      '???': 'Name', '???': 'Number', '?????': 'Date', '??????': 'Quantity', '?????': 'Price',
+      '????????': 'Total', '???????': 'Total', '?????': 'Tax', '???': 'Discount',
+      '????': 'Product', '????????': 'Products', '????': 'Customer', '???????': 'Customers',
+      '????': 'Supplier', '????????': 'Suppliers', '????': 'Employee', '????????': 'Employees',
+      '??????': 'Invoice', '????????': 'Invoices', '??????': 'Sales', '???????': 'Purchases',
+      '?????': 'Inventory', '???????': 'Resources', '???????': 'Human',
+      '???????': 'Settings', '?????': 'Print', '?????': 'Export', '???': 'Pay', '????': 'New',
+      '??????': 'Details', '????': 'Status', '?????????': 'Actions', '?????': 'Message',
+      '??????': 'WhatsApp', '??????': 'Value', '??????': 'Net', '???????': 'Remaining',
+      '?????????': 'Due Date', '??????': 'Unit', '????': 'Piece', '?????': 'Carton', '????': 'Kilo',
+      '????': 'Gram', '?????': 'Allowances', '?????': 'Commission', '?????': 'Incentives',
+      '????': 'Salary', '?????': 'Basic', '?????': 'Insurance', '??????': 'Vacations',
+      '???': 'Contract', '?????': 'Iqama', '????': 'ID', '???': 'Health', '?????': 'Today',
+      '??????': 'Total'
+    };
+    let translated = en.split(/\s+/).map(w => {
+      let clean = w.replace(/[.,:;()\[\]{}!?]/g, '');
+      if (wordsMap[clean]) return w.replace(clean, wordsMap[clean]);
+      return w;
+    }).join(' ');
+    
+    return translated;
+  };
+  Object.assign(t, dict[lang] || dict['ar']);
 
   const theme = {
     primary: '#d97706',
@@ -691,7 +774,7 @@ function App() {
   };
 
   const empFormReset = () => {
-    setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpVacations(''); setEmpInsurance(''); setEmpIqamaEnd(''); setEmpHealthEnd(''); setEmpContractEnd(''); setEmpCommission(''); setEmpAllowances('');
+    setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpVacations(''); setEmpInsurance(''); setEmpIqamaEnd(''); setEmpHealthEnd(''); setEmpContractEnd(''); setEmpCommission(''); setEmpAllowances(''); setEmpCommissionType(''); setEmpHousingAllowance(''); setEmpTransportAllowance(''); setEmpIncentives(''); setEmpCommissionType(''); setEmpHousingAllowance(''); setEmpTransportAllowance(''); setEmpIncentives(''); setEmpCommissionType(''); setEmpHousingAllowance(''); setEmpTransportAllowance(''); setEmpIncentives(''); setEmpCommissionType(''); setEmpHousingAllowance(''); setEmpTransportAllowance(''); setEmpIncentives('');
   };
 
 
@@ -1649,7 +1732,7 @@ function App() {
           {/* TAB 1: Dashboard */}
           {activeTab === 'dashboard' && user.role !== 'cashier' && (
             <DashboardTab
-              user={user} t={t} theme={theme} isDark={isDark}
+              user={user} t={t} theme={theme} isDark={isDark} lang={lang}
               inventoryVal={inventoryVal} totalSalesVal={totalSalesVal}
               totalPurchasesVal={totalPurchasesVal} netProfitVal={netProfitVal}
               todaySalesVal={todaySalesVal} todayInvoices={todayInvoices}
@@ -1664,7 +1747,7 @@ function App() {
           {/* TAB 2: POS */}
           {activeTab === 'pos' && (
             <PosTab
-              t={t} theme={theme} isDark={isDark}
+              t={t} theme={theme} isDark={isDark} lang={lang}
               inventory={inventory} cartItems={cartItems} setCartItems={setCartItems}
               posCustomerSearch={posCustomerSearch} setPosCustomerSearch={setPosCustomerSearch}
               posSelectedCustomerId={posSelectedCustomerId} setPosSelectedCustomerId={setPosSelectedCustomerId}
@@ -1679,7 +1762,7 @@ function App() {
           {/* TAB 3: Sales */}
           {activeTab === 'sales' && (
             <SalesBillingTab
-              t={t} theme={theme} isDark={isDark}
+              t={t} theme={theme} isDark={isDark} lang={lang}
               inventory={inventory} cartItems={cartItems}
               salesCustomerSearch={salesCustomerSearch} setSalesCustomerSearch={setSalesCustomerSearch}
               selectedCustomerId={selectedCustomerId} setSelectedCustomerId={setSelectedCustomerId}
@@ -1717,7 +1800,7 @@ function App() {
           {/* TAB 5: PurchaseInvoicesList */}
           {activeTab === 'purchaseInvoicesList' && user.role !== 'cashier' && (
             <PurchaseInvoicesListTab
-              t={t} theme={theme} isDark={isDark} user={user}
+              t={t} theme={theme} isDark={isDark} lang={lang} user={user}
               filteredPurchaseInvoices={filteredPurchaseInvoices}
               purchaseInvoicesListSearch={purchaseInvoicesListSearch}
               setPurchaseInvoicesListSearch={setPurchaseInvoicesListSearch}
@@ -1729,7 +1812,7 @@ function App() {
           {/* TAB 6: Purchases */}
           {activeTab === 'purchases' && user.role !== 'cashier' && (
             <PurchasesTab
-              t={t} theme={theme} isDark={isDark} user={user}
+              t={t} theme={theme} isDark={isDark} lang={lang} user={user}
               suppliers={suppliers}
               selectedSupplierId={selectedSupplierId} setSelectedSupplierId={setSelectedSupplierId}
               purchaseProductSearch={purchaseProductSearch} setPurchaseProductSearch={setPurchaseProductSearch}
@@ -1749,7 +1832,7 @@ function App() {
           {/* TAB 7: Customers */}
           {activeTab === 'customers' && user.role !== 'cashier' && (
             <CustomersTab
-              t={t} theme={theme} isDark={isDark} user={user}
+              t={t} theme={theme} isDark={isDark} lang={lang} user={user}
               filteredCustomers={filteredCustomers}
               customerSearchQuery={customerSearchQuery} setCustomerSearchQuery={setCustomerSearchQuery}
               custName={custName} setCustName={setCustName}
@@ -1768,7 +1851,7 @@ function App() {
           {/* TAB 8: Suppliers */}
           {activeTab === 'suppliers' && user.role !== 'cashier' && (
             <SuppliersTab
-              t={t} theme={theme} isDark={isDark} user={user}
+              t={t} theme={theme} isDark={isDark} lang={lang} user={user}
               filteredSuppliers={filteredSuppliers}
               supplierSearchQuery={supplierSearchQuery} setSupplierSearchQuery={setSupplierSearchQuery}
               suppName={suppName} setSuppName={setSuppName}
@@ -1786,7 +1869,7 @@ function App() {
           {/* TAB 9: Inventory */}
           {activeTab === 'inventory' && (
             <InventoryTab
-              t={t} theme={theme} isDark={isDark} user={user}
+              t={t} theme={theme} isDark={isDark} lang={lang} user={user}
               filteredInventory={filteredInventory}
               inventorySearchQuery={inventorySearchQuery} setInventorySearchQuery={setInventorySearchQuery}
               newProdName={newProdName} setNewProdName={setNewProdName}
@@ -1803,7 +1886,7 @@ function App() {
           {/* TAB 11: HR */}
           {activeTab === 'hr' && user.role !== 'cashier' && (
             <HrTab
-              t={t} theme={theme} isDark={isDark} user={user}
+              t={t} theme={theme} isDark={isDark} lang={lang} user={user}
               hrSubTab={hrSubTab} setHrSubTab={setHrSubTab}
               employees={employees}
               filteredEmployees={filteredEmployees}
@@ -1828,7 +1911,7 @@ function App() {
           {/* TAB 12: Settings */}
           {activeTab === 'settings' && (
             <SettingsTab
-              t={t} theme={theme} isDark={isDark}
+              t={t} theme={theme} isDark={isDark} lang={lang}
               lang={lang} setLang={setLang} setIsDark={setIsDark}
               companyLogo={companyLogo} setCompanyLogo={setCompanyLogo}
               companyAddress={companyAddress} setCompanyAddress={setCompanyAddress}
