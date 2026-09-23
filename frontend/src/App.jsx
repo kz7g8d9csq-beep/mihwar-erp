@@ -265,6 +265,27 @@ function App() {
   const [lang, setLang] = useState('ar');
   const [isDark, setIsDark] = useState(true);
 
+  // تهيئة الحسابات المسجلة لضمان التحقق من وجود الحساب
+  useEffect(() => {
+    const accounts = localStorage.getItem('mihwar_registered_accounts');
+    if (!accounts) {
+      const savedUser = localStorage.getItem('mihwar_user');
+      if (savedUser) {
+        try {
+          const u = JSON.parse(savedUser);
+          if (u && u.email) {
+            localStorage.setItem('mihwar_registered_accounts', JSON.stringify([{
+              email: u.email.trim().toLowerCase(),
+              password: '',
+              phone: '',
+              businessName: u.businessName || u.name || 'نظام محور'
+            }]));
+          }
+        } catch (e) {}
+      }
+    }
+  }, []);
+
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('mihwar_user');
     const savedToken = localStorage.getItem('mihwar_token');
@@ -298,7 +319,9 @@ function App() {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
 
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [businessName, setBusinessName] = useState('نظام محور');
+  const [businessName, setBusinessName] = useState(() => {
+    return localStorage.getItem('mihwar_business_name') || 'نظام محور';
+  });
 
   const [companyLogo, setCompanyLogo] = useState(() => {
     return localStorage.getItem('mihwar_company_logo') || '';
@@ -1025,9 +1048,23 @@ function App() {
     }
   };
 
-  // حذف الحساب بشكل نهائي
+  // تسجيل الخروج فقط (الاحتفاظ بكافة البيانات في النظام لإعادة الدخول لاحقاً)
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('mihwar_user');
+    localStorage.removeItem('mihwar_token');
+    if (API.defaults) delete API.defaults.headers.common['Authorization'];
+    setShowLanding(true);
+    setAuthMode('login');
+    setAuthEmail('');
+    setAuthPassword('');
+    setAuthPhone('');
+    setAuthCompanyName('');
+  };
+
+  // حذف الحساب بشكل نهائي ومسح جميع البيانات والنسيان الكامل
   const handleDeleteAccountPermanently = () => {
-    const confirmed = window.confirm('⚠️ تحذير نهائي: هل أنت متأكد تماماً من رغبتك في حذف الحساب ومسح جميع البيانات بشكل نهائي؟ لا يمكن التراجع عن هذا الإجراء.');
+    const confirmed = window.confirm('⚠️ تحذير نهائي: هل أنت متأكد تماماً من رغبتك في حذف الحساب ومسح جميع البيانات بشكل نهائي؟\n\nسيتم نسيان الحساب ومسح كافة الفواتير والمنتجات والعملاء ولن تتمكن من تسجيل الدخول إلا بإنشاء حساب جديد تماماً.');
     if (!confirmed) return;
 
     localStorage.clear();
@@ -1035,15 +1072,20 @@ function App() {
     if (API.defaults) delete API.defaults.headers.common['Authorization'];
     setBusinessName('نظام محور');
     setCompanyLogo('');
+    setInventory([]);
+    setCustomers([]);
+    setSuppliers([]);
     setInvoices([]);
     setPurchaseInvoices([]);
+    setEmployees([]);
+    setDeductionsList([]);
     setShowLanding(true);
-    setAuthMode('login');
+    setAuthMode('register');
     setAuthEmail('');
     setAuthPassword('');
     setAuthPhone('');
     setAuthCompanyName('');
-    alert('✅ تم حذف الحساب وجميع البيانات بنجاح.');
+    alert('✅ تم حذف الحساب وجميع البيانات نهائياً من النظام. يتطلب منك الآن إنشاء حساب جديد للدخول.');
   };
 
   // -------------------------------------------------------------
@@ -1060,6 +1102,19 @@ function App() {
     } else {
       if (!authEmail || !authPassword || !authPhone) {
         alert('❌ يرجى إدخال البريد الإلكتروني، كلمة المرور، ورقم الهاتف!');
+        return;
+      }
+
+      // التحقق من وجود الحساب المسجل في النظام
+      const registeredAccounts = JSON.parse(localStorage.getItem('mihwar_registered_accounts') || '[]');
+      const account = registeredAccounts.find(a => a.email === authEmail.trim().toLowerCase());
+      if (!account) {
+        alert('❌ هذا الحساب غير موجود في النظام أو تم حذفه نهائياً!\nيرجى اختيار "فتح حساب" لإنشاء حسابك أولاً.');
+        setAuthMode('register');
+        return;
+      }
+      if (account.password && authPassword !== account.password) {
+        alert('❌ كلمة المرور غير صحيحة!');
         return;
       }
     }
@@ -1117,34 +1172,41 @@ function App() {
       setEnteredOtp('');
 
       if (authMode === 'register') {
-        alert('✅ تم التحقق وفتح الحساب بنجاح! يمكنك تسجيل الدخول الآن.');
+        const registeredAccounts = JSON.parse(localStorage.getItem('mihwar_registered_accounts') || '[]');
+        const newAccount = {
+          email: pendingAuthData.email.trim().toLowerCase(),
+          password: pendingAuthData.password,
+          phone: pendingAuthData.phone,
+          businessName: pendingAuthData.businessName
+        };
+        const filtered = registeredAccounts.filter(a => a.email !== newAccount.email);
+        filtered.push(newAccount);
+        localStorage.setItem('mihwar_registered_accounts', JSON.stringify(filtered));
+        localStorage.setItem('mihwar_business_name', newAccount.businessName);
+        setBusinessName(newAccount.businessName);
+
+        alert('✅ تم التحقق وفتح الحساب بنجاح! يمكنك الآن تسجيل الدخول.');
         setAuthMode('login');
+        setAuthPassword('');
       } else {
+        const registeredAccounts = JSON.parse(localStorage.getItem('mihwar_registered_accounts') || '[]');
+        const account = registeredAccounts.find(a => a.email === pendingAuthData.email.trim().toLowerCase());
+        const bName = (account && account.businessName) || pendingAuthData.businessName || 'نظام محور';
+        
         const loggedUser = { 
-          name: pendingAuthData.businessName || 'مالك النظام', 
+          name: bName, 
           email: pendingAuthData.email, 
           role: loginType, 
-          businessName: pendingAuthData.businessName || 'نظام محور' 
+          businessName: bName 
         };
         setUser(loggedUser);
+        setBusinessName(bName);
         localStorage.setItem('mihwar_user', JSON.stringify(loggedUser));
         alert('✅ تم تسجيل الدخول بنجاح!');
       }
     } else {
       alert('❌ رمز التحقق غير صحيح. يرجى المحاولة مرة أخرى.');
     }
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.clear();
-    delete API.defaults.headers.common['Authorization'];
-    setShowLanding(true);
-    setAuthMode('login');
-    setAuthEmail('');
-    setAuthPassword('');
-    setAuthPhone('');
-    setAuthCompanyName('');
   };
 
   const handleExportSales = () => {
@@ -1385,16 +1447,9 @@ function App() {
       </aside>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <header style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '14px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <header style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '16px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <span style={{ fontSize: '15px', fontWeight: '800', color: theme.textDark }}>{availableTabs.find(t => t.id === activeTab)?.icon} {availableTabs.find(t => t.id === activeTab)?.label}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: theme.bgMain, padding: '6px 14px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#d97706', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '12px' }}>{user.name[0]}</div>
-              <span style={{ fontSize: '13px', fontWeight: 'bold' }}>{user.name}</span>
-            </div>
-            <button onClick={handleLogout} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>خروج</button>
+            <span style={{ fontSize: '16px', fontWeight: '800', color: theme.textDark }}>{availableTabs.find(t => t.id === activeTab)?.icon} {availableTabs.find(t => t.id === activeTab)?.label}</span>
           </div>
         </header>
 
@@ -1483,7 +1538,7 @@ function App() {
                 <div style={{ marginBottom: '15px', background: theme.bgMain, padding: '10px', borderRadius: '10px', border: `1px solid ${theme.border}` }}>
                   <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#d97706' }}>🔍 البحث واختيار العميل للفاتورة:</label>
                   <input type="text" value={posCustomerSearch} onChange={e => setPosCustomerSearch(e.target.value)} placeholder="ابحث باسم المنشأة، السجل التجاري، الرقم الضريبي..." style={{ width: '100%', padding: '8px', borderRadius: '6px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '6px', boxSizing: 'border-box', fontSize: '12px' }} />
-                  <select value={posSelectedCustomerId} onChange={e => setPosSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
+                  <select value={posSelectedCustomerId} onChange={e => setPosSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '12px' }}>
                     <option value="">-- عميل نقدي عام (افتراضي) --</option>
                     {filteredCustomersForPos.map(c => (<option key={c.id} value={c.id}>{c.name} ({c.nationalId || c.phone || 'نقدي'})</option>))}
                   </select>
@@ -1831,7 +1886,7 @@ function App() {
                   <input type="text" placeholder="رقم الهاتف" value={custPhone} onChange={e=>setCustPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="email" placeholder="البريد الإلكتروني" value={custEmail} onChange={e=>setCustEmail(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="العنوان (مثال: جدة - حي الروضة)" value={custAddress} onChange={e=>setCustAddress(e.target.value)} placeholder="مثال: جدة - حي الروضة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={custGracePeriod} onChange={e=>setCustGracePeriod(e.target.value)} placeholder="مثال: 30 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
+                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={custGracePeriod} onChange={e=>setCustGracePeriod(e.target.value)} placeholder="مثال: 30 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ العميل</button>
                 </form>
               </div>
@@ -1877,8 +1932,8 @@ function App() {
                   <input type="text" placeholder="اسم المورد / الشركة *" value={suppName} onChange={e=>setSuppName(e.target.value)} required style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="الرقم الضريبي" value={suppTaxNumber} onChange={e=>setSuppTaxNumber(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
                   <input type="text" placeholder="رقم الهاتف" value={suppPhone} onChange={e=>setSuppPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-                  <input type="text" placeholder="العنوان (مثال: جدة - المنطقة الصناعية)" value={suppAddress} onChange={e=>setSuppAddress(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
-                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={suppGracePeriod} onChange={e=>setSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} />
+                  <input type="text" placeholder="العنوان (مثال: جدة - المنطقة الصناعية)" value={suppAddress} onChange={e=>setSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  <input type="text" placeholder="فترة السماح (مثال: 15 يوم / 30 يوم)" value={suppGracePeriod} onChange={e=>setSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
                   <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ المورد</button>
                 </form>
               </div>
@@ -2091,16 +2146,28 @@ function App() {
                 </div>
               </div>
 
-              {/* بطاقة حذف الحساب نهائياً */}
-              <div style={{ background: theme.cardBg, borderRadius: '16px', border: '1px solid #7f1d1d', padding: '22px' }}>
-                <h3 style={{ margin: '0 0 5px 0', fontSize: '17px', color: '#ef4444' }}>⚠️ حذف الحساب بشكل نهائي</h3>
-                <p style={{ fontSize: '12px', color: theme.textMuted, margin: '0 0 15px 0' }}>سيتم مسح جميع البيانات والجلسات ونسيان الحساب تماماً من هذا الجهاز فور تأكيد الإجراء.</p>
-                <button 
-                  type="button" 
-                  onClick={handleDeleteAccountPermanently}
-                  style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '12px 18px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px', width: '100%' }}>
-                  حذف الحساب نهائياً 🗑️
-                </button>
+              {/* بطاقة إدارة الحساب والجلسة (تسجيل خروج أو حذف نهائي) */}
+              <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '15px' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 6px 0', fontSize: '17px', color: theme.textDark }}>🔒 إدارة الحساب والجلسة</h3>
+                  <p style={{ fontSize: '12px', color: theme.textMuted, margin: 0, lineHeight: '1.6' }}>
+                    تسجيل الخروج يحفظ كامل بياناتك، أما الحذف النهائي فيمسح الحساب وجميع البيانات تماماً من النظام.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <button 
+                    type="button" 
+                    onClick={handleLogout}
+                    style={{ background: '#334155', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <span>تسجيل الخروج</span> 🚪
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={handleDeleteAccountPermanently}
+                    style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <span>حذف الحساب بشكل نهائي</span> 🗑️
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -2122,7 +2189,7 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editCustPhone} onChange={e=>setEditCustPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>البريد الإلكتروني</label><input type="email" value={editCustEmail} onChange={e=>setEditCustEmail(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editCustAddress} onChange={e=>setEditCustAddress(e.target.value)} placeholder="مثال: جدة - حي الروضة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editCustGracePeriod} onChange={e=>setEditCustGracePeriod(e.target.value)} placeholder="مثال: 30 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editCustGracePeriod} onChange={e=>setEditCustGracePeriod(e.target.value)} placeholder="مثال: 30 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث العميل</button>
                 <button type="button" onClick={() => setShowEditCustModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
@@ -2145,7 +2212,7 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الرقم الضريبي</label><input type="text" value={editSuppTaxNumber} onChange={e=>setEditSuppTaxNumber(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={editSuppPhone} onChange={e=>setEditSuppPhone(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>العنوان</label><input type="text" value={editSuppAddress} onChange={e=>setEditSuppAddress(e.target.value)} placeholder="مثال: جدة - المنطقة الصناعية" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>فترة السماح</label><input type="text" value={editSuppGracePeriod} onChange={e=>setEditSuppGracePeriod(e.target.value)} placeholder="مثال: 15 يوم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تحديث المورد</button>
                 <button type="button" onClick={() => setShowEditSuppModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
