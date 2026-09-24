@@ -1634,8 +1634,41 @@ function App() {
   const handleExportSales = () => {
     const isAr = lang === 'ar';
     const title = isAr ? 'تقرير_المبيعات_الضريبية' : 'Tax_Sales_Report';
-    const headers = isAr ? ['رقم الفاتورة', 'العميل المستلم', 'حالة الدفع', 'طريقة الدفع', 'مدة الاستحقاق', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'الإجمالي المستحق (ر.س)'] : ['Invoice Number', 'Client / Buyer', 'Payment Status', 'Payment Method', 'Due Date', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)'];
-    const rows = filteredInvoices.map(inv => [inv.invoiceNo, inv.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), inv.paymentStatus || 'مدفوعة', inv.paymentMethod || 'نقد', inv.dueDate || '-', new Date(inv.createdAt).toISOString().slice(0, 10), Number(inv.subtotal || 0).toFixed(2), Number(inv.taxAmount || 0).toFixed(2), Number(inv.totalAmount || 0).toFixed(2)]);
+    const headers = isAr ? 
+      ['رقم الفاتورة', 'العميل المستلم', 'تاريخ الإصدار', 'المبلغ الخاضع للضريبة (ر.س)', 'ضريبة القيمة المضافة 15% (ر.س)', 'إجمالي الفاتورة (ر.س)', 'المبلغ المدفوع (ر.س)', 'المبلغ المتبقي (ر.س)', 'حالة الدفع', 'طريقة الدفع', 'مدة الاستحقاق'] : 
+      ['Invoice Number', 'Client / Buyer', 'Issue Date', 'Taxable Amount (SAR)', 'VAT 15% (SAR)', 'Total Amount Due (SAR)', 'Paid Amount (SAR)', 'Remaining Amount (SAR)', 'Payment Status', 'Payment Method', 'Due Date'];
+    
+    const rows = filteredInvoices.map(inv => {
+      const status = inv?.paymentStatus || 'مدفوعة';
+      const total = Number(inv?.totalAmount) || 0;
+      let paid = 0;
+      let rem = 0;
+
+      if (status === 'مدفوعة') {
+        paid = total;
+        rem = 0;
+      } else if (status === 'غير مدفوعة') {
+        paid = 0;
+        rem = total;
+      } else if (status === 'مدفوعة جزئياً') {
+        paid = Number(inv?.paidAmount) || 0;
+        rem = Number(inv?.remainingAmount) || 0;
+      }
+
+      return [
+        inv?.invoiceNo || '-', 
+        inv?.customer?.name || (isAr ? 'عميل نقدي عام' : 'General Cash Customer'), 
+        inv?.createdAt ? new Date(inv.createdAt).toISOString().slice(0, 10) : '-',
+        Number(inv?.subtotal || 0).toFixed(2), 
+        Number(inv?.taxAmount || 0).toFixed(2), 
+        total.toFixed(2),
+        paid.toFixed(2),
+        rem.toFixed(2),
+        status, 
+        inv?.paymentMethod || 'نقد', 
+        inv?.dueDate || '-'
+      ];
+    });
     exportToExcel(title, headers, rows, lang);
   };
 
