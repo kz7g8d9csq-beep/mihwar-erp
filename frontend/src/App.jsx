@@ -509,7 +509,12 @@ function App() {
   const [empHealthEnd, setEmpHealthEnd] = useState('');
   const [empContractEnd, setEmpContractEnd] = useState('');
   const [empCommission, setEmpCommission] = useState('');
+  const [empCommissionType, setEmpCommissionType] = useState('');
   const [empAllowances, setEmpAllowances] = useState('');
+  const [empHousingAllowance, setEmpHousingAllowance] = useState('');
+  const [empTransportAllowance, setEmpTransportAllowance] = useState('');
+  const [empIncentiveType, setEmpIncentiveType] = useState('???? ????');
+  const [empIncentiveValue, setEmpIncentiveValue] = useState('');
 
   const [hrDeductSearchQuery, setHrDeductSearchQuery] = useState('');
   const [hrSelectedEmployeeName, setHrSelectedEmployeeName] = useState('');
@@ -800,7 +805,12 @@ function App() {
             healthEnd: empHealthEnd || emp.healthEnd,
             contractEnd: empContractEnd || emp.contractEnd,
             commission: empCommission !== '' ? Number(empCommission) : (emp.commission || 0),
-            allowances: empAllowances !== '' ? Number(empAllowances) : (emp.allowances || 0)
+            commissionType: empCommissionType || emp.commissionType || '',
+            allowances: empAllowances !== '' ? Number(empAllowances) : (emp.allowances || 0),
+            housingAllowance: empHousingAllowance !== '' ? Number(empHousingAllowance) : (emp.housingAllowance || 0),
+            transportAllowance: empTransportAllowance !== '' ? Number(empTransportAllowance) : (emp.transportAllowance || 0),
+            incentiveType: empIncentiveType || emp.incentiveType || '???? ????',
+            incentives: empIncentiveValue !== '' ? empIncentiveValue : (emp.incentives || '')
           };
         }
         return emp;
@@ -825,7 +835,12 @@ function App() {
         healthEnd: empHealthEnd || '-',
         contractEnd: empContractEnd || '-',
         commission: empCommission !== '' ? Number(empCommission) : 0,
-        allowances: empAllowances !== '' ? Number(empAllowances) : 0
+          commissionType: empCommissionType || '',
+          allowances: empAllowances !== '' ? Number(empAllowances) : 0,
+          housingAllowance: empHousingAllowance !== '' ? Number(empHousingAllowance) : 0,
+          transportAllowance: empTransportAllowance !== '' ? Number(empTransportAllowance) : 0,
+          incentiveType: empIncentiveType || '???? ????',
+          incentives: empIncentiveValue !== '' ? empIncentiveValue : ''
       };
       const updated = [newEmp, ...employees];
       setEmployees(updated);
@@ -852,7 +867,12 @@ function App() {
     setEmpHealthEnd(emp.healthEnd || '');
     setEmpContractEnd(emp.contractEnd || '');
     setEmpCommission(emp.commission !== undefined ? emp.commission : '');
-    setEmpAllowances(emp.allowances !== undefined ? emp.allowances : '');
+      setEmpCommissionType(emp.commissionType || '');
+      setEmpAllowances(emp.allowances !== undefined ? emp.allowances : '');
+      setEmpHousingAllowance(emp.housingAllowance !== undefined ? emp.housingAllowance : '');
+      setEmpTransportAllowance(emp.transportAllowance !== undefined ? emp.transportAllowance : '');
+      setEmpIncentiveType(emp.incentiveType || '???? ????');
+      setEmpIncentiveValue(emp.incentives !== undefined ? emp.incentives : '');
     setShowAddEmpModal(true);
   };
 
@@ -2020,15 +2040,52 @@ function App() {
                 <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empVacations}</label><input type="number" value={empVacations} onChange={e=>setEmpVacations(e.target.value)} placeholder="21" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               </div>
 
-              {/* حقلي العمولة والبدلات */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: theme.bgMain, padding: '12px', borderRadius: '10px', border: `1px solid ${theme.border}` }}>
+              {/* ??????? */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', background: theme.bgMain, padding: '12px', borderRadius: '10px', border: `1px solid ${theme.border}` }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#d97706' }}>نسبة العمولة (%)</label>
-                  <input type="number" step="0.1" value={empCommission} onChange={e=>setEmpCommission(e.target.value)} placeholder="مثال: 5" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#10b981' }}>{t(`??? ??? (?.?)`)}</label>
+                  <input type="number" value={empHousingAllowance} onChange={e=>setEmpHousingAllowance(e.target.value)} placeholder="0" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#d97706' }}>عدد البدلات</label>
-                  <input type="number" value={empAllowances} onChange={e=>setEmpAllowances(e.target.value)} placeholder="مثال: 2" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#10b981' }}>{t(`??? ??????? (?.?)`)}</label>
+                  <input type="number" value={empTransportAllowance} onChange={e=>setEmpTransportAllowance(e.target.value)} placeholder="0" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#10b981' }}>{t(`????? ???? (?.?)`)}</label>
+                  <input type="number" value={empAllowances} onChange={e=>setEmpAllowances(e.target.value)} placeholder="0" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+              </div>
+
+              {/* ???????? ???????? */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: theme.bgMain, padding: '12px', borderRadius: '10px', border: `1px solid ${theme.border}`, marginTop: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#d97706' }}>{t(`??? ???????`)}</label>
+                  <select value={empCommissionType} onChange={e=>setEmpCommissionType(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }}>
+                    <option value="">{t(`-- ???? ????? --`)}</option>
+                    <option value="????????">{t(`????????`)}</option>
+                    <option value="???????">{t(`??????? (%)`)}</option>
+                    <option value="??????">{t(`??????`)}</option>
+                    <option value="???????">{t(`???????`)}</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#d97706' }}>{t(`???? ???????`)}</label>
+                  <input type="number" step="0.1" value={empCommission} onChange={e=>setEmpCommission(e.target.value)} placeholder="0" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#8b5cf6' }}>{t(`??? ??????`)}</label>
+                  <select value={empIncentiveType} onChange={e=>setEmpIncentiveType(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }}>
+                    <option value="???? ????">{t(`???? ????`)}</option>
+                    <option value="???? ?????">{t(`???? ?????`)}</option>
+                    <option value="???? ????">{t(`???? ????`)}</option>
+                    <option value="???? ?????">{t(`???? ?????`)}</option>
+                    <option value="???? ???? ?????">{t(`???? ???? ?????`)}</option>
+                    <option value="???? ???? ?????">{t(`???? ???? ?????`)}</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#8b5cf6' }}>{t(`???? / ??? ??????`)}</label>
+                  <input type="text" value={empIncentiveValue} onChange={e=>setEmpIncentiveValue(e.target.value)} placeholder={empIncentiveType === '???? ????' ? t(`?????? (?.?)`) : t(`??? ??????`)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
                 </div>
               </div>
 

@@ -61,6 +61,8 @@ const HrTab = ({
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
           <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t(`إجمالي الموظفين`)}</p><h2 style={{ color: '#38bdf8', margin: '8px 0 0 0', fontSize: '24px' }}>{employees.length} {t(`موظف`)}</h2></div>
           <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t(`إجمالي الرواتب الأساسية`)}</p><h2 style={{ color: '#10b981', margin: '8px 0 0 0', fontSize: '24px' }}>{totalPayroll.toLocaleString()} {t.currency}</h2></div>
+          <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t(`إجمالي العمولات`)}</p><h2 style={{ color: '#f59e0b', margin: '8px 0 0 0', fontSize: '24px' }}>{totalCommissions.toLocaleString()} {t.currency}</h2></div>
+          <div style={{ background: theme.cardBg, padding: '22px', borderRadius: '14px', border: `1px solid ${theme.border}` }}><p style={{ margin: 0, color: theme.textMuted, fontSize: '13px' }}>{t(`إجمالي الحوافز المادية`)}</p><h2 style={{ color: '#8b5cf6', margin: '8px 0 0 0', fontSize: '24px' }}>{totalIncentives.toLocaleString()} {t.currency}</h2></div>
         </div>
       )}
 
@@ -85,10 +87,14 @@ const HrTab = ({
                   <td style={{ padding: '12px' }}>{emp.role} <br/><span style={{ color: '#2dd4bf', fontSize: '11px' }}>{emp.dept}</span></td>
                   <td style={{ padding: '12px' }}>
                     <span style={{ color: '#10b981', fontWeight: 'bold' }}>{emp.salary} {t.currency}</span>
-                    <br/><span style={{ color: '#ef4444', fontSize: '11px' }}>{t(`خصم:`)} {emp.deductions} {t.currency}</span>
+                    <br/><span style={{ color: '#ef4444', fontSize: '11px' }}>{t(`خصم:`)} {emp.deductions || 0} {t.currency}</span>
                     <div style={{ fontSize: '11px', color: '#d97706', marginTop: '3px' }}>
-                      {emp.commission ? `${t(`عمولة:`)} ${emp.commission}% ` : ''}
-                      {emp.allowances ? `| ${t(`بدلات:`)} ${emp.allowances}` : ''}
+                      {emp.commission ? `${t(`عمولة:`)} ${emp.commission} (${emp.commissionType || t(`بدون`)}) ` : ''}
+                      {emp.allowances || emp.housingAllowance || emp.transportAllowance ? `| ${t(`بدلات:`)} ${(Number(emp.allowances) || 0) + (Number(emp.housingAllowance) || 0) + (Number(emp.transportAllowance) || 0)}` : ''}
+                    </div>
+                    <div style={{ color: '#8b5cf6', fontSize: '11px', fontWeight: 'bold', marginTop: '3px' }}>
+                      {emp.incentiveType && emp.incentiveType !== 'حافز مادي' ? `${t(`حافز:`)} ${t(emp.incentiveType)} (${emp.incentives || t(`بدون وصف`)})` : ''}
+                      {(!emp.incentiveType || emp.incentiveType === 'حافز مادي') && emp.incentives ? `${t(`حافز مادي:`)} ${emp.incentives} ${t.currency}` : ''}
                     </div>
                   </td>
                   <td style={{ padding: '12px' }}><span>{emp.insurance}</span><br/><span style={{ color: '#38bdf8', fontSize: '11px' }}>{t(`أجازات:`)} {emp.vacations} {t(`يوم`)}</span></td>
