@@ -1,0 +1,46 @@
+const fs = require('fs');
+const file = 'frontend/src/App.jsx';
+let content = fs.readFileSync(file, 'utf8');
+
+const regex = /<div style=\{\{ marginBottom: '10px' \}\}>\s*<label[^>]*>إجمالي الفاتورة:<\/label>\s*<div[^>]*>\s*\{\(invoices\.find\(i => i\.id === payTargetInvoiceId\)\?\.totalAmount \|\| 0\)\} \{t\.currency\}\s*<\/div>\s*<\/div>\s*<div style=\{\{ marginBottom: '10px' \}\}>\s*<label[^>]*>المبلغ المسدد حالياً:<\/label>\s*<input[^>]*value=\{partialPayAmount\}[^>]*\/>\s*<\/div>\s*<div style=\{\{ marginBottom: '10px' \}\}>\s*<label[^>]*>طريقة دفع الجزء:<\/label>\s*<select[^>]*value=\{partialPayMethod\}[^>]*>.*?<\/select>\s*<\/div>\s*<div>\s*<label[^>]*>المبلغ المتبقي:<\/label>\s*<div[^>]*>\s*\{Math\.max\(0,\s*\(invoices\.find\(i => i\.id === payTargetInvoiceId\)\?\.totalAmount \|\| 0\)\s*-\s*\(Number\(partialPayAmount\)\s*\|\|\s*0\)\)\.toFixed\(2\)\}\s*\{t\.currency\}\s*<\/div>\s*<\/div>/s;
+
+const replacement = `<div style={{ marginBottom: '10px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>المبلغ المتبقي المطلوب سداده:</label>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: theme.textDark }}>
+                      {(() => {
+                        const inv = invoices.find(i => i.id === payTargetInvoiceId);
+                        const remaining = inv?.paymentStatus === 'مدفوعة جزئياً' ? (inv?.remainingAmount || 0) : (inv?.totalAmount || 0);
+                        return Number(remaining).toFixed(2);
+                      })()} {t.currency}
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>المبلغ المسدد حالياً:</label>
+                    <input type="number" step="0.01" value={partialPayAmount} onChange={e => setPartialPayAmount(e.target.value)} placeholder="0.00" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: \`1px solid \${theme.border}\`, outline: 'none' }} />
+                  </div>
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>طريقة دفع الجزء:</label>
+                    <select value={partialPayMethod} onChange={e => setPartialPayMethod(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: \`1px solid \${theme.border}\`, outline: 'none' }}>
+                      <option value="نقد">نقد</option>
+                      <option value="شبكة">شبكة</option>
+                      <option value="حوالة">حوالة بنكية</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>المتبقي بعد السداد:</label>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#ef4444' }}>
+                      {(() => {
+                        const inv = invoices.find(i => i.id === payTargetInvoiceId);
+                        const remaining = inv?.paymentStatus === 'مدفوعة جزئياً' ? (inv?.remainingAmount || 0) : (inv?.totalAmount || 0);
+                        return Math.max(0, remaining - (Number(partialPayAmount) || 0)).toFixed(2);
+                      })()} {t.currency}
+                    </div>
+                  </div>`;
+
+if (regex.test(content)) {
+  content = content.replace(regex, replacement);
+  fs.writeFileSync(file, content, 'utf8');
+  console.log('Successfully updated the modal UI calculation.');
+} else {
+  console.log('Regex failed to find the UI code block.');
+}

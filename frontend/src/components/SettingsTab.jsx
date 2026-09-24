@@ -1,6 +1,6 @@
 const SettingsTab = ({
   t, theme, isDark,
-  lang, setLang, setIsDark,
+  lang, setIsDark,
   companyLogo, setCompanyLogo,
   companyAddress, setCompanyAddress,
   invoiceLogoSize, setInvoiceLogoSize,
@@ -13,8 +13,7 @@ const SettingsTab = ({
       <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
         <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{t.prefTitle}</h3>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
-          <button onClick={()=>setLang('ar')} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: lang==='ar'?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>{t(`🇸🇦 العربية`)}</button>
-          <button onClick={()=>setLang('en')} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: lang==='en'?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>🇺🇸 English</button>
+          <button style={{ flex: 1, padding: '10px', borderRadius: '8px', background: '#d97706', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'default' }}>{t(`🇸🇦 العربية`)}</button>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button onClick={()=>setIsDark(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: !isDark?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>{t(`☀️ النهاري`)}</button>

@@ -44,8 +44,13 @@ const InvoicesListTab = ({
         <tbody>
           {filteredInvoices.map(inv => {
             const isUnpaid = inv?.paymentStatus === 'غير مدفوعة';
+            const isPartial = inv?.paymentStatus === 'مدفوعة جزئياً';
+            const needsPayment = isUnpaid || isPartial;
             const daysLeft = getDueDateDaysLeft(inv?.dueDate);
-            const isDueSoon = isUnpaid && daysLeft !== null && daysLeft <= 3;
+            const isDueSoon = needsPayment && daysLeft !== null && daysLeft <= 3;
+            
+            const statusBg = isUnpaid ? '#7f1d1d' : (isPartial ? '#9a3412' : '#065f46');
+            const statusColor = isUnpaid ? '#fca5a5' : (isPartial ? '#fdba74' : '#6ee7b7');
 
             return (
               <tr key={inv?.id || Math.random()} style={{ borderBottom: `1px solid ${theme.border}` }}>
@@ -54,12 +59,19 @@ const InvoicesListTab = ({
                   <span style={{ fontWeight: 'bold' }}>{inv?.customer?.name || 'عميل نقدي'}</span>
                   {inv?.customer?.phone && <div style={{ fontSize: '11px', color: theme.textMuted }}>{inv.customer.phone}</div>}
                 </td>
-                <td style={{ padding: '12px', color: '#10b981', fontWeight: 'bold' }}>{inv?.totalAmount || '0.00'} {t.currency}</td>
                 <td style={{ padding: '12px' }}>
-                  <span style={{ background: isUnpaid ? '#7f1d1d' : '#065f46', color: isUnpaid ? '#fca5a5' : '#6ee7b7', padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px' }}>
+                  <div style={{ color: '#10b981', fontWeight: 'bold' }}>{inv?.totalAmount || '0.00'} {t.currency}</div>
+                  {isPartial && (
+                    <div style={{ fontSize: '11px', marginTop: '4px', color: theme.textMuted }}>
+                      {t(`المدفوع:`)} <span style={{ color: '#10b981' }}>{inv?.paidAmount || 0}</span> | {t(`المتبقي:`)} <span style={{ color: '#ef4444' }}>{inv?.remainingAmount || 0}</span>
+                    </div>
+                  )}
+                </td>
+                <td style={{ padding: '12px' }}>
+                  <span style={{ background: statusBg, color: statusColor, padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px' }}>
                     {inv?.paymentStatus || 'مدفوعة'}
                   </span>
-                  {isUnpaid && inv?.dueDate && (
+                  {needsPayment && inv?.dueDate && (
                     <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '3px' }}>
                       {t(`الاستحقاق:`)} {inv.dueDate} {daysLeft !== null && <span style={{ color: daysLeft <= 0 ? '#ef4444' : '#38bdf8', fontWeight: 'bold' }}>({daysLeft <= 0 ? t(`مستحقة`) : `${t(`متبقي`)} ${daysLeft} ${t(`يوم`)}`})</span>}
                     </div>
@@ -76,8 +88,8 @@ const InvoicesListTab = ({
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <button onClick={() => setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>{t(`معاينة وطباعة 👁️`)}</button>
                     
-                    {/* زر الواتساب يظهر لكل فاتورة غير مدفوعة ولا يتوقف حتى يتم الضغط على تم الدفع */}
-                    {isUnpaid && (
+                    {/* زر الواتساب يظهر لكل فاتورة غير مدفوعة أو مدفوعة جزئياً */}
+                    {needsPayment && (
                       <button 
                         type="button"
                         onClick={() => handleSendWhatsAppReminder(inv)}
@@ -87,7 +99,7 @@ const InvoicesListTab = ({
                       </button>
                     )}
 
-                    {isUnpaid && (<button onClick={() => handleOpenPayConfirm(inv?.id)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>{t(`تم الدفع ✓`)}</button>)}
+                    {needsPayment && (<button onClick={() => handleOpenPayConfirm(inv?.id)} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>{t(`سداد الفاتورة ✓`)}</button>)}
                   </div>
                 </td>
               </tr>

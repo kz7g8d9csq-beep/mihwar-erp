@@ -313,7 +313,7 @@ const getDueDateDaysLeft = (dueDateStr) => {
 };
 
 function App() {
-  const [lang, setLang] = useState('ar');
+  const lang = 'ar';
   const [isDark, setIsDark] = useState(true);
 
   const getRegisteredAccounts = () => {
@@ -458,6 +458,8 @@ function App() {
   const [showPayConfirmModal, setShowPayConfirmModal] = useState(false);
   const [payTargetInvoiceId, setPayTargetInvoiceId] = useState(null);
   const [payConfirmMethod, setPayConfirmMethod] = useState('نقد');
+  const [partialPayAmount, setPartialPayAmount] = useState('');
+  const [partialPayMethod, setPartialPayMethod] = useState('نقد');
 
   // المشتريات
   const [purchaseProductSearch, setPurchaseProductSearch] = useState('');
@@ -520,6 +522,19 @@ function App() {
   const [hrSelectedEmployeeName, setHrSelectedEmployeeName] = useState('');
   const [hrDeductAmount, setHrDeductAmount] = useState('');
   const [hrDeductReason, setHrDeductReason] = useState('');
+
+  // نافذة الحوافز والمكافآت
+  const [showIncentiveModal, setShowIncentiveModal] = useState(false);
+  const [incSelectedEmpName, setIncSelectedEmpName] = useState('');
+  const [incIncentiveType, setIncIncentiveType] = useState('');
+  const [incIncentiveValue, setIncIncentiveValue] = useState('');
+  const [incCommissionType, setIncCommissionType] = useState('');
+  const [incCommissionValue, setIncCommissionValue] = useState('');
+  const [hrIncentivesSearchQuery, setHrIncentivesSearchQuery] = useState('');
+  const [incentiveRecords, setIncentiveRecords] = useState(() => {
+    const saved = localStorage.getItem('mihwar_hr_incentives');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // الحد الأدنى للمخزون
   const [lowStockThreshold, setLowStockThreshold] = useState(() => {
@@ -584,7 +599,30 @@ function App() {
         "?????? ????????? ????????": "Salary, Commissions & Allowances",
         "????": "Card",
         "????? ????": "Bank Transfer",
-        "??? (???)": "Credit"
+        "??? (???)": "Credit",
+        "الخصومات": "Deductions",
+        "الحوافز والمكافآت": "Incentives & Rewards",
+        "إضافة حافز أو مكافأة +": "Add Incentive / Reward +",
+        "إضافة حافز أو مكافأة": "Add Incentive / Reward",
+        "إضافة موظف جديد +": "Add New Employee +",
+        "المسمى الوظيفي والقسم": "Job Title & Department",
+        "التأمين الطبي والأجازات": "Medical Insurance & Vacations",
+        "🏆 سجل الحوافز والمكافآت والعمولات": "🏆 Incentives, Rewards & Commissions Log",
+        "المسمى الوظيفي": "Job Title",
+        "التاريخ": "Date",
+        "حفظ الحافز": "Save Incentive",
+        "لم يتم تسجيل أي حوافز أو مكافآت بعد. اضغط على زر \"إضافة حافز أو مكافأة +\" لبدء التسجيل.": "No incentives or rewards recorded yet. Click \"Add Incentive / Reward +\" to start.",
+        "اختر الموظف": "Select Employee",
+        "-- اختر الموظف من القائمة --": "-- Select Employee --",
+        "انتهاء التأمين الطبي": "Medical Insurance Expiry",
+        "انتهاء العقد الوظيفي": "Employment Contract Expiry",
+        "التأمين الطبي:": "Medical Insurance:",
+        "عقد وظيفي:": "Employment Contract:",
+        "بدل سكن (ر.س)": "Housing Allowance (SAR)",
+        "بدل مواصلات (ر.س)": "Transport Allowance (SAR)",
+        "المدفوع:": "Paid:",
+        "المتبقي:": "Remaining:",
+        "سداد الفاتورة ✓": "Pay Invoice ✓"
     };
     
     if (autoMap[key]) return autoMap[key];
@@ -769,17 +807,27 @@ function App() {
     const dueDate = inv?.dueDate || (isAr ? 'غير محدد' : 'Not specified');
     
     let text = '';
+    const isPartial = inv?.paymentStatus === 'مدفوعة جزئياً';
+
     if (isAr) {
-      text = `أهلاً بك ${clientName}\nرقم الفاتورة: #${inv?.invoiceNo}\nالإجمالي النهائي: ${inv?.totalAmount} ر.س\nتاريخ الاستحقاق: ${dueDate}\nنود تذكيركم بسداد المبلغ المستحق.\nشكراً لتعاملك معنا في نظام محور.`;
+      if (isPartial) {
+        text = `أهلاً بك ${clientName}\nرقم الفاتورة: #${inv?.invoiceNo}\nالإجمالي النهائي: ${inv?.totalAmount} ر.س\nالمبلغ المسدد: ${inv?.paidAmount || 0} ر.س\nالمبلغ المتبقي: ${inv?.remainingAmount || 0} ر.س\nتاريخ الاستحقاق: ${dueDate}\nنود تذكيركم بسداد المبلغ المتبقي.\nشكراً لتعاملك معنا في نظام محور.`;
+      } else {
+        text = `أهلاً بك ${clientName}\nرقم الفاتورة: #${inv?.invoiceNo}\nالإجمالي النهائي: ${inv?.totalAmount} ر.س\nتاريخ الاستحقاق: ${dueDate}\nنود تذكيركم بسداد المبلغ المستحق.\nشكراً لتعاملك معنا في نظام محور.`;
+      }
     } else {
-      text = `Hello ${clientName}\nInvoice Number: #${inv?.invoiceNo}\nTotal Amount Due: ${inv?.totalAmount} SAR\nDue Date: ${dueDate}\nKindly settle the pending payment.\nThank you for your business with Mihwar ERP.`;
+      if (isPartial) {
+        text = `Hello ${clientName}\nInvoice Number: #${inv?.invoiceNo}\nTotal Invoice: ${inv?.totalAmount} SAR\nPaid Amount: ${inv?.paidAmount || 0} SAR\nRemaining Due: ${inv?.remainingAmount || 0} SAR\nDue Date: ${dueDate}\nKindly settle the pending payment.\nThank you for your business with Mihwar ERP.`;
+      } else {
+        text = `Hello ${clientName}\nInvoice Number: #${inv?.invoiceNo}\nTotal Amount Due: ${inv?.totalAmount} SAR\nDue Date: ${dueDate}\nKindly settle the pending payment.\nThank you for your business with Mihwar ERP.`;
+      }
     }
 
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const empFormReset = () => {
-    setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpVacations(''); setEmpInsurance(''); setEmpIqamaEnd(''); setEmpHealthEnd(''); setEmpContractEnd(''); setEmpCommission(''); setEmpAllowances(''); setEmpCommissionType(''); setEmpHousingAllowance(''); setEmpTransportAllowance(''); setEmpIncentives(''); setEmpCommissionType(''); setEmpHousingAllowance(''); setEmpTransportAllowance(''); setEmpIncentives(''); setEmpCommissionType(''); setEmpHousingAllowance(''); setEmpTransportAllowance(''); setEmpIncentives(''); setEmpCommissionType(''); setEmpHousingAllowance(''); setEmpTransportAllowance(''); setEmpIncentives('');
+    setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpVacations(''); setEmpInsurance(''); setEmpIqamaEnd(''); setEmpHealthEnd(''); setEmpContractEnd(''); setEmpCommission(''); setEmpAllowances(''); setEmpCommissionType(''); setEmpHousingAllowance(''); setEmpTransportAllowance(''); setEmpIncentiveType('حافز مادي'); setEmpIncentiveValue('');
   };
 
 
@@ -846,7 +894,7 @@ function App() {
       setEmployees(updated);
       localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
     }
-    setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpVacations(''); setEmpInsurance(''); setEmpIqamaEnd(''); setEmpHealthEnd(''); setEmpContractEnd(''); setEmpCommission(''); setEmpAllowances('');
+    setEmpName(''); setEmpIdNumber(''); setEmpNumber(''); setEmpRole(''); setEmpDept(''); setEmpPhone(''); setEmpSalary(''); setEmpVacations(''); setEmpInsurance(''); setEmpIqamaEnd(''); setEmpHealthEnd(''); setEmpContractEnd(''); setEmpCommission(''); setEmpAllowances(''); setEmpCommissionType(''); setEmpHousingAllowance(''); setEmpTransportAllowance(''); setEmpIncentiveType('حافز مادي'); setEmpIncentiveValue('');
     setEditingEmpId(null);
     setShowAddEmpModal(false);
   };
@@ -922,6 +970,36 @@ function App() {
     alert('✅ تم إعفاء الخصم بنجاح واستعادة الرصيد للموظف!');
   };
 
+  // === حفظ حافز/مكافأة جديدة ===
+  const handleSaveIncentive = (e) => {
+    e.preventDefault();
+    if (!incSelectedEmpName) return;
+    const emp = employees.find(em => em.name === incSelectedEmpName);
+    const newRecord = {
+      id: Date.now(),
+      empName: incSelectedEmpName,
+      empRole: emp?.role || '-',
+      incentiveType: incIncentiveType,
+      incentiveValue: incIncentiveValue,
+      commissionType: incCommissionType,
+      commissionValue: incCommissionValue ? Number(incCommissionValue) : 0,
+      date: new Date().toISOString().slice(0, 10)
+    };
+    const updated = [newRecord, ...incentiveRecords];
+    setIncentiveRecords(updated);
+    localStorage.setItem('mihwar_hr_incentives', JSON.stringify(updated));
+    setIncSelectedEmpName(''); setIncIncentiveType(''); setIncIncentiveValue(''); setIncCommissionType(''); setIncCommissionValue('');
+    setShowIncentiveModal(false);
+    alert('✅ تم تسجيل الحافز/المكافأة بنجاح!');
+  };
+
+  const handleRemoveIncentive = (recordId) => {
+    if (!window.confirm('⚠️ هل أنت متأكد من حذف هذا الحافز؟')) return;
+    const updated = incentiveRecords.filter(r => r.id !== recordId);
+    setIncentiveRecords(updated);
+    localStorage.setItem('mihwar_hr_incentives', JSON.stringify(updated));
+  };
+
   const handleOpenEditProduct = (prod) => {
     setEditingProdId(prod.id); setEditProdName(prod.name || ''); setEditProdPrice(prod.price || ''); setEditProdStock(prod.stock !== undefined ? prod.stock : 0); setEditItemCode(prod.itemCode || ''); setShowEditProdModal(true);
   };
@@ -989,24 +1067,77 @@ function App() {
   };
 
   const handleOpenPayConfirm = (invoiceId) => {
-    setPayTargetInvoiceId(invoiceId); setPayConfirmMethod('نقد'); setShowPayConfirmModal(true);
+    setPayTargetInvoiceId(invoiceId); setPayConfirmMethod('نقد'); setPartialPayAmount(''); setPartialPayMethod('نقد'); setShowPayConfirmModal(true);
   };
 
   const handleExecutePayment = () => {
     if (!payTargetInvoiceId) return;
+    let finalStatus = 'مدفوعة';
+    let paidAmt = 0;
+    let remAmt = 0;
+    let actualMethod = payConfirmMethod;
+    
+    const invTarget = invoices.find(inv => inv.id === payTargetInvoiceId);
+    if (!invTarget) return;
+
+            let currentPaymentAmount = 0;
+    if (payConfirmMethod === 'دفع جزء') {
+      const total = Number(invTarget?.totalAmount) || 0;
+      const newlyPaid = Number(partialPayAmount) || 0;
+      
+      if (newlyPaid <= 0) { alert('الرجاء إدخال مبلغ صحيح للسداد.'); return; }
+      
+      const previousPaid = Number(invTarget?.paidAmount) || 0;
+      paidAmt = previousPaid + newlyPaid;
+      currentPaymentAmount = newlyPaid;
+      
+      if (paidAmt >= total) {
+        finalStatus = 'مدفوعة';
+        actualMethod = partialPayMethod;
+        paidAmt = total;
+        remAmt = 0;
+      } else {
+        finalStatus = 'مدفوعة جزئياً';
+        actualMethod = partialPayMethod;
+        remAmt = total - paidAmt;
+      }
+    } else {
+      paidAmt = Number(invTarget?.totalAmount) || 0;
+      remAmt = 0;
+      currentPaymentAmount = paidAmt - (Number(invTarget?.paidAmount) || 0);
+    }
+
     const updated = invoices.map(inv => {
       if (inv.id === payTargetInvoiceId) {
-        localStorage.setItem(`invoice_status_${inv.id}`, 'مدفوعة');
-        localStorage.setItem(`invoice_method_${inv.id}`, payConfirmMethod);
-        localStorage.removeItem(`invoice_duedate_${inv.id}`);
-        return { ...inv, paymentStatus: 'مدفوعة', paymentMethod: payConfirmMethod, dueDate: '' };
+        localStorage.setItem(`invoice_status_${inv.id}`, finalStatus);
+        localStorage.setItem(`invoice_method_${inv.id}`, actualMethod);
+        
+        const now = new Date();
+        const dateString = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        
+        const newPaymentRecord = {
+          amount: currentPaymentAmount,
+          date: dateString,
+          method: actualMethod,
+          remaining: remAmt
+        };
+
+        const currentPayments = Array.isArray(inv.payments) ? [...inv.payments] : [];
+        currentPayments.push(newPaymentRecord);
+
+        if (finalStatus === 'مدفوعة') {
+          localStorage.removeItem(`invoice_duedate_${inv.id}`);
+          return { ...inv, paymentStatus: finalStatus, paymentMethod: actualMethod, paidAmount: paidAmt, remainingAmount: 0, dueDate: '', payments: currentPayments };
+        } else {
+          return { ...inv, paymentStatus: finalStatus, paymentMethod: actualMethod, paidAmount: paidAmt, remainingAmount: remAmt, payments: currentPayments };
+        }
       }
       return inv;
     });
     setInvoices(updated);
     localStorage.setItem('mihwar_invoices', JSON.stringify(updated));
     setShowPayConfirmModal(false);
-    alert(`✅ تم تأكيد السداد بطريقة (${payConfirmMethod}) وتحويل الفاتورة إلى مدفوعة!`);
+    alert(`✅ تم تأكيد السداد بتحويل الفاتورة إلى ${finalStatus}!`);
   };
 
   const handleAddItemToSalesCart = () => {
@@ -1925,6 +2056,11 @@ function App() {
               setShowDeductModal={setShowDeductModal}
               setEditingEmpId={setEditingEmpId}
               empFormReset={empFormReset}
+              setShowIncentiveModal={setShowIncentiveModal}
+              incentiveRecords={incentiveRecords}
+              hrIncentivesSearchQuery={hrIncentivesSearchQuery}
+              setHrIncentivesSearchQuery={setHrIncentivesSearchQuery}
+              handleRemoveIncentive={handleRemoveIncentive}
             />
           )}
 
@@ -1932,7 +2068,7 @@ function App() {
           {activeTab === 'settings' && (
             <SettingsTab
               t={t} theme={theme} isDark={isDark} lang={lang}
-              lang={lang} setLang={setLang} setIsDark={setIsDark}
+              setIsDark={setIsDark}
               companyLogo={companyLogo} setCompanyLogo={setCompanyLogo}
               companyAddress={companyAddress} setCompanyAddress={setCompanyAddress}
               invoiceLogoSize={invoiceLogoSize} setInvoiceLogoSize={setInvoiceLogoSize}
@@ -2040,52 +2176,15 @@ function App() {
                 <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empVacations}</label><input type="number" value={empVacations} onChange={e=>setEmpVacations(e.target.value)} placeholder="21" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               </div>
 
-              {/* ??????? */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', background: theme.bgMain, padding: '12px', borderRadius: '10px', border: `1px solid ${theme.border}` }}>
+              {/* البدلات */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: theme.bgMain, padding: '12px', borderRadius: '10px', border: `1px solid ${theme.border}` }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#10b981' }}>{t(`??? ??? (?.?)`)}</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#10b981' }}>{t(`بدل سكن (ر.س)`)}</label>
                   <input type="number" value={empHousingAllowance} onChange={e=>setEmpHousingAllowance(e.target.value)} placeholder="0" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#10b981' }}>{t(`??? ??????? (?.?)`)}</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#10b981' }}>{t(`بدل مواصلات (ر.س)`)}</label>
                   <input type="number" value={empTransportAllowance} onChange={e=>setEmpTransportAllowance(e.target.value)} placeholder="0" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#10b981' }}>{t(`????? ???? (?.?)`)}</label>
-                  <input type="number" value={empAllowances} onChange={e=>setEmpAllowances(e.target.value)} placeholder="0" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                </div>
-              </div>
-
-              {/* ???????? ???????? */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: theme.bgMain, padding: '12px', borderRadius: '10px', border: `1px solid ${theme.border}`, marginTop: '10px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#d97706' }}>{t(`??? ???????`)}</label>
-                  <select value={empCommissionType} onChange={e=>setEmpCommissionType(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }}>
-                    <option value="">{t(`-- ???? ????? --`)}</option>
-                    <option value="????????">{t(`????????`)}</option>
-                    <option value="???????">{t(`??????? (%)`)}</option>
-                    <option value="??????">{t(`??????`)}</option>
-                    <option value="???????">{t(`???????`)}</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#d97706' }}>{t(`???? ???????`)}</label>
-                  <input type="number" step="0.1" value={empCommission} onChange={e=>setEmpCommission(e.target.value)} placeholder="0" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#8b5cf6' }}>{t(`??? ??????`)}</label>
-                  <select value={empIncentiveType} onChange={e=>setEmpIncentiveType(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }}>
-                    <option value="???? ????">{t(`???? ????`)}</option>
-                    <option value="???? ?????">{t(`???? ?????`)}</option>
-                    <option value="???? ????">{t(`???? ????`)}</option>
-                    <option value="???? ?????">{t(`???? ?????`)}</option>
-                    <option value="???? ???? ?????">{t(`???? ???? ?????`)}</option>
-                    <option value="???? ???? ?????">{t(`???? ???? ?????`)}</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#8b5cf6' }}>{t(`???? / ??? ??????`)}</label>
-                  <input type="text" value={empIncentiveValue} onChange={e=>setEmpIncentiveValue(e.target.value)} placeholder={empIncentiveType === '???? ????' ? t(`?????? (?.?)`) : t(`??? ??????`)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
                 </div>
               </div>
 
@@ -2096,11 +2195,11 @@ function App() {
                   <input type="date" value={empIqamaEnd} onChange={e=>setEmpIqamaEnd(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>انتهاء الشهادة الصحية</label>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>انتهاء التأمين الطبي</label>
                   <input type="date" value={empHealthEnd} onChange={e=>setEmpHealthEnd(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>انتهاء العقد</label>
+                  <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>انتهاء العقد الوظيفي</label>
                   <input type="date" value={empContractEnd} onChange={e=>setEmpContractEnd(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none', fontSize: '12px' }} />
                 </div>
               </div>
@@ -2152,6 +2251,57 @@ function App() {
         </div>
       )}
 
+      {/* نافذة إضافة حافز أو مكافأة */}
+      {showIncentiveModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '580px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#8b5cf6' }}>{t('إضافة حافز أو مكافأة')}</h3>
+              <button onClick={() => setShowIncentiveModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
+            </div>
+            <form onSubmit={handleSaveIncentive} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t('اختر الموظف')}</label>
+                <select value={incSelectedEmpName} onChange={e=>setIncSelectedEmpName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }}>
+                  <option value="">{t('-- اختر الموظف من القائمة --')}</option>
+                  {employees.map(e => (<option key={e.id} value={e.name}>{e.name} ({t('هوية:')} {e.idNumber})</option>))}
+                </select>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#8b5cf6' }}>{t('الحافز')}</label>
+                  <input type="text" value={incIncentiveType} onChange={e=>setIncIncentiveType(e.target.value)} placeholder={t('مثال: 100 ر.س')} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#8b5cf6' }}>{t('سبب الحافز')}</label>
+                  <input type="text" value={incIncentiveValue} onChange={e=>setIncIncentiveValue(e.target.value)} placeholder={t('مثال: تميز في المبيعات')} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#d97706' }}>{t('نوع العمولة')}</label>
+                  <select value={incCommissionType} onChange={e=>setIncCommissionType(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }}>
+                    <option value="">{t('-- بدون عمولة --')}</option>
+                    <option value="بالكرتون">{t('بالكرتون')}</option>
+                    <option value="بالنسبة">{t('بالنسبة (%)')}</option>
+                    <option value="باليوم">{t('باليوم')}</option>
+                    <option value="بالساعة">{t('بالساعة')}</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#d97706' }}>{t('قيمة العمولة')}</label>
+                  <input type="number" step="0.1" value={incCommissionValue} onChange={e=>setIncCommissionValue(e.target.value)} placeholder="0" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                <button type="submit" style={{ flex: 1, background: '#8b5cf6', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t('حفظ الحافز')}</button>
+                <button type="button" onClick={() => setShowIncentiveModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Pay Confirm Modal */}
       {showPayConfirmModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3100, padding: '15px' }}>
@@ -2167,8 +2317,46 @@ function App() {
                   <option value="نقد">نقد</option>
                   <option value="شبكة">شبكة</option>
                   <option value="حوالة">حوالة بنكية</option>
+                  <option value="دفع جزء">دفع جزء من المبلغ</option>
                 </select>
               </div>
+
+              {payConfirmMethod === 'دفع جزء' && (
+                <div style={{ background: theme.bgMain, padding: '15px', borderRadius: '10px', border: `1px solid ${theme.border}` }}>
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>المبلغ المطلوب سداده:</label>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: theme.textDark }}>
+                      {(() => {
+                        const inv = invoices.find(i => i.id === payTargetInvoiceId);
+                        const remaining = inv?.paymentStatus === 'مدفوعة جزئياً' ? (inv?.remainingAmount || 0) : (inv?.totalAmount || 0);
+                        return Number(remaining).toFixed(2);
+                      })()} {t.currency}
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>المبلغ المسدد حالياً:</label>
+                    <input type="number" step="0.01" value={partialPayAmount} onChange={e => setPartialPayAmount(e.target.value)} placeholder="0.00" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }} />
+                  </div>
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>طريقة دفع الجزء:</label>
+                    <select value={partialPayMethod} onChange={e => setPartialPayMethod(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none' }}>
+                      <option value="نقد">نقد</option>
+                      <option value="شبكة">شبكة</option>
+                      <option value="حوالة">حوالة بنكية</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>المتبقي بعد السداد:</label>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#ef4444' }}>
+                      {(() => {
+                        const inv = invoices.find(i => i.id === payTargetInvoiceId);
+                        const remaining = inv?.paymentStatus === 'مدفوعة جزئياً' ? (inv?.remainingAmount || 0) : (inv?.totalAmount || 0);
+                        return Math.max(0, remaining - (Number(partialPayAmount) || 0)).toFixed(2);
+                      })()} {t.currency}
+                    </div>
+                  </div>
+                </div>
+              )}
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="button" onClick={handleExecutePayment} style={{ flex: 1, background: '#10b981', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>تأكيد السداد ✓</button>
                 <button type="button" onClick={() => setShowPayConfirmModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إلغاء</button>
@@ -2260,9 +2448,42 @@ function App() {
                 <div style={{ textAlign: 'left', fontSize: '14px', minWidth: '220px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span style={{ color: '#64748b' }}>{t.subtotal}</span><strong>{printingInvoice.subtotal} {t.currency}</strong></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', margin: '4px 0' }}><span style={{ color: '#64748b' }}>{t.vatAmount}</span><strong>{printingInvoice.taxAmount} {t.currency}</strong></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '1px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#d97706' }}><strong>{t.totalDue}</strong><strong>{printingInvoice.totalAmount} {t.currency}</strong></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', margin: '10px 0 0 0', borderTop: '1px solid #cbd5e1', paddingTop: '8px', fontSize: '16px', color: '#0f172a' }}><strong>إجمالي الفاتورة:</strong><strong>{printingInvoice.totalAmount} {t.currency}</strong></div>
                 </div>
               </div>
+
+              {/* سجل الدفعات */}
+              {printingInvoice.payments && printingInvoice.payments.length > 0 && (
+                <div style={{ marginTop: '20px', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '15px', background: '#f8fafc' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '15px', color: '#0f172a', borderBottom: '2px solid #cbd5e1', paddingBottom: '5px' }}>سجل الدفعات (Payment History)</h4>
+                  <div style={{ fontSize: '12px' }}>
+                    {printingInvoice.payments.map((pmt, i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: i !== printingInvoice.payments.length - 1 ? '1px dashed #cbd5e1' : 'none' }}>
+                        <div>
+                          <strong>دفعة #{i + 1}:</strong> تم سداد <span style={{ color: '#10b981', fontWeight: 'bold' }}>{pmt?.amount} ر.س</span>
+                          <span style={{ color: '#64748b', marginLeft: '10px' }}> (طريقة الدفع: {pmt?.method}) </span>
+                        </div>
+                        <div style={{ color: '#64748b' }}>بتاريخ: {pmt?.date}</div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div style={{ marginTop: '12px', borderTop: '2px solid #cbd5e1', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '5px', fontSize: '14px', fontWeight: 'bold' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>إجمالي المبالغ المدفوعة:</span>
+                      <span style={{ color: '#10b981' }}>{printingInvoice.paidAmount || 0} ر.س</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>المتبقي للتحصيل:</span>
+                      {(printingInvoice.remainingAmount || 0) > 0 ? (
+                        <span style={{ color: '#ef4444' }}>{printingInvoice.remainingAmount} ر.س</span>
+                      ) : (
+                        <span style={{ color: '#10b981' }}>خالصة بالكامل ✓</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '11px', color: '#64748b', borderTop: '1px dashed #cbd5e1', paddingTop: '10px' }}>{t.invoiceFooterNote}</div>
             </div>
