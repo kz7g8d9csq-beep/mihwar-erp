@@ -12,81 +12,23 @@ import SuppliersTab from './components/SuppliersTab';
 import InventoryTab from './components/InventoryTab';
 import HrTab from './components/HrTab';
 import SettingsTab from './components/SettingsTab';
+import ReturnsTab from './components/ReturnsTab';
 
 const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
-  const isAr = lang === 'ar';
   const cleanTitle = sheetTitle.replace(/[/\\?*[\]]/g, '');
-  const brandName = isAr ? 'نظام محور' : 'Mihwar ERP';
-  const metaText = isAr
-    ? `تاريخ التصدير: ${new Date().toLocaleDateString('ar-SA')} | وثيقة معتمدة ومصدرة آلياً من النظام`
-    : `Export Date: ${new Date().toLocaleDateString('en-US')} | Official System Generated Report`;
+  
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(','))
+  ].join('\r\n');
 
-  const rightToLeftXml = isAr ? '<x:DisplayRightToLeft/>' : '';
-
-  const template = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-      <meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">
-      <!--[if gte mso 9]>
-      <xml>
-        <x:ExcelWorkbook>
-          <x:ExcelWorksheets>
-            <x:ExcelWorksheet>
-              <x:Name>${cleanTitle.slice(0, 31)}</x:Name>
-              <x:WorksheetOptions>
-                ${rightToLeftXml}
-              </x:WorksheetOptions>
-            </x:ExcelWorksheet>
-          </x:ExcelWorksheets>
-        </x:ExcelWorkbook>
-      </xml>
-      <![endif]-->
-      <style>
-        table { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; border-collapse: collapse; direction: ${isAr ? 'rtl' : 'ltr'}; width: 100%; }
-        .main-title { font-size: 16pt; font-weight: bold; color: #d97706; text-align: center; padding: 12px; }
-        .meta-text { font-size: 10pt; color: #64748b; text-align: center; padding-bottom: 10px; }
-        th { background-color: #d97706; color: #ffffff; font-weight: bold; border: 1px solid #b45309; padding: 10px 14px; text-align: center; font-size: 11pt; }
-        td { border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 10pt; text-align: ${isAr ? 'right' : 'left'}; }
-        .text-cell { mso-number-format: "\\@"; text-align: center; }
-        .num-cell { mso-number-format: "#\\,##0\\.00"; text-align: right; }
-      </style>
-    </head>
-    <body>
-      <table>
-        <thead>
-          <tr><td colspan="${headers.length}" class="main-title">${brandName} • ${cleanTitle.replace(/_/g, ' ')}</td></tr>
-          <tr><td colspan="${headers.length}" class="meta-text">${metaText}</td></tr>
-          <tr>
-            ${headers.map(h => `<th>${h}</th>`).join('')}
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(row => `
-            <tr>
-              ${row.map(cell => {
-                const str = String(cell ?? '');
-                const isCodeOrPhone = /^\d{9,}$/.test(str) || str.startsWith('05') || str.startsWith('+');
-                const isCurrency = /^-?\d+(\.\d+)?$/.test(str) && !isCodeOrPhone;
-                if (isCodeOrPhone) {
-                  return `<td class="text-cell">${str}</td>`;
-                } else if (isCurrency) {
-                  return `<td class="num-cell">${Number(str).toFixed(2)}</td>`;
-                }
-                return `<td>${str}</td>`;
-              }).join('')}
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </body>
-    </html>
-  `;
-
-  const blob = new Blob(['\uFEFF' + template], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const finalFileContent = '\uFEFFsep=,\r\n' + csvContent;
+  const blob = new Blob([finalFileContent], { type: 'text/csv;charset=utf-8;' });
+  
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${cleanTitle}_${new Date().toISOString().slice(0, 10)}.xls`;
+  link.download = `${cleanTitle}_${new Date().toISOString().slice(0, 10)}.csv`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -1848,6 +1790,7 @@ function App() {
     { id: 'customers', label: t.customers, adminOnly: true, icon: '👥' },
     { id: 'suppliers', label: t.suppliers, adminOnly: true, icon: '🏭' },
     { id: 'inventory', label: t.inventory, adminOnly: false, icon: '📦' },
+    { id: 'returns', label: t.returns || 'المرتجعات', adminOnly: true, icon: '↩️' },
     { id: 'hr', label: t.hr, adminOnly: true, icon: '👔' },
     { id: 'settings', label: t.settings, adminOnly: false, icon: '⚙️' }
   ];
@@ -2064,6 +2007,20 @@ function App() {
               handleOpenEditProduct={handleOpenEditProduct}
               handleDeleteProduct={handleDeleteProduct}
               handleExportInventory={handleExportInventory}
+            />
+          )}
+
+          {/* TAB: Returns */}
+          {activeTab === 'returns' && (
+            <ReturnsTab
+              theme={theme}
+              isDark={isDark}
+              invoices={invoices}
+              setInvoices={setInvoices}
+              purchaseInvoices={purchaseInvoices}
+              setPurchaseInvoices={setPurchaseInvoices}
+              inventory={inventory}
+              setInventory={setInventory}
             />
           )}
 
