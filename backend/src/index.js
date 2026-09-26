@@ -58,6 +58,8 @@ app.use(async (req, res, next) => {
   }
 });
 
+// ==================== الحسابات والمصادقة ====================
+
 // إنشاء مساحة عمل جديدة مع تشفير Bcrypt وتوليد JWT
 app.post(['/register', '/api/register', '/api/api/register'], async (req, res) => {
   const { businessName, clientName, email, phone, password } = req.body;
@@ -563,6 +565,209 @@ app.post(['/purchases', '/api/purchases', '/api/api/purchases'], async (req, res
     res.json({ message: 'تم تسجيل فاتورة الشراء وتوريد الكمية للمخزون بنجاح', purchaseInvoice: result });
   } catch (error) {
     res.status(400).json({ error: error.message || 'فشلت عملية الشراء' });
+  }
+});
+
+// ==================== الموارد البشرية HR ====================
+
+// 1. جلب الأقسام
+app.get(['/departments', '/api/departments', '/api/api/departments'], async (req, res) => {
+  try {
+    const departments = await prisma.department.findMany({
+      where: { companyId: req.companyId },
+      orderBy: { createdAt: 'asc' }
+    });
+    res.json(departments);
+  } catch (error) {
+    res.status(500).json({ error: 'خطأ في جلب بيانات الأقسام' });
+  }
+});
+
+// 2. إضافة قسم جديد
+app.post(['/departments', '/api/departments', '/api/api/departments'], async (req, res) => {
+  const { name, desc } = req.body;
+  try {
+    if (!name) return res.status(400).json({ error: 'اسم القسم مطلوب' });
+    const newDept = await prisma.department.create({
+      data: {
+        companyId: req.companyId,
+        name: String(name).trim(),
+        desc: desc ? String(desc).trim() : null
+      }
+    });
+    res.json(newDept);
+  } catch (error) {
+    res.status(500).json({ error: 'تعذر حفظ القسم' });
+  }
+});
+
+// 3. حذف قسم
+app.delete(['/departments/:id', '/api/departments/:id', '/api/api/departments/:id'], async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.department.delete({ where: { id: Number(id) } });
+    res.json({ message: 'تم حذف القسم بنجاح' });
+  } catch (error) {
+    res.status(500).json({ error: 'تعذر حذف القسم' });
+  }
+});
+
+// 4. جلب الموظفين مع الحوافز والخصومات
+app.get(['/employees', '/api/employees', '/api/api/employees'], async (req, res) => {
+  try {
+    const employees = await prisma.employee.findMany({
+      where: { companyId: req.companyId },
+      include: { incentives: true, deductions: true, department: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(employees);
+  } catch (error) {
+    res.status(500).json({ error: 'خطأ في جلب بيانات الموظفين' });
+  }
+});
+
+// 5. إضافة موظف جديد
+app.post(['/employees', '/api/employees', '/api/api/employees'], async (req, res) => {
+  try {
+    const {
+      empNo, name, role, idNumber, phone, address, maritalStatus,
+      childrenCount, medicalInsurance, salary, vacations,
+      housingAllowance, transportAllowance, iqamaEnd, healthEnd,
+      contractEnd, deptName, departmentId
+    } = req.body;
+
+    if (!name || !salary || !idNumber) {
+      return res.status(400).json({ error: 'الاسم، الراتب، ورقم الهوية مطلوبون' });
+    }
+
+    const newEmp = await prisma.employee.create({
+      data: {
+        companyId: req.companyId,
+        empNo: empNo ? String(empNo) : null,
+        name: String(name).trim(),
+        role: role ? String(role).trim() : null,
+        idNumber: String(idNumber).trim(),
+        phone: phone ? String(phone) : null,
+        address: address ? String(address).trim() : null,
+        maritalStatus: maritalStatus || 'أعزب',
+        childrenCount: Number(childrenCount) || 0,
+        medicalInsurance: medicalInsurance ? String(medicalInsurance).trim() : null,
+        salary: Number(salary) || 0,
+        vacations: Number(vacations) || 21,
+        housingAllowance: Number(housingAllowance) || 0,
+        transportAllowance: Number(transportAllowance) || 0,
+        iqamaEnd: iqamaEnd || '-',
+        healthEnd: healthEnd || '-',
+        contractEnd: contractEnd || '-',
+        deptName: deptName || 'الإدارة العامة',
+        departmentId: departmentId ? Number(departmentId) : null
+      }
+    });
+
+    res.json(newEmp);
+  } catch (error) {
+    res.status(500).json({ error: 'تعذر إضافة الموظف' });
+  }
+});
+
+// 6. تعديل بيانات موظف
+app.put(['/employees/:id', '/api/employees/:id', '/api/api/employees/:id'], async (req, res) => {
+  const { id } = req.params;
+  try {
+    const {
+      empNo, name, role, idNumber, phone, address, maritalStatus,
+      childrenCount, medicalInsurance, salary, vacations,
+      housingAllowance, transportAllowance, iqamaEnd, healthEnd,
+      contractEnd, deptName, departmentId
+    } = req.body;
+
+    const updated = await prisma.employee.update({
+      where: { id: Number(id) },
+      data: {
+        empNo: empNo !== undefined ? String(empNo) : undefined,
+        name: name ? String(name).trim() : undefined,
+        role: role !== undefined ? String(role).trim() : undefined,
+        idNumber: idNumber !== undefined ? String(idNumber).trim() : undefined,
+        phone: phone !== undefined ? String(phone).trim() : undefined,
+        address: address !== undefined ? String(address).trim() : undefined,
+        maritalStatus: maritalStatus !== undefined ? maritalStatus : undefined,
+        childrenCount: childrenCount !== undefined ? Number(childrenCount) : undefined,
+        medicalInsurance: medicalInsurance !== undefined ? String(medicalInsurance).trim() : undefined,
+        salary: salary !== undefined ? Number(salary) : undefined,
+        vacations: vacations !== undefined ? Number(vacations) : undefined,
+        housingAllowance: housingAllowance !== undefined ? Number(housingAllowance) : undefined,
+        transportAllowance: transportAllowance !== undefined ? Number(transportAllowance) : undefined,
+        iqamaEnd: iqamaEnd !== undefined ? iqamaEnd : undefined,
+        healthEnd: healthEnd !== undefined ? healthEnd : undefined,
+        contractEnd: contractEnd !== undefined ? contractEnd : undefined,
+        deptName: deptName !== undefined ? deptName : undefined,
+        departmentId: departmentId !== undefined ? (departmentId ? Number(departmentId) : null) : undefined
+      }
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ error: 'تعذر تعديل بيانات الموظف' });
+  }
+});
+
+// 7. حذف موظف
+app.delete(['/employees/:id', '/api/employees/:id', '/api/api/employees/:id'], async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.employee.delete({ where: { id: Number(id) } });
+    res.json({ message: 'تم حذف الموظف بنجاح' });
+  } catch (error) {
+    res.status(500).json({ error: 'تعذر حذف الموظف' });
+  }
+});
+
+// 8. إضافة حافز ومكافأة
+app.post(['/incentives', '/api/incentives', '/api/api/incentives'], async (req, res) => {
+  const { employeeId, amount, reason, date } = req.body;
+  try {
+    if (!employeeId || !amount) return res.status(400).json({ error: 'الموظف ومبلغ الحافز مطلوبان' });
+    const inc = await prisma.incentive.create({
+      data: {
+        employeeId: Number(employeeId),
+        amount: Number(amount),
+        reason: reason ? String(reason).trim() : null,
+        date: date || new Date().toISOString().slice(0, 10)
+      }
+    });
+    res.json(inc);
+  } catch (error) {
+    res.status(500).json({ error: 'تعذر تسجيل الحافز' });
+  }
+});
+
+// 9. إضافة خصم واستقطاع
+app.post(['/deductions', '/api/deductions', '/api/api/deductions'], async (req, res) => {
+  const { employeeId, amount, reason, date } = req.body;
+  try {
+    if (!employeeId || !amount) return res.status(400).json({ error: 'الموظف ومبلغ الخصم مطلوبان' });
+    const ded = await prisma.deduction.create({
+      data: {
+        employeeId: Number(employeeId),
+        amount: Number(amount),
+        reason: reason ? String(reason).trim() : null,
+        date: date || new Date().toISOString().slice(0, 10)
+      }
+    });
+    res.json(ded);
+  } catch (error) {
+    res.status(500).json({ error: 'تعذر تسجيل الخصم' });
+  }
+});
+
+// 10. إعفاء وإلغاء خصم
+app.delete(['/deductions/:id', '/api/deductions/:id', '/api/api/deductions/:id'], async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.deduction.delete({ where: { id: Number(id) } });
+    res.json({ message: 'تم إلغاء الخصم بنجاح' });
+  } catch (error) {
+    res.status(500).json({ error: 'تعذر إلغاء الخصم' });
   }
 });
 

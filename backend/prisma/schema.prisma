@@ -17,6 +17,8 @@ model Company {
   suppliers        Supplier[]
   invoices         Invoice[]
   purchaseInvoices PurchaseInvoice[]
+  departments      Department[]
+  employees        Employee[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @default(now()) @updatedAt
 }
@@ -106,7 +108,7 @@ model Invoice {
   salesRepId      Int?          // رقم المندوب / البائع
   salesRepName    String?       // اسم المندوب للأرشفة السريعة
   totalCommission Float         @default(0) // إجمالي عمولات المندوب في الفاتورة
-  netProfit       Float?        // صافي ربح الفاتورة (المبيعات - التكلفة - العمولات)
+  netProfit       Float?        // صافي ربح الفاتورة
   items           InvoiceItem[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @default(now()) @updatedAt
@@ -119,9 +121,9 @@ model InvoiceItem {
   productId        Int
   product          Product  @relation(fields: [productId], references: [id])
   quantity         Int      @default(1)
-  cartonsCount     Float    @default(0) // عدد الكراتين المباعة من هذا الصنف
-  cartonCommission Float    @default(0) // عمولة الكرتون وقت البيع
-  itemCommission   Float    @default(0) // إجمالي عمولة هذا البند
+  cartonsCount     Float    @default(0)
+  cartonCommission Float    @default(0)
+  itemCommission   Float    @default(0)
   unitPrice        Float
   subtotal         Float
   createdAt        DateTime @default(now())
@@ -155,4 +157,66 @@ model PurchaseInvoiceItem {
   unitCost          Float
   subtotal          Float
   createdAt         DateTime        @default(now())
+}
+
+// ==================== جداول الموارد البشرية HR ====================
+
+model Department {
+  id          Int        @id @default(autoincrement())
+  name        String
+  desc        String?
+  companyId   Int        @default(1)
+  company     Company    @relation(fields: [companyId], references: [id])
+  employees   Employee[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @default(now()) @updatedAt
+}
+
+model Employee {
+  id                 Int         @id @default(autoincrement())
+  empNo              String?
+  name               String
+  role               String?
+  idNumber           String?
+  phone              String?
+  address            String?     // العنوان الوطني
+  maritalStatus      String?     @default("أعزب")
+  childrenCount      Int         @default(0)
+  medicalInsurance   String?     // شركة وفئة التأمين الطبي
+  salary             Float       @default(0)
+  vacations          Int         @default(21)
+  housingAllowance   Float       @default(0)
+  transportAllowance Float       @default(0)
+  iqamaEnd           String?
+  healthEnd          String?
+  contractEnd        String?     // تاريخ نهاية العقد
+  departmentId       Int?
+  department         Department? @relation(fields: [departmentId], references: [id])
+  deptName           String?     // اسم القسم كاحتياط وسرعة عرض
+  companyId          Int         @default(1)
+  company            Company     @relation(fields: [companyId], references: [id])
+  incentives         Incentive[]
+  deductions         Deduction[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @default(now()) @updatedAt
+}
+
+model Incentive {
+  id          Int       @id @default(autoincrement())
+  amount      Float
+  reason      String?
+  date        String?
+  employeeId  Int
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+}
+
+model Deduction {
+  id          Int       @id @default(autoincrement())
+  amount      Float
+  reason      String?
+  date        String?
+  employeeId  Int
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
 }
