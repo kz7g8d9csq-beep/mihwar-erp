@@ -47,7 +47,6 @@ const HrTab = ({
   const [empMaritalStatus, setEmpMaritalStatus] = useState('أعزب');
   const [empChildrenCount, setEmpChildrenCount] = useState('');
   const [empMedicalInsurance, setEmpMedicalInsurance] = useState('');
-  const [empContractStart, setEmpContractStart] = useState('');
   const [empContractEnd, setEmpContractEnd] = useState('');
   const [empNumber, setEmpNumber] = useState('');
   const [empVacations, setEmpVacations] = useState('');
@@ -122,7 +121,6 @@ const HrTab = ({
       transportAllowance: parseNum(empTransportAllowance),
       iqamaEnd: empIqamaEnd || '-',
       healthEnd: empHealthEnd || '-',
-      contractStart: empContractStart || '-',
       contractEnd: empContractEnd || '-',
       dept: selectedDepartment ? selectedDepartment.name : 'الإدارة العامة',
       incentives: 0,
@@ -135,7 +133,7 @@ const HrTab = ({
     }
     setEmpName(''); setEmpRole(''); setEmpNationalId(''); setEmpSalary(''); setEmpPhone('');
     setEmpAddress(''); setEmpMaritalStatus('أعزب'); setEmpChildrenCount('');
-    setEmpMedicalInsurance(''); setEmpContractStart(''); setEmpContractEnd('');
+    setEmpMedicalInsurance(''); setEmpContractEnd('');
     setEmpNumber(''); setEmpVacations(''); setEmpHousingAllowance(''); setEmpTransportAllowance('');
     setEmpIqamaEnd(''); setEmpHealthEnd('');
     setShowAddEmpModal(false);
@@ -211,7 +209,6 @@ const HrTab = ({
   const handleWaiveDeduction = (d) => {
     if (window.confirm('هل أنت متأكد من إعفاء هذا الموظف وإلغاء الخصم؟')) {
       const updatedList = deductionsList.filter(record => record.id !== d.id);
-      
       const amountToRestore = parseNum(d.amount);
       const updatedEmps = employees.map(emp => {
         if (emp.name === d.empName) {
@@ -244,7 +241,7 @@ const HrTab = ({
     }
   };
 
-  // دالة تصدير إكسيل الاحترافية المطابقة لتصدير المخزون
+  // تصدير إكسيل بدون بداية العقد ومع العنوان الوطني والتأمين الطبي
   const exportDeptExcel = () => {
     if (!selectedDepartment) return;
 
@@ -289,7 +286,6 @@ const HrTab = ({
         <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">${emp.childrenCount || 0}</td>
         <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: right;">${emp.address || '-'}</td>
         <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">${emp.medicalInsurance || '-'}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">${emp.contractStart || '-'}</td>
         <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">${emp.contractEnd || '-'}</td>
         <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; color: #10b981;">${salary.toFixed(2)} ر.س</td>
         <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; color: #8b5cf6;">${inc.toFixed(2)} ر.س</td>
@@ -298,9 +294,9 @@ const HrTab = ({
       </tr>`;
     });
 
-    // صف الإجماليات
+    // صف الإجماليات (10 أعمدة بيانات + 4 أعمدة مالية = 14 عموداً)
     tableRows += `<tr style="background-color: #e2e8f0; font-weight: bold;">
-      <td colspan="11" style="border: 1px solid #94a3b8; padding: 12px; text-align: center; font-size: 13px; color: #0f172a;">إجمالي مسيرات الرواتب والمستحقات لقسم (${selectedDepartment.name})</td>
+      <td colspan="10" style="border: 1px solid #94a3b8; padding: 12px; text-align: center; font-size: 13px; color: #0f172a;">إجمالي مسيرات الرواتب والمستحقات لقسم (${selectedDepartment.name})</td>
       <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #10b981; font-size: 13px;">${totalSalaries.toFixed(2)} ر.س</td>
       <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #8b5cf6; font-size: 13px;">${totalIncentives.toFixed(2)} ر.س</td>
       <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #ef4444; font-size: 13px;">${totalDeductions.toFixed(2)} ر.س</td>
@@ -325,10 +321,10 @@ const HrTab = ({
         <table>
           <thead>
             <tr>
-              <th colspan="15" style="background-color: #1e293b; color: #ffffff; font-size: 18px; padding: 16px; text-align: center; font-weight: bold;">${systemTitle}</th>
+              <th colspan="14" style="background-color: #1e293b; color: #ffffff; font-size: 18px; padding: 16px; text-align: center; font-weight: bold;">${systemTitle}</th>
             </tr>
             <tr>
-              <th colspan="15" style="background-color: #334155; color: #e2e8f0; font-size: 12px; padding: 8px; text-align: center;">تاريخ التصدير: ${exportDate} | تقرير مسير معتمد ومصدر آلياً من النظام</th>
+              <th colspan="14" style="background-color: #334155; color: #e2e8f0; font-size: 12px; padding: 8px; text-align: center;">تاريخ التصدير: ${exportDate} | تقرير مسير معتمد ومصدر آلياً من النظام</th>
             </tr>
             <tr style="background-color: #e2e8f0;">
               <th>الرقم الوظيفي</th>
@@ -340,7 +336,6 @@ const HrTab = ({
               <th>الأطفال</th>
               <th>العنوان الوطني</th>
               <th>التأمين الطبي</th>
-              <th>بداية العقد</th>
               <th>نهاية العقد</th>
               <th>الراتب الأساسي</th>
               <th>إجمالي الحوافز</th>
@@ -520,8 +515,8 @@ const HrTab = ({
                     <th style={{ padding: '12px' }}>المسمى</th>
                     <th style={{ padding: '12px' }}>الهوية</th>
                     <th style={{ padding: '12px' }}>الهاتف</th>
-                    <th style={{ padding: '12px' }}>الحالة الاجتماعية</th>
-                    <th style={{ padding: '12px' }}>الأطفال</th>
+                    <th style={{ padding: '12px' }}>العنوان الوطني</th>
+                    <th style={{ padding: '12px' }}>التأمين الطبي</th>
                     <th style={{ padding: '12px' }}>الراتب</th>
                     <th style={{ padding: '12px' }}>صافي المستحق</th>
                     <th style={{ padding: '12px' }}>الإجراءات</th>
@@ -539,8 +534,8 @@ const HrTab = ({
                         <td style={{ padding: '12px', color: theme?.textMuted || '#94a3b8' }}>{emp.role || '-'}</td>
                         <td style={{ padding: '12px' }}>{emp.idNumber || '-'}</td>
                         <td style={{ padding: '12px' }} dir="ltr">{emp.phone || '-'}</td>
-                        <td style={{ padding: '12px' }}>{emp.maritalStatus || '-'}</td>
-                        <td style={{ padding: '12px' }}>{emp.childrenCount || '0'}</td>
+                        <td style={{ padding: '12px' }}>{emp.address || '-'}</td>
+                        <td style={{ padding: '12px' }}>{emp.medicalInsurance || '-'}</td>
                         <td style={{ padding: '12px', fontWeight: 'bold', color: '#10b981' }}>{salary.toFixed(2)}</td>
                         <td style={{ padding: '12px', fontWeight: 'bold', fontSize: '14px', color: theme?.textDark || '#fff' }}>{net.toFixed(2)}</td>
                         <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
@@ -694,7 +689,7 @@ const HrTab = ({
         </>
       )}
 
-      {/* Modals */}
+      {/* نافذة إضافة قسم جديد */}
       {showAddDeptModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '400px', width: '100%', border: `1px solid ${theme?.border || '#334155'}` }}>
@@ -717,23 +712,40 @@ const HrTab = ({
         </div>
       )}
 
+      {/* نافذة إضافة موظف جديد - محدثة بالكامل */}
       {showAddEmpModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', border: `1px solid ${theme?.border || '#334155'}` }}>
+          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', border: `1px solid ${theme?.border || '#334155'}`, maxHeight: '92vh', overflowY: 'auto' }}>
             <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px' }}>إضافة موظف (قسم {selectedDepartment?.name})</h3>
             <form onSubmit={handleAddEmp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={labelStyle}>الاسم الكامل *</label><input type="text" value={empName} onChange={e=>setEmpName(e.target.value)} required style={inputStyle} /></div>
+                <div><label style={labelStyle}>الاسم الكامل *</label><input type="text" value={empName} onChange={e=>setEmpName(e.target.value)} required placeholder="اسم الموظف الثلاثي أو الرباعي" style={inputStyle} /></div>
                 <div><label style={labelStyle}>رقم الموظف</label><input type="text" value={empNumber} onChange={e=>setEmpNumber(e.target.value)} placeholder="مثال: 22" style={inputStyle} /></div>
               </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={labelStyle}>رقم الهوية / الإقامة</label><input type="text" value={empNationalId} onChange={e=>setEmpNationalId(e.target.value)} placeholder="رقم الهوية أو الإقامة" required style={inputStyle} /></div>
+                <div><label style={labelStyle}>رقم الهوية / الإقامة *</label><input type="text" value={empNationalId} onChange={e=>setEmpNationalId(e.target.value)} placeholder="رقم الهوية الوطنية أو الإقامة" required style={inputStyle} /></div>
                 <div><label style={labelStyle}>رقم الهاتف</label><input type="text" value={empPhone} onChange={e=>setEmpPhone(e.target.value)} placeholder="05xxxxxxxx" style={inputStyle} /></div>
               </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={labelStyle}>المسمى الوظيفي</label><input type="text" value={empRole} onChange={e=>setEmpRole(e.target.value)} placeholder="المسمى الوظيفي" required style={inputStyle} /></div>
+                <div><label style={labelStyle}>المسمى الوظيفي *</label><input type="text" value={empRole} onChange={e=>setEmpRole(e.target.value)} placeholder="مثال: مندوب مبيعات، محاسب..." required style={inputStyle} /></div>
                 <div><label style={labelStyle}>القسم</label><input type="text" value={selectedDepartment?.name} disabled style={{...inputStyle, opacity: 0.7}} /></div>
               </div>
+
+              {/* العنوان الوطني والتأمين الطبي */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={labelStyle}>العنوان الوطني</label>
+                  <input type="text" value={empAddress} onChange={e=>setEmpAddress(e.target.value)} placeholder="مثال: الرياض - حي النرجس - شارع..." style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>شركة / فئة التأمين الطبي</label>
+                  <input type="text" value={empMedicalInsurance} onChange={e=>setEmpMedicalInsurance(e.target.value)} placeholder="مثال: بوبا فئة A / التعاونية" style={inputStyle} />
+                </div>
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={labelStyle}>الحالة الاجتماعية</label>
@@ -742,21 +754,22 @@ const HrTab = ({
                     <option value="متزوج">متزوج</option>
                   </select>
                 </div>
-                <div><label style={labelStyle}>عدد الأطفال</label><input type="number" value={empChildrenCount} onChange={e=>setEmpChildrenCount(e.target.value)} placeholder="0" style={inputStyle} /></div>
+                <div><label style={labelStyle}>عدد الأطفال</label><input type="number" min="0" value={empChildrenCount} onChange={e=>setEmpChildrenCount(e.target.value)} placeholder="0" style={inputStyle} /></div>
               </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={labelStyle}>الراتب الأساسي (ر.س)</label><input type="number" value={empSalary} onChange={e=>setEmpSalary(e.target.value)} required placeholder="4000" style={inputStyle} /></div>
-                <div><label style={labelStyle}>رصيد الإجازات (أيام)</label><input type="number" value={empVacations} onChange={e=>setEmpVacations(e.target.value)} placeholder="21" style={{...inputStyle, background: theme?.cardBg || '#1e293b'}} /></div>
+                <div><label style={labelStyle}>الراتب الأساسي (ر.س) *</label><input type="number" min="0" value={empSalary} onChange={e=>setEmpSalary(e.target.value)} required placeholder="4000" style={inputStyle} /></div>
+                <div><label style={labelStyle}>رصيد الإجازات (أيام)</label><input type="number" min="0" value={empVacations} onChange={e=>setEmpVacations(e.target.value)} placeholder="21" style={{...inputStyle, background: theme?.cardBg || '#1e293b'}} /></div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: theme?.bgMain || '#0f172a', padding: '12px', borderRadius: '10px', border: `1px solid ${theme?.border || '#334155'}` }}>
                 <div>
                   <label style={{ ...labelStyle, color: '#10b981' }}>بدل سكن (ر.س)</label>
-                  <input type="number" value={empHousingAllowance} onChange={e=>setEmpHousingAllowance(e.target.value)} placeholder="0" style={{...inputStyle, padding: '10px', background: theme?.cardBg || '#1e293b'}} />
+                  <input type="number" min="0" value={empHousingAllowance} onChange={e=>setEmpHousingAllowance(e.target.value)} placeholder="0" style={{...inputStyle, padding: '10px', background: theme?.cardBg || '#1e293b'}} />
                 </div>
                 <div>
                   <label style={{ ...labelStyle, color: '#10b981' }}>بدل مواصلات (ر.س)</label>
-                  <input type="number" value={empTransportAllowance} onChange={e=>setEmpTransportAllowance(e.target.value)} placeholder="0" style={{...inputStyle, padding: '10px', background: theme?.cardBg || '#1e293b'}} />
+                  <input type="number" min="0" value={empTransportAllowance} onChange={e=>setEmpTransportAllowance(e.target.value)} placeholder="0" style={{...inputStyle, padding: '10px', background: theme?.cardBg || '#1e293b'}} />
                 </div>
               </div>
 
@@ -784,6 +797,7 @@ const HrTab = ({
         </div>
       )}
 
+      {/* نافذة الحوافز */}
       {showIncentiveModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '400px', width: '100%', border: `1px solid ${theme?.border || '#334155'}` }}>
@@ -815,6 +829,7 @@ const HrTab = ({
         </div>
       )}
 
+      {/* نافذة الخصومات */}
       {showDeductModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '400px', width: '100%', border: `1px solid ${theme?.border || '#334155'}` }}>
@@ -846,6 +861,7 @@ const HrTab = ({
         </div>
       )}
 
+      {/* نافذة الملف الشخصي للموظف */}
       {viewingEmpProfile && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '650px', width: '100%', border: `1px solid ${theme?.border || '#334155'}`, maxHeight: '90vh', overflowY: 'auto' }}>
@@ -865,18 +881,17 @@ const HrTab = ({
 
             <h4 style={{ color: '#10b981', margin: '0 0 15px 0' }}>البيانات الشخصية والتأمين</h4>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px', borderBottom: `1px solid ${theme?.border || '#334155'}`, paddingBottom: '20px' }}>
-              <div><strong style={{ color: theme?.textMuted || '#94a3b8' }}>العنوان السكني:</strong> <div>{viewingEmpProfile.address || '-'}</div></div>
+              <div><strong style={{ color: theme?.textMuted || '#94a3b8' }}>العنوان الوطني:</strong> <div>{viewingEmpProfile.address || '-'}</div></div>
               <div><strong style={{ color: theme?.textMuted || '#94a3b8' }}>الحالة الاجتماعية:</strong> <div>{viewingEmpProfile.maritalStatus || '-'}</div></div>
               <div><strong style={{ color: theme?.textMuted || '#94a3b8' }}>عدد الأطفال:</strong> <div>{viewingEmpProfile.childrenCount || '0'}</div></div>
-              <div style={{ gridColumn: '1 / -1' }}><strong style={{ color: theme?.textMuted || '#94a3b8' }}>التأمين الطبي:</strong> <div>{viewingEmpProfile.medicalInsurance || '-'}</div></div>
+              <div><strong style={{ color: theme?.textMuted || '#94a3b8' }}>التأمين الطبي:</strong> <div>{viewingEmpProfile.medicalInsurance || '-'}</div></div>
             </div>
 
             <h4 style={{ color: '#d97706', margin: '0 0 15px 0' }}>بيانات العقد الوظيفي</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div><strong style={{ color: theme?.textMuted || '#94a3b8' }}>تاريخ بداية العقد:</strong> <div>{viewingEmpProfile.contractStart || '-'}</div></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
               <div>
                 <strong style={{ color: theme?.textMuted || '#94a3b8' }}>تاريخ نهاية العقد:</strong> 
-                <div style={{ fontWeight: 'bold', color: viewingEmpProfile.contractEnd && new Date(viewingEmpProfile.contractEnd) < new Date(Date.now() + 30*24*60*60*1000) ? '#ef4444' : (theme?.textDark || '#fff') }}>
+                <div style={{ fontWeight: 'bold', color: viewingEmpProfile.contractEnd && new Date(viewingEmpProfile.contractEnd) < new Date(Date.now() + 30*24*60*60*1000) ? '#ef4444' : (theme?.textDark || '#fff'), marginTop: '5px' }}>
                   {viewingEmpProfile.contractEnd || '-'}
                   {viewingEmpProfile.contractEnd && new Date(viewingEmpProfile.contractEnd) < new Date(Date.now() + 30*24*60*60*1000) && (
                     <span style={{ fontSize: '11px', background: '#fef2f2', color: '#ef4444', padding: '2px 8px', borderRadius: '12px', marginRight: '10px' }}>ينتهي قريباً / منتهٍ</span>
