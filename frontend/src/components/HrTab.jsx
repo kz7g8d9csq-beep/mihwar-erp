@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+
+const API_BASE = 'https://backend-6grl.onrender.com';
 
 const HrTab = ({
   t, theme = {}, isDark, user,
@@ -20,10 +22,6 @@ const HrTab = ({
       return defaultDepts;
     }
   });
-
-  useEffect(() => {
-    localStorage.setItem('mihwar_departments', JSON.stringify(departments));
-  }, [departments]);
 
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   
@@ -56,7 +54,7 @@ const HrTab = ({
   const [empIqamaEnd, setEmpIqamaEnd] = useState('');
   const [empHealthEnd, setEmpHealthEnd] = useState('');
 
-  // Edit Employee Modal State (مدمج داخلياً)
+  // Edit Employee Modal State
   const [showEditEmpModal, setShowEditEmpModal] = useState(false);
   const [editEmpData, setEditEmpData] = useState(null);
 
@@ -73,6 +71,15 @@ const HrTab = ({
   const [dedEmpId, setDedEmpId] = useState('');
   const [dedAmount, setDedAmount] = useState('');
   const [dedReason, setDedReason] = useState('');
+
+  // ترويسة التوثيق للأمان
+  const getHeaders = () => {
+    const token = localStorage.getItem('token') || localStorage.getItem('mihwar_token') || (user && user.token) || '';
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (user && user.id) headers['user-id'] = user.id;
+    return headers;
+  };
 
   const parseNum = (val) => {
     if (typeof val === 'number') return val;
@@ -92,28 +99,133 @@ const HrTab = ({
     return `${y}-${m}-${d} ${h}:${min}`;
   };
 
-  const handleAddDept = (e) => {
+  // مزامنة البيانات تلقائياً مع السيرفر
+  const fetchCloudData = useCallback(async () => {
+    try {
+      const [deptRes, empRes] = await Promise.all([
+        fetch(`${API_BASE}/departments`, { headers: getHeaders() }),
+        fetch(`${API_BASE}/employees`, { headers: getHeaders() })
+      ]);
+
+      if (deptRes.ok) {
+        const depts = await deptRes.json();
+        if (Array.isArray(depts) && depts.length > 0) {
+          setDepartments(depts);
+          localStorage.setItem('mihwar_departments', JSON.stringify(depts));
+        }
+      }
+
+      if (empRes.ok) {
+        const emps = await empRes.json();
+        if (Array.isArray(emps)) {
+          const allIncs = [];
+          const allDeds = [];
+
+          const formatted = emps.map(emp => {
+            const incTotal = (emp.incentives || []).reduce((sum, i) => sum + parseNum(i.amount), 0);
+            const dedTotal = (emp.deductions || []).reduce((sum, d) => sum + parseNum(d.amount), 0);
+
+            (emp.incentives || []).forEach(i => {
+              allIncs.push({
+                id: i.id,
+                employeeId: emp.id,
+                empName: emp.name,
+                empRole: emp.role,
+                amount: parseNum(i.amount),
+                reason: i.reason,
+                date: i.date || (i.createdAt ? i.createdAt.slice(0, 10) : '')
+              });
+            });
+
+            (emp.deductions || []).forEach(d => {
+              allDeds.push({
+                id: d.id,
+                employeeId: emp.id,
+                empName: emp.name,
+                amount: parseNum(d.amount),
+                reason: d.reason,
+                date: d.date || (d.createdAt ? d.createdAt.slice(0, 10) : '')
+              });
+            });
+
+            return {
+              ...emp,
+              dept: emp.deptName || (emp.department ? emp.department.name : 'الإدارة العامة'),
+              incentives: incTotal,
+              deductions: dedTotal
+            };
+          });
+
+          if (setEmployees) setEmployees(formatted);
+          if (setIncentiveRecords) setIncentiveRecords(allIncs);
+          if (setDeductionsList) setDeductionsList(allDeds);
+
+          localStorage.setItem('mihwar_hr_employees', JSON.stringify(formatted));
+          localStorage.setItem('mihwar_hr_incentives', JSON.stringify(allIncs));
+          localStorage.setItem('mihwar_hr_deductions', JSON.stringify(allDeds));
+        }
+      }
+    } catch (err) {
+      console.warn('استخدام التخزين المحلي مؤقتاً لحين استجابة السيرفر:', err);
+    }
+  }, [setEmployees, setIncentiveRecords, setDeductionsList]);
+
+  useEffect(() => {
+    fetchCloudData();
+  }, [fetchCloudData]);
+
+  // إضافة قسم
+  const handleAddDept = async (e) => {
     e.preventDefault();
     if (!newDeptName) return;
-    const newDept = { id: Date.now(), name: newDeptName.trim(), desc: newDeptDesc };
-    setDepartments([...departments, newDept]);
+
+    let newDept = { id: Date.now(), name: newDeptName.trim(), desc: newDeptDesc };
+    try {
+      const res = await fetch(`${API_BASE}/departments`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ name: newDeptName.trim(), desc: newDeptDesc })
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        newDept = saved;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+
+    const updated = [...departments, newDept];
+    setDepartments(updated);
+    localStorage.setItem('mihwar_departments', JSON.stringify(updated));
     setNewDeptName('');
     setNewDeptDesc('');
     setShowAddDeptModal(false);
   };
 
-  const handleDeleteDept = (id, e) => {
+  // حذف قسم
+  const handleDeleteDept = async (id, e) => {
     e.stopPropagation();
     if (window.confirm('هل أنت متأكد من حذف هذا القسم؟')) {
-      setDepartments(departments.filter(d => d.id !== id));
+      try {
+        await fetch(`${API_BASE}/departments/${id}`, {
+          method: 'DELETE',
+          headers: getHeaders()
+        });
+      } catch (err) {
+        console.error(err);
+      }
+      const updated = departments.filter(d => d.id !== id);
+      setDepartments(updated);
+      localStorage.setItem('mihwar_departments', JSON.stringify(updated));
     }
   };
 
-  const handleAddEmp = (e) => {
+  // إضافة موظف جديد
+  const handleAddEmp = async (e) => {
     e.preventDefault();
     if (!empName || !empSalary || !empNationalId) return;
-    const newEmp = {
-      id: Date.now(),
+
+    const payload = {
       empNo: empNumber.trim() || String(employees.length + 1),
       name: empName.trim(),
       role: empRole.trim(),
@@ -130,15 +242,31 @@ const HrTab = ({
       iqamaEnd: empIqamaEnd || '-',
       healthEnd: empHealthEnd || '-',
       contractEnd: empContractEnd || '-',
-      dept: selectedDepartment ? selectedDepartment.name : 'الإدارة العامة',
-      incentives: 0,
-      deductions: 0
+      deptName: selectedDepartment ? selectedDepartment.name : 'الإدارة العامة',
+      departmentId: selectedDepartment?.id || null
     };
+
+    let newEmp = { ...payload, id: Date.now(), dept: payload.deptName, incentives: 0, deductions: 0 };
+    try {
+      const res = await fetch(`${API_BASE}/employees`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        newEmp = { ...saved, dept: saved.deptName || payload.deptName, incentives: 0, deductions: 0 };
+      }
+    } catch (err) {
+      console.error(err);
+    }
+
     const updated = [newEmp, ...employees];
     if (setEmployees) {
       setEmployees(updated);
       localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
     }
+
     setEmpName(''); setEmpRole(''); setEmpNationalId(''); setEmpSalary(''); setEmpPhone('');
     setEmpAddress(''); setEmpMaritalStatus('أعزب'); setEmpChildrenCount('');
     setEmpMedicalInsurance(''); setEmpContractEnd('');
@@ -147,7 +275,7 @@ const HrTab = ({
     setShowAddEmpModal(false);
   };
 
-  // فتح نافذة التعديل وتعبئة البيانات الحالية
+  // فتح نافذة التعديل
   const handleOpenEditModal = (emp) => {
     setEditEmpData({
       ...emp,
@@ -161,23 +289,46 @@ const HrTab = ({
   };
 
   // حفظ التعديلات
-  const handleSaveEditEmp = (e) => {
+  const handleSaveEditEmp = async (e) => {
     e.preventDefault();
     if (!editEmpData || !editEmpData.name) return;
+
+    const payload = {
+      empNo: editEmpData.empNo,
+      name: editEmpData.name,
+      role: editEmpData.role,
+      idNumber: editEmpData.idNumber,
+      phone: editEmpData.phone,
+      address: editEmpData.address,
+      maritalStatus: editEmpData.maritalStatus,
+      childrenCount: parseNum(editEmpData.childrenCount),
+      medicalInsurance: editEmpData.medicalInsurance,
+      salary: parseNum(editEmpData.salary),
+      vacations: parseNum(editEmpData.vacations),
+      housingAllowance: parseNum(editEmpData.housingAllowance),
+      transportAllowance: parseNum(editEmpData.transportAllowance),
+      contractEnd: editEmpData.contractEnd || '-',
+      iqamaEnd: editEmpData.iqamaEnd || '-',
+      healthEnd: editEmpData.healthEnd || '-',
+      deptName: editEmpData.dept || selectedDepartment?.name
+    };
+
+    try {
+      await fetch(`${API_BASE}/employees/${editEmpData.id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.error(err);
+    }
 
     const updated = employees.map(emp => {
       if (emp.id === editEmpData.id) {
         return {
           ...emp,
           ...editEmpData,
-          salary: parseNum(editEmpData.salary),
-          childrenCount: parseNum(editEmpData.childrenCount),
-          vacations: parseNum(editEmpData.vacations),
-          housingAllowance: parseNum(editEmpData.housingAllowance),
-          transportAllowance: parseNum(editEmpData.transportAllowance),
-          contractEnd: editEmpData.contractEnd || '-',
-          iqamaEnd: editEmpData.iqamaEnd || '-',
-          healthEnd: editEmpData.healthEnd || '-'
+          ...payload
         };
       }
       return emp;
@@ -191,12 +342,34 @@ const HrTab = ({
     setEditEmpData(null);
   };
 
-  const handleAddIncentive = (e) => {
+  // تسجيل حافز
+  const handleAddIncentive = async (e) => {
     e.preventDefault();
     if (!incEmpId || !incAmount) return;
     const emp = employees.find(e => String(e.id) === String(incEmpId));
     const amount = parseNum(incAmount);
-    
+    const dateNow = getCleanDateTime();
+
+    let newId = Date.now();
+    try {
+      const res = await fetch(`${API_BASE}/incentives`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          employeeId: incEmpId,
+          amount,
+          reason: incReason,
+          date: dateNow
+        })
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        newId = saved.id;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+
     const updatedEmps = employees.map(e => 
       String(e.id) === String(incEmpId) 
         ? { ...e, incentives: (parseNum(e.incentives) + amount) }
@@ -208,12 +381,13 @@ const HrTab = ({
     }
 
     const newRecord = {
-      id: Date.now(),
+      id: newId,
+      employeeId: incEmpId,
       empName: emp?.name,
       empRole: emp?.role,
       amount: amount,
       reason: incReason,
-      date: getCleanDateTime()
+      date: dateNow
     };
     if (setIncentiveRecords) {
       const updatedRecs = [newRecord, ...incentiveRecords];
@@ -225,12 +399,34 @@ const HrTab = ({
     setShowIncentiveModal(false);
   };
 
-  const handleAddDeduction = (e) => {
+  // تسجيل خصم
+  const handleAddDeduction = async (e) => {
     e.preventDefault();
     if (!dedEmpId || !dedAmount) return;
     const emp = employees.find(e => String(e.id) === String(dedEmpId));
     const amount = parseNum(dedAmount);
-    
+    const dateNow = getCleanDateTime();
+
+    let newId = Date.now();
+    try {
+      const res = await fetch(`${API_BASE}/deductions`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          employeeId: dedEmpId,
+          amount,
+          reason: dedReason,
+          date: dateNow
+        })
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        newId = saved.id;
+      }
+    } catch (err) {
+      console.error(err);
+    }
+
     const updatedEmps = employees.map(e => 
       String(e.id) === String(dedEmpId) 
         ? { ...e, deductions: (parseNum(e.deductions) + amount) }
@@ -242,11 +438,12 @@ const HrTab = ({
     }
 
     const newRecord = {
-      id: Date.now(),
+      id: newId,
+      employeeId: dedEmpId,
       empName: emp?.name,
       amount: amount,
       reason: dedReason,
-      date: getCleanDateTime()
+      date: dateNow
     };
     if (setDeductionsList) {
       const updatedList = [newRecord, ...deductionsList];
@@ -258,12 +455,22 @@ const HrTab = ({
     setShowDeductModal(false);
   };
 
-  const handleWaiveDeduction = (d) => {
+  // إعفاء وإلغاء الخصم
+  const handleWaiveDeduction = async (d) => {
     if (window.confirm('هل أنت متأكد من إعفاء هذا الموظف وإلغاء الخصم؟')) {
+      try {
+        await fetch(`${API_BASE}/deductions/${d.id}`, {
+          method: 'DELETE',
+          headers: getHeaders()
+        });
+      } catch (err) {
+        console.error(err);
+      }
+
       const updatedList = deductionsList.filter(record => record.id !== d.id);
       const amountToRestore = parseNum(d.amount);
       const updatedEmps = employees.map(emp => {
-        if (emp.name === d.empName) {
+        if (emp.name === d.empName || String(emp.id) === String(d.employeeId)) {
           return { ...emp, deductions: Math.max(0, parseNum(emp.deductions) - amountToRestore) };
         }
         return emp;
@@ -283,8 +490,18 @@ const HrTab = ({
     }
   };
 
-  const handleDeleteEmployeeLocal = (id) => {
+  // حذف موظف
+  const handleDeleteEmployeeLocal = async (id) => {
     if (window.confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
+      try {
+        await fetch(`${API_BASE}/employees/${id}`, {
+          method: 'DELETE',
+          headers: getHeaders()
+        });
+      } catch (err) {
+        console.error(err);
+      }
+
       const updated = employees.filter(e => e.id !== id);
       if (setEmployees) {
         setEmployees(updated);
@@ -293,6 +510,7 @@ const HrTab = ({
     }
   };
 
+  // تصدير إكسيل
   const exportDeptExcel = () => {
     if (!selectedDepartment) return;
 
@@ -348,7 +566,7 @@ const HrTab = ({
     tableRows += `<tr style="background-color: #e2e8f0; font-weight: bold;">
       <td colspan="10" style="border: 1px solid #94a3b8; padding: 12px; text-align: center; font-size: 13px; color: #0f172a;">إجمالي مسيرات الرواتب والمستحقات لقسم (${selectedDepartment.name})</td>
       <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #10b981; font-size: 13px;">${totalSalaries.toFixed(2)} ر.س</td>
-      <td style="border: 1px solid #94a3b8; padding: 12px; text-align: color; #8b5cf6; font-size: 13px;">${totalIncentives.toFixed(2)} ر.س</td>
+      <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #8b5cf6; font-size: 13px;">${totalIncentives.toFixed(2)} ر.س</td>
       <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #ef4444; font-size: 13px;">${totalDeductions.toFixed(2)} ر.س</td>
       <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #0284c7; font-size: 14px; background-color: #e0f2fe;">${totalNet.toFixed(2)} ر.س</td>
     </tr>`;
@@ -845,7 +1063,7 @@ const HrTab = ({
         </div>
       )}
 
-      {/* نافذة تعديل بيانات الموظف المدمجة (مع العنوان الوطني والتأمين وبدون بداية العقد) */}
+      {/* نافذة تعديل بيانات الموظف المدمجة */}
       {showEditEmpModal && editEmpData && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', border: `1px solid ${theme?.border || '#334155'}`, maxHeight: '92vh', overflowY: 'auto' }}>
@@ -885,7 +1103,6 @@ const HrTab = ({
                 </div>
               </div>
 
-              {/* العنوان الوطني والتأمين الطبي في التعديل */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={labelStyle}>العنوان الوطني</label>
