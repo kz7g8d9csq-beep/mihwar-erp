@@ -4,7 +4,7 @@ const HrTab = ({
   t, theme = {}, isDark, user,
   employees = [], setEmployees,
   incentiveRecords = [], setIncentiveRecords,
-  deductionsList = [], setDeductionsList, handleOpenEditEmp
+  deductionsList = [], setDeductionsList
 }) => {
   const defaultDepts = [
     { id: 1, name: 'المبيعات والتوزيع', desc: 'إدارة المبيعات والمندوبين' },
@@ -37,6 +37,7 @@ const HrTab = ({
   const [newDeptName, setNewDeptName] = useState('');
   const [newDeptDesc, setNewDeptDesc] = useState('');
 
+  // Add Employee Form States
   const [showAddEmpModal, setShowAddEmpModal] = useState(false);
   const [empName, setEmpName] = useState('');
   const [empRole, setEmpRole] = useState('');
@@ -54,8 +55,15 @@ const HrTab = ({
   const [empTransportAllowance, setEmpTransportAllowance] = useState('');
   const [empIqamaEnd, setEmpIqamaEnd] = useState('');
   const [empHealthEnd, setEmpHealthEnd] = useState('');
+
+  // Edit Employee Modal State (مدمج داخلياً)
+  const [showEditEmpModal, setShowEditEmpModal] = useState(false);
+  const [editEmpData, setEditEmpData] = useState(null);
+
+  // Profile View State
   const [viewingEmpProfile, setViewingEmpProfile] = useState(null);
 
+  // Incentives & Deductions Modals
   const [showIncentiveModal, setShowIncentiveModal] = useState(false);
   const [incEmpId, setIncEmpId] = useState('');
   const [incAmount, setIncAmount] = useState('');
@@ -137,6 +145,50 @@ const HrTab = ({
     setEmpNumber(''); setEmpVacations(''); setEmpHousingAllowance(''); setEmpTransportAllowance('');
     setEmpIqamaEnd(''); setEmpHealthEnd('');
     setShowAddEmpModal(false);
+  };
+
+  // فتح نافذة التعديل وتعبئة البيانات الحالية
+  const handleOpenEditModal = (emp) => {
+    setEditEmpData({
+      ...emp,
+      address: emp.address || '',
+      medicalInsurance: emp.medicalInsurance || '',
+      contractEnd: emp.contractEnd === '-' ? '' : emp.contractEnd || '',
+      iqamaEnd: emp.iqamaEnd === '-' ? '' : emp.iqamaEnd || '',
+      healthEnd: emp.healthEnd === '-' ? '' : emp.healthEnd || ''
+    });
+    setShowEditEmpModal(true);
+  };
+
+  // حفظ التعديلات
+  const handleSaveEditEmp = (e) => {
+    e.preventDefault();
+    if (!editEmpData || !editEmpData.name) return;
+
+    const updated = employees.map(emp => {
+      if (emp.id === editEmpData.id) {
+        return {
+          ...emp,
+          ...editEmpData,
+          salary: parseNum(editEmpData.salary),
+          childrenCount: parseNum(editEmpData.childrenCount),
+          vacations: parseNum(editEmpData.vacations),
+          housingAllowance: parseNum(editEmpData.housingAllowance),
+          transportAllowance: parseNum(editEmpData.transportAllowance),
+          contractEnd: editEmpData.contractEnd || '-',
+          iqamaEnd: editEmpData.iqamaEnd || '-',
+          healthEnd: editEmpData.healthEnd || '-'
+        };
+      }
+      return emp;
+    });
+
+    if (setEmployees) {
+      setEmployees(updated);
+      localStorage.setItem('mihwar_hr_employees', JSON.stringify(updated));
+    }
+    setShowEditEmpModal(false);
+    setEditEmpData(null);
   };
 
   const handleAddIncentive = (e) => {
@@ -241,7 +293,6 @@ const HrTab = ({
     }
   };
 
-  // تصدير إكسيل بدون بداية العقد ومع العنوان الوطني والتأمين الطبي
   const exportDeptExcel = () => {
     if (!selectedDepartment) return;
 
@@ -294,11 +345,10 @@ const HrTab = ({
       </tr>`;
     });
 
-    // صف الإجماليات (10 أعمدة بيانات + 4 أعمدة مالية = 14 عموداً)
     tableRows += `<tr style="background-color: #e2e8f0; font-weight: bold;">
       <td colspan="10" style="border: 1px solid #94a3b8; padding: 12px; text-align: center; font-size: 13px; color: #0f172a;">إجمالي مسيرات الرواتب والمستحقات لقسم (${selectedDepartment.name})</td>
       <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #10b981; font-size: 13px;">${totalSalaries.toFixed(2)} ر.س</td>
-      <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #8b5cf6; font-size: 13px;">${totalIncentives.toFixed(2)} ر.س</td>
+      <td style="border: 1px solid #94a3b8; padding: 12px; text-align: color; #8b5cf6; font-size: 13px;">${totalIncentives.toFixed(2)} ر.س</td>
       <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #ef4444; font-size: 13px;">${totalDeductions.toFixed(2)} ر.س</td>
       <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #0284c7; font-size: 14px; background-color: #e0f2fe;">${totalNet.toFixed(2)} ر.س</td>
     </tr>`;
@@ -360,7 +410,6 @@ const HrTab = ({
   const inputStyle = { width: '100%', padding: '11px', borderRadius: '8px', background: theme?.bgMain || '#0f172a', color: theme?.textDark || '#fff', border: `1px solid ${theme?.border || '#334155'}`, boxSizing: 'border-box', outline: 'none' };
   const labelStyle = { fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: theme?.textDark || '#fff' };
 
-  // Data processing for Sub-tabs
   let deptEmps = [];
   let filteredEmps = [];
   let deptDeductions = [];
@@ -540,7 +589,7 @@ const HrTab = ({
                         <td style={{ padding: '12px', fontWeight: 'bold', fontSize: '14px', color: theme?.textDark || '#fff' }}>{net.toFixed(2)}</td>
                         <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
                           <button onClick={() => setViewingEmpProfile(emp)} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', marginLeft: '5px' }}>👁️ تفاصيل</button>
-                          <button onClick={() => handleOpenEditEmp && handleOpenEditEmp(emp)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', marginLeft: '5px' }}>تعديل ✏️</button>
+                          <button onClick={() => handleOpenEditModal(emp)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', marginLeft: '5px' }}>تعديل ✏️</button>
                           <button onClick={() => handleDeleteEmployeeLocal(emp.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>حذف 🗑️</button>
                         </td>
                       </tr>
@@ -712,7 +761,7 @@ const HrTab = ({
         </div>
       )}
 
-      {/* نافذة إضافة موظف جديد - محدثة بالكامل */}
+      {/* نافذة إضافة موظف جديد */}
       {showAddEmpModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
           <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', border: `1px solid ${theme?.border || '#334155'}`, maxHeight: '92vh', overflowY: 'auto' }}>
@@ -734,7 +783,6 @@ const HrTab = ({
                 <div><label style={labelStyle}>القسم</label><input type="text" value={selectedDepartment?.name} disabled style={{...inputStyle, opacity: 0.7}} /></div>
               </div>
 
-              {/* العنوان الوطني والتأمين الطبي */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={labelStyle}>العنوان الوطني</label>
@@ -791,6 +839,118 @@ const HrTab = ({
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ الموظف</button>
                 <button type="button" onClick={() => setShowAddEmpModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إلغاء</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* نافذة تعديل بيانات الموظف المدمجة (مع العنوان الوطني والتأمين وبدون بداية العقد) */}
+      {showEditEmpModal && editEmpData && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', border: `1px solid ${theme?.border || '#334155'}`, maxHeight: '92vh', overflowY: 'auto' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px', color: '#f59e0b' }}>تعديل بيانات الموظف: {editEmpData.name}</h3>
+            <form onSubmit={handleSaveEditEmp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={labelStyle}>الاسم الكامل *</label>
+                  <input type="text" value={editEmpData.name || ''} onChange={e=>setEditEmpData({...editEmpData, name: e.target.value})} required style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>رقم الموظف</label>
+                  <input type="text" value={editEmpData.empNo || ''} onChange={e=>setEditEmpData({...editEmpData, empNo: e.target.value})} style={inputStyle} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={labelStyle}>رقم الهوية / الإقامة *</label>
+                  <input type="text" value={editEmpData.idNumber || ''} onChange={e=>setEditEmpData({...editEmpData, idNumber: e.target.value})} required style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>رقم الهاتف</label>
+                  <input type="text" value={editEmpData.phone || ''} onChange={e=>setEditEmpData({...editEmpData, phone: e.target.value})} style={inputStyle} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={labelStyle}>المسمى الوظيفي *</label>
+                  <input type="text" value={editEmpData.role || ''} onChange={e=>setEditEmpData({...editEmpData, role: e.target.value})} required style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>القسم</label>
+                  <input type="text" value={editEmpData.dept || selectedDepartment?.name} disabled style={{...inputStyle, opacity: 0.7}} />
+                </div>
+              </div>
+
+              {/* العنوان الوطني والتأمين الطبي في التعديل */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={labelStyle}>العنوان الوطني</label>
+                  <input type="text" value={editEmpData.address || ''} onChange={e=>setEditEmpData({...editEmpData, address: e.target.value})} placeholder="المدينة، الحي، الشارع" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>شركة / فئة التأمين الطبي</label>
+                  <input type="text" value={editEmpData.medicalInsurance || ''} onChange={e=>setEditEmpData({...editEmpData, medicalInsurance: e.target.value})} placeholder="مثال: بوبا فئة A / التعاونية" style={inputStyle} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={labelStyle}>الحالة الاجتماعية</label>
+                  <select value={editEmpData.maritalStatus || 'أعزب'} onChange={e=>setEditEmpData({...editEmpData, maritalStatus: e.target.value})} style={inputStyle}>
+                    <option value="أعزب">أعزب</option>
+                    <option value="متزوج">متزوج</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>عدد الأطفال</label>
+                  <input type="number" min="0" value={editEmpData.childrenCount || 0} onChange={e=>setEditEmpData({...editEmpData, childrenCount: e.target.value})} style={inputStyle} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={labelStyle}>الراتب الأساسي (ر.س) *</label>
+                  <input type="number" min="0" value={editEmpData.salary || 0} onChange={e=>setEditEmpData({...editEmpData, salary: e.target.value})} required style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>رصيد الإجازات (أيام)</label>
+                  <input type="number" min="0" value={editEmpData.vacations || 21} onChange={e=>setEditEmpData({...editEmpData, vacations: e.target.value})} style={{...inputStyle, background: theme?.cardBg || '#1e293b'}} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: theme?.bgMain || '#0f172a', padding: '12px', borderRadius: '10px', border: `1px solid ${theme?.border || '#334155'}` }}>
+                <div>
+                  <label style={{ ...labelStyle, color: '#10b981' }}>بدل سكن (ر.س)</label>
+                  <input type="number" min="0" value={editEmpData.housingAllowance || 0} onChange={e=>setEditEmpData({...editEmpData, housingAllowance: e.target.value})} style={{...inputStyle, padding: '10px', background: theme?.cardBg || '#1e293b'}} />
+                </div>
+                <div>
+                  <label style={{ ...labelStyle, color: '#10b981' }}>بدل مواصلات (ر.س)</label>
+                  <input type="number" min="0" value={editEmpData.transportAllowance || 0} onChange={e=>setEditEmpData({...editEmpData, transportAllowance: e.target.value})} style={{...inputStyle, padding: '10px', background: theme?.cardBg || '#1e293b'}} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', background: theme?.bgMain || '#0f172a', padding: '12px', borderRadius: '10px', border: `1px solid ${theme?.border || '#334155'}` }}>
+                <div>
+                  <label style={labelStyle}>انتهاء الإقامة</label>
+                  <input type="date" value={editEmpData.iqamaEnd || ''} onChange={e=>setEditEmpData({...editEmpData, iqamaEnd: e.target.value})} style={{...inputStyle, padding: '8px', fontSize: '12px', background: theme?.cardBg || '#1e293b'}} />
+                </div>
+                <div>
+                  <label style={labelStyle}>انتهاء التأمين الطبي</label>
+                  <input type="date" value={editEmpData.healthEnd || ''} onChange={e=>setEditEmpData({...editEmpData, healthEnd: e.target.value})} style={{...inputStyle, padding: '8px', fontSize: '12px', background: theme?.cardBg || '#1e293b'}} />
+                </div>
+                <div>
+                  <label style={labelStyle}>انتهاء العقد الوظيفي</label>
+                  <input type="date" value={editEmpData.contractEnd || ''} onChange={e=>setEditEmpData({...editEmpData, contractEnd: e.target.value})} style={{...inputStyle, padding: '8px', fontSize: '12px', background: theme?.cardBg || '#1e293b'}} />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                <button type="submit" style={{ flex: 1, background: '#10b981', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ التعديلات</button>
+                <button type="button" onClick={() => { setShowEditEmpModal(false); setEditEmpData(null); }} style={{ flex: 1, background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إلغاء</button>
               </div>
             </form>
           </div>
