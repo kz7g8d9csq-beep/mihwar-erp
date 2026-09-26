@@ -20,6 +20,7 @@ const HrTab = ({
   hrIncentivesSearchQuery = '', setHrIncentivesSearchQuery,
   handleRemoveIncentive
 }) => {
+
   // دالة أمان لقراءة الترجمة
   const tr = (key, fallback) => {
     if (typeof t === 'function') {
@@ -33,7 +34,16 @@ const HrTab = ({
 
   const currency = (t && t.currency) || 'ر.س';
 
-  // دالة تنظيف وتوضيح صيغة العمولة (نسبة % أو بالكرتون أو نقداً)
+  // دالة استخراج الأرقام من أي قيمة أو نص
+  const parseNum = (val) => {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    const cleaned = String(val).replace(/[^0-9.]/g, '');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
+  };
+
+  // دالة تنظيف وتوضيح صيغة العمولة
   const formatCommissionDisplay = (val, type) => {
     if (val === undefined || val === null || val === '' || val === 0) return '0';
     const strVal = String(val).trim();
@@ -45,10 +55,26 @@ const HrTab = ({
     if (strType.includes('كرتون')) {
       return strVal + ' بالكرتون';
     }
-    if (strType && strType !== 'بدون') {
+    if (strType && strType !== 'بدون' && strType !== 'null') {
       return strVal + ' (' + strType + ')';
     }
     return strVal + ' ' + currency;
+  };
+
+  // دالة حساب فارق الأيام بدقة لتنبيهات الوثائق
+  const calculateDaysLeft = (dateStr) => {
+    if (!dateStr || dateStr === '-' || dateStr === 'null' || dateStr === 'undefined') return null;
+    try {
+      const target = new Date(dateStr);
+      if (isNaN(target.getTime())) return null;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      target.setHours(0, 0, 0, 0);
+      const diffTime = target.getTime() - today.getTime();
+      return Math.round(diffTime / (1000 * 60 * 60 * 24));
+    } catch (e) {
+      return null;
+    }
   };
 
   // دالة توليد التاريخ والوقت لترويسة التصدير
@@ -62,26 +88,123 @@ const HrTab = ({
     return y + '-' + m + '-' + d + ' ' + h + ':' + min;
   };
 
+  // ══════════════ 1. الحساب المتحرك والديناميكي لإجمالي الحوافز المادية ══════════════
+  const totalIncentivesFromRecords = (incentiveRecords || []).reduce((acc, r) => {
+    const val = parseNum(r?.incentiveValue) || parseNum(r?.incentiveType) || parseNum(r?.amount) || parseNum(r?.value) || 0;
+    return acc + val;
+  }, 0);
+
+  const totalIncentivesFromEmployees = (employees || []).reduce((acc, emp) => {
+    if (!emp?.incentiveType || emp?.incentiveType === 'حافز مادي') {
+      return acc + parseNum(emp?.incentives);
+    }
+    return acc;
+  }, 0);
+
+  // إجمالي الحوافز المتحرك لحظياً
+  const dynamicTotalIncentives = totalIncentivesFromRecords > 0 
+    ? totalIncentivesFromRecords + totalIncentivesFromEmployees 
+    : (totalIncentivesFromEmployees > 0 ? totalIncentivesFromEmployees : (parseNum(totalIncentives) || 0));
+
+  // إجمالي العمولات المتحرك
   const calculatedCommissions = totalCommissions !== undefined 
     ? totalCommissions 
-    : (employees || []).reduce((acc, emp) => acc + (Number(emp?.commission) || 0), 0);
+    : (employees || []).reduce((acc, emp) => acc + parseNum(emp?.commission), 0);
 
-  const calculatedIncentives = totalIncentives !== undefined 
-    ? totalIncentives 
-    : (employees || []).reduce((acc, emp) => {
-        if (!emp?.incentiveType || emp?.incentiveType === 'حافز مادي') {
-          return acc + (Number(emp?.incentives) || 0);
-        }
-        return acc;
-      }, 0);
-
+  // فلترة سجل الحوافز والمكافآت
   const safeLower = (s) => (s || '').toString().toLowerCase();
   const filteredIncentiveRecords = (incentiveRecords || []).filter(r =>
     safeLower(r?.empName).includes(safeLower(hrIncentivesSearchQuery)) ||
-    safeLower(r?.empRole).includes(safeLower(hrIncentivesSearchQuery))
+    safeLower(r?.empRole).includes(safeLower(hrIncentivesSearchQuery)) ||
+    safeLower(r?.reason).includes(safeLower(hrIncentivesSearchQuery))
   );
 
-  // دالة تصدير الإكسيل الرسمية المعتمدة
+  // ══════════════ 2. معالج التنبيهات الشامل والمضمون للوثائق ══════════════
+  const getComprehensiveAlerts = () => {
+    const list = [];
+    const empList = employees || [];
+
+    // توليد التنبيهات من الموظفين مباشرة لضمان عدم فقدان أي رقم هوية أو نوع وثيقة
+    empList.forEach((emp, eIdx) => {
+      // وثيقة 1: هوية مقيم / إقامة
+      if (emp?.iqamaEnd && emp.iqamaEnd !== '-') {
+        const diff = calculateDaysLeft(emp.iqamaEnd);
+        list.push({
+          id: 'iqama-' + (emp?.id || eIdx),
+          empName: emp?.name || 'موظف',
+          empIdNumber: emp?.idNumber || '-',
+          docType: 'هوية مقيم / إقامة',
+          expiryDate: emp.iqamaEnd,
+          daysDiff: diff !== null ? diff : 0
+        });
+      }
+
+      // وثيقة 2: تأمين طبي / شهادة صحية
+      const healthDate = emp?.healthEnd || emp?.insuranceEnd || emp?.medicalEnd;
+      if (healthDate && healthDate !== '-') {
+        const diff = calculateDaysLeft(healthDate);
+        list.push({
+          id: 'health-' + (emp?.id || eIdx),
+          empName: emp?.name || 'موظف',
+          empIdNumber: emp?.idNumber || '-',
+          docType: 'شهادة صحية وتأمين طبي',
+          expiryDate: healthDate,
+          daysDiff: diff !== null ? diff : 0
+        });
+      }
+
+      // وثيقة 3: عقد العمل الوظيفي
+      if (emp?.contractEnd && emp.contractEnd !== '-') {
+        const diff = calculateDaysLeft(emp.contractEnd);
+        list.push({
+          id: 'contract-' + (emp?.id || eIdx),
+          empName: emp?.name || 'موظف',
+          empIdNumber: emp?.idNumber || '-',
+          docType: 'عقد العمل الوظيفي',
+          expiryDate: emp.contractEnd,
+          daysDiff: diff !== null ? diff : 0
+        });
+      }
+    });
+
+    // دمج تنبيهات filteredAlerts الممررة إن كانت تحتوي على وثائق إضافية
+    if (filteredAlerts && filteredAlerts.length > 0) {
+      filteredAlerts.forEach((al, idx) => {
+        const exists = list.some(item => 
+          item.empName === (al?.empName || al?.name) && 
+          item.docType === (al?.docType || al?.type)
+        );
+        if (!exists) {
+          const emp = empList.find(e => e.name === (al?.empName || al?.name));
+          const diff = al?.daysDiff !== undefined ? al.daysDiff : calculateDaysLeft(al?.date || al?.expiryDate);
+          list.push({
+            id: al?.id || 'alert-' + idx,
+            empName: al?.empName || al?.name || emp?.name || 'موظف',
+            empIdNumber: al?.empIdNumber || al?.idNumber || emp?.idNumber || '-',
+            docType: al?.docType || al?.type || al?.documentType || 'وثيقة رسمية',
+            expiryDate: al?.expiryDate || al?.date || '-',
+            daysDiff: diff !== null ? diff : 0
+          });
+        }
+      });
+    }
+
+    // فلترة بالبحث في خانة تنبيهات الوثائق
+    if (hrAlertsSearchQuery && hrAlertsSearchQuery.trim() !== '') {
+      const q = hrAlertsSearchQuery.toLowerCase().trim();
+      return list.filter(item => 
+        safeLower(item.empName).includes(q) ||
+        safeLower(item.empIdNumber).includes(q) ||
+        safeLower(item.docType).includes(q)
+      );
+    }
+
+    return list;
+  };
+
+  const finalAlertsList = getComprehensiveAlerts();
+
+  // ══════════════ 3. دالة تصدير الإكسيل المعتمدة لكافة أقسام الموارد البشرية ══════════════
   const handleExportHRExcel = () => {
     const exportDate = getCleanDateTime();
     let systemTitle = 'نظام محور • سجل الموارد البشرية والرواتب';
@@ -89,7 +212,116 @@ const HrTab = ({
     let tableHeaders = '';
     let tableRows = '';
 
-    if (hrSubTab === 'payroll') {
+    if (hrSubTab === 'alerts') {
+      // ══════ تصدير تنبيهات الوثائق بعد إصلاح جميع الأعمدة الفارغة ══════
+      systemTitle = 'نظام محور • قائمة تنبيهات وثائق الموظفين';
+      fileName = 'تنبيهات_وثائق_الموظفين';
+      const list = finalAlertsList;
+      if (list.length === 0) {
+        alert('لا توجد تنبيهات وثائق للتصدير');
+        return;
+      }
+
+      tableHeaders = '<tr style="background-color: #e2e8f0;">' +
+        '<th width="200" style="width: 200px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">اسم الموظف</th>' +
+        '<th width="160" style="width: 160px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">رقم الهوية / الإقامة</th>' +
+        '<th width="180" style="width: 180px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">نوع الوثيقة</th>' +
+        '<th width="150" style="width: 150px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">تاريخ الانتهاء</th>' +
+        '<th width="150" style="width: 150px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">الأيام المتبقية</th>' +
+        '<th width="130" style="width: 130px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">حالة الوثيقة</th>' +
+      '</tr>';
+
+      list.forEach((al, idx) => {
+        const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+        const isExp = al.daysDiff < 0;
+        const isNear = al.daysDiff >= 0 && al.daysDiff <= 30;
+
+        let statusText = 'سارية';
+        let statusColor = '#16a34a';
+        if (isExp) {
+          statusText = 'منتهية';
+          statusColor = '#dc2626';
+        } else if (isNear) {
+          statusText = 'تنتهي قريباً';
+          statusColor = '#d97706';
+        }
+
+        const daysText = isExp 
+          ? 'منتهي منذ ' + Math.abs(al.daysDiff) + ' يوم' 
+          : 'متبقي ' + al.daysDiff + ' يوم';
+
+        tableRows += '<tr style="background-color: ' + bg + ';">' +
+          '<td style="border: 1px solid #cbd5e1; padding: 10px 15px; text-align: right; font-weight: bold; white-space: nowrap;">' + al.empName + '</td>' +
+          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; mso-number-format:\'\\@\'; font-weight: bold;">' + al.empIdNumber + '</td>' +
+          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; color: #0284c7; font-weight: bold;">' + al.docType + '</td>' +
+          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; mso-number-format:\'\\@\';">' + al.expiryDate + '</td>' +
+          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; color: ' + (isExp ? '#dc2626' : (isNear ? '#d97706' : '#0f172a')) + ';">' + daysText + '</td>' +
+          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; color: ' + statusColor + ';">' + statusText + '</td>' +
+        '</tr>';
+      });
+
+    } else if (hrSubTab === 'incentives') {
+      // ══════ تصدير سجل الحوافز والمكافآت ══════
+      systemTitle = 'نظام محور • سجل الحوافز والمكافآت والعمولات';
+      fileName = 'سجل_حوافز_الموظفين';
+      const list = filteredIncentiveRecords || [];
+      if (list.length === 0) {
+        alert('لا توجد بيانات حوافز ومكافآت للتصدير');
+        return;
+      }
+
+      tableHeaders = '<tr style="background-color: #e2e8f0;">' +
+        '<th width="200" style="width: 200px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">اسم الموظف</th>' +
+        '<th width="160" style="width: 160px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">المسمى الوظيفي</th>' +
+        '<th width="150" style="width: 150px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">قيمة الحافز</th>' +
+        '<th width="220" style="width: 220px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">سبب الحافز</th>' +
+        '<th width="140" style="width: 140px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">نوع العمولة</th>' +
+        '<th width="140" style="width: 140px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">قيمة العمولة</th>' +
+        '<th width="150" style="width: 150px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">التاريخ</th>' +
+      '</tr>';
+
+      let totalIncentivesTable = 0;
+      let totalCommissionsTable = 0;
+
+      list.forEach((r, idx) => {
+        const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+        
+        // استخراج القيمة وسبب الحافز بدقة حتى لو تم تبديلهما بالخطأ
+        const numVal = parseNum(r?.incentiveValue) || parseNum(r?.incentiveType) || parseNum(r?.amount) || 0;
+        totalIncentivesTable += numVal;
+        
+        let reasonText = r?.reason || '';
+        if (!reasonText) {
+          if (isNaN(Number(r?.incentiveValue)) && r?.incentiveValue) reasonText = r.incentiveValue;
+          else if (isNaN(Number(r?.incentiveType)) && r?.incentiveType) reasonText = r.incentiveType;
+          else reasonText = '-';
+        }
+
+        const commVal = parseNum(r?.commissionValue);
+        totalCommissionsTable += commVal;
+
+        tableRows += '<tr style="background-color: ' + bg + ';">' +
+          '<td style="border: 1px solid #cbd5e1; padding: 10px 15px; text-align: right; font-weight: bold; white-space: nowrap;">' + (r?.empName || '-') + '</td>' +
+          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: right; color: #0284c7;">' + (r?.empRole || '-') + '</td>' +
+          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; color: #8b5cf6;">' + (numVal > 0 ? numVal.toFixed(2) + ' ' + currency : '-') + '</td>' +
+          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: right; font-weight: bold; color: #10b981;">' + reasonText + '</td>' +
+          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">' + (r?.commissionType && r.commissionType !== 'null' ? r.commissionType : '-') + '</td>' +
+          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; color: #d97706;">' + formatCommissionDisplay(r?.commissionValue, r?.commissionType) + '</td>' +
+          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; mso-number-format:\'\\@\';">' + (r?.date || '-') + '</td>' +
+        '</tr>';
+      });
+
+      // صف إجمالي للحوافز في الأسفل
+      tableRows += '<tr style="background-color: #e2e8f0; font-weight: bold;">' +
+        '<td colspan="2" style="border: 1px solid #94a3b8; padding: 12px; text-align: center; font-size: 13px;">الإجمالي الكلي</td>' +
+        '<td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #8b5cf6; font-size: 13px;">' + totalIncentivesTable.toFixed(2) + ' ' + currency + '</td>' +
+        '<td colspan="2" style="border: 1px solid #94a3b8; padding: 12px;"></td>' +
+        '<td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #d97706; font-size: 13px;">' + totalCommissionsTable.toFixed(2) + ' ' + currency + '</td>' +
+        '<td style="border: 1px solid #94a3b8; padding: 12px;"></td>' +
+      '</tr>';
+
+    } else if (hrSubTab === 'payroll') {
+      // ══════ تصدير الخصومات ══════
       systemTitle = 'نظام محور • سجل الخصومات والجزاءات';
       fileName = 'سجل_خصومات_الموظفين';
       const list = filteredDeductions || [];
@@ -99,16 +331,16 @@ const HrTab = ({
       }
 
       tableHeaders = '<tr style="background-color: #e2e8f0;">' +
-        '<th width="200" style="width: 200px;">اسم الموظف</th>' +
-        '<th width="140" style="width: 140px;">قيمة الخصم</th>' +
-        '<th width="260" style="width: 260px;">سبب الخصم</th>' +
-        '<th width="160" style="width: 160px;">تاريخ التسجيل</th>' +
+        '<th width="200" style="width: 200px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">اسم الموظف</th>' +
+        '<th width="140" style="width: 140px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">قيمة الخصم</th>' +
+        '<th width="260" style="width: 260px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">سبب الخصم</th>' +
+        '<th width="160" style="width: 160px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">تاريخ التسجيل</th>' +
       '</tr>';
 
       let totalDeductionsAmount = 0;
       list.forEach((d, idx) => {
         const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
-        const amt = Number(d?.amount || 0);
+        const amt = parseNum(d?.amount);
         totalDeductionsAmount += amt;
         tableRows += '<tr style="background-color: ' + bg + ';">' +
           '<td style="border: 1px solid #cbd5e1; padding: 10px 15px; text-align: right; font-weight: bold; white-space: nowrap;">' + (d?.empName || '-') + '</td>' +
@@ -125,69 +357,8 @@ const HrTab = ({
         '<td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #64748b;">-</td>' +
       '</tr>';
 
-    } else if (hrSubTab === 'incentives') {
-      systemTitle = 'نظام محور • سجل الحوافز والمكافآت والعمولات';
-      fileName = 'سجل_حوافز_الموظفين';
-      const list = filteredIncentiveRecords || [];
-      if (list.length === 0) {
-        alert('لا توجد بيانات حوافز ومكافآت للتصدير');
-        return;
-      }
-
-      tableHeaders = '<tr style="background-color: #e2e8f0;">' +
-        '<th width="200" style="width: 200px;">اسم الموظف</th>' +
-        '<th width="160" style="width: 160px;">المسمى الوظيفي</th>' +
-        '<th width="140" style="width: 140px;">نوع الحافز</th>' +
-        '<th width="160" style="width: 160px;">قيمة / وصف الحافز</th>' +
-        '<th width="140" style="width: 140px;">نوع العمولة</th>' +
-        '<th width="140" style="width: 140px;">قيمة العمولة</th>' +
-        '<th width="160" style="width: 160px;">تاريخ التسجيل</th>' +
-      '</tr>';
-
-      list.forEach((r, idx) => {
-        const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
-        tableRows += '<tr style="background-color: ' + bg + ';">' +
-          '<td style="border: 1px solid #cbd5e1; padding: 10px 15px; text-align: right; font-weight: bold; white-space: nowrap;">' + (r?.empName || '-') + '</td>' +
-          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: right; color: #0284c7;">' + (r?.empRole || '-') + '</td>' +
-          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">' + (r?.incentiveType || '-') + '</td>' +
-          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; color: #10b981;">' + (r?.incentiveValue || '-') + '</td>' +
-          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">' + (r?.commissionType || '-') + '</td>' +
-          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; color: #d97706;">' + formatCommissionDisplay(r?.commissionValue, r?.commissionType) + '</td>' +
-          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; mso-number-format:\'\\@\';">' + (r?.date || '-') + '</td>' +
-        '</tr>';
-      });
-
-    } else if (hrSubTab === 'alerts') {
-      systemTitle = 'نظام محور • قائمة تنبيهات وثائق الموظفين';
-      fileName = 'تنبيهات_وثائق_الموظفين';
-      const list = filteredAlerts || [];
-      if (list.length === 0) {
-        alert('لا توجد تنبيهات وثائق للتصدير');
-        return;
-      }
-
-      tableHeaders = '<tr style="background-color: #e2e8f0;">' +
-        '<th width="200" style="width: 200px;">اسم الموظف</th>' +
-        '<th width="160" style="width: 160px;">رقم الهوية / الإقامة</th>' +
-        '<th width="160" style="width: 160px;">نوع الوثيقة</th>' +
-        '<th width="150" style="width: 150px;">الأيام المتبقية</th>' +
-        '<th width="140" style="width: 140px;">الحالة</th>' +
-      '</tr>';
-
-      list.forEach((al, idx) => {
-        const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
-        const isExp = al?.daysDiff < 0;
-        tableRows += '<tr style="background-color: ' + bg + ';">' +
-          '<td style="border: 1px solid #cbd5e1; padding: 10px 15px; text-align: right; font-weight: bold; white-space: nowrap;">' + (al?.empName || '-') + '</td>' +
-          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; mso-number-format:\'\\@\';">' + (al?.empIdNumber || '-') + '</td>' +
-          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: right;">' + (al?.docType || '-') + '</td>' +
-          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold;">' + (al?.daysDiff || 0) + ' يوم</td>' +
-          '<td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; color: ' + (isExp ? '#dc2626' : '#16a34a') + ';">' + (isExp ? 'منتهية' : 'سارية') + '</td>' +
-        '</tr>';
-      });
-
     } else {
-      // سجل الموظفين والرواتب والوثائق (14 عموداً كاملاً مع انتهاء التأمين الطبي في مكانه الصحيح)
+      // ══════ تصدير سجل الموظفين والرواتب والوثائق ══════
       systemTitle = 'نظام محور • سجل الموظفين والرواتب والوثائق';
       fileName = 'سجل_الموظفين_والرواتب';
       const list = filteredEmployees || [];
@@ -197,20 +368,20 @@ const HrTab = ({
       }
 
       tableHeaders = '<tr style="background-color: #e2e8f0;">' +
-        '<th width="120" style="width: 120px;">الرقم الوظيفي</th>' +
-        '<th width="260" style="width: 260px; padding: 12px 16px;">اسم الموظف</th>' +
-        '<th width="160" style="width: 160px;">رقم الهوية / الإقامة</th>' +
-        '<th width="160" style="width: 160px;">المسمى الوظيفي</th>' +
-        '<th width="140" style="width: 140px;">القسم</th>' +
-        '<th width="130" style="width: 130px;">الراتب الأساسي</th>' +
-        '<th width="120" style="width: 120px;">البدلات</th>' +
-        '<th width="140" style="width: 140px;">العمولات</th>' +
-        '<th width="120" style="width: 120px;">الخصومات</th>' +
-        '<th width="150" style="width: 150px;">صافي الراتب التقديري</th>' +
-        '<th width="120" style="width: 120px;">رصيد الإجازات</th>' +
-        '<th width="140" style="width: 140px;">انتهاء الإقامة</th>' +
-        '<th width="150" style="width: 150px;">انتهاء التأمين الطبي</th>' +
-        '<th width="140" style="width: 140px;">انتهاء العقد</th>' +
+        '<th width="120" style="width: 120px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">الرقم الوظيفي</th>' +
+        '<th width="260" style="width: 260px; padding: 12px 16px; border: 1px solid #94a3b8; font-weight: bold; color: #0f172a;">اسم الموظف</th>' +
+        '<th width="160" style="width: 160px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">رقم الهوية / الإقامة</th>' +
+        '<th width="160" style="width: 160px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">المسمى الوظيفي</th>' +
+        '<th width="140" style="width: 140px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">القسم</th>' +
+        '<th width="130" style="width: 130px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">الراتب الأساسي</th>' +
+        '<th width="120" style="width: 120px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">البدلات</th>' +
+        '<th width="140" style="width: 140px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">العمولات</th>' +
+        '<th width="120" style="width: 120px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">الخصومات</th>' +
+        '<th width="150" style="width: 150px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">صافي الراتب التقديري</th>' +
+        '<th width="120" style="width: 120px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">رصيد الإجازات</th>' +
+        '<th width="140" style="width: 140px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">انتهاء الإقامة</th>' +
+        '<th width="150" style="width: 150px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">انتهاء التأمين الطبي</th>' +
+        '<th width="140" style="width: 140px; border: 1px solid #94a3b8; padding: 12px; font-weight: bold; color: #0f172a;">انتهاء العقد</th>' +
       '</tr>';
 
       let sumBasic = 0;
@@ -221,10 +392,10 @@ const HrTab = ({
       list.forEach((emp, idx) => {
         const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
         const empNo = emp?.empNo || ('EMP-' + (idx + 1));
-        const salary = Number(emp?.salary || 0);
-        const allow = (Number(emp?.allowances) || 0) + (Number(emp?.housingAllowance) || 0) + (Number(emp?.transportAllowance) || 0);
-        const deduct = Number(emp?.deductions || 0);
-        const net = Math.max(0, salary + allow + Number(emp?.commission || 0) - deduct);
+        const salary = parseNum(emp?.salary);
+        const allow = parseNum(emp?.allowances) + parseNum(emp?.housingAllowance) + parseNum(emp?.transportAllowance);
+        const deduct = parseNum(emp?.deductions);
+        const net = Math.max(0, salary + allow + parseNum(emp?.commission) - deduct);
 
         sumBasic += salary;
         sumAllowances += allow;
@@ -267,7 +438,7 @@ const HrTab = ({
       '</tr>';
     }
 
-    const colCount = hrSubTab === 'payroll' ? 4 : (hrSubTab === 'incentives' ? 7 : (hrSubTab === 'alerts' ? 5 : 14));
+    const colCount = hrSubTab === 'payroll' ? 4 : (hrSubTab === 'incentives' ? 7 : (hrSubTab === 'alerts' ? 6 : 14));
 
     const excelTemplate = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">' +
       '<head>' +
@@ -310,6 +481,7 @@ const HrTab = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+      
       {/* رأس الصفحة وأزرار الإضافة والتصدير */}
       <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '16px', border: `1px solid ${theme?.border || '#334155'}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div>
@@ -399,7 +571,9 @@ const HrTab = ({
           </div>
           <div style={{ background: theme?.cardBg || '#1e293b', padding: '22px', borderRadius: '14px', border: `1px solid ${theme?.border || '#334155'}` }}>
             <p style={{ margin: 0, color: theme?.textMuted || '#94a3b8', fontSize: '13px' }}>{tr('إجمالي الحوافز المادية')}</p>
-            <h2 style={{ color: '#8b5cf6', margin: '8px 0 0 0', fontSize: '24px' }}>{(Number(calculatedIncentives) || 0).toLocaleString()} {currency}</h2>
+            <h2 style={{ color: '#8b5cf6', margin: '8px 0 0 0', fontSize: '24px' }}>
+              {(Number(dynamicTotalIncentives) || 0).toLocaleString()} {currency}
+            </h2>
           </div>
         </div>
       )}
@@ -453,7 +627,7 @@ const HrTab = ({
                     <br/><span style={{ color: '#ef4444', fontSize: '11px' }}>{tr('خصم:')} {emp?.deductions || 0} {currency}</span>
                     <div style={{ fontSize: '11px', color: '#d97706', marginTop: '3px' }}>
                       {emp?.commission ? `${tr('عمولة:')} ${formatCommissionDisplay(emp.commission, emp.commissionType)} ` : ''}
-                      {(emp?.allowances || emp?.housingAllowance || emp?.transportAllowance) ? `| ${tr('بدلات:')} ${(Number(emp?.allowances) || 0) + (Number(emp?.housingAllowance) || 0) + (Number(emp?.transportAllowance) || 0)}` : ''}
+                      {(emp?.allowances || emp?.housingAllowance || emp?.transportAllowance) ? `| ${tr('بدلات:')} ${(parseNum(emp?.allowances)) + (parseNum(emp?.housingAllowance)) + (parseNum(emp?.transportAllowance))}` : ''}
                     </div>
                     <div style={{ color: '#8b5cf6', fontSize: '11px', fontWeight: 'bold', marginTop: '3px' }}>
                       {emp?.incentiveType && emp?.incentiveType !== 'حافز مادي' ? `${tr('حافز:')} ${tr(emp.incentiveType)} (${emp?.incentives || tr('بدون وصف')})` : ''}
@@ -567,7 +741,7 @@ const HrTab = ({
                 type="text" 
                 value={hrIncentivesSearchQuery} 
                 onChange={e => setHrIncentivesSearchQuery && setHrIncentivesSearchQuery(e.target.value)} 
-                placeholder={tr('🔍 ابحث بالاسم أو رقم الهوية...')} 
+                placeholder={tr('🔍 ابحث بالاسم أو سبب الحافز...')} 
                 style={{ padding: '8px 12px', borderRadius: '8px', background: theme?.bgMain || '#0f172a', color: theme?.textDark || '#fff', border: `1px solid ${theme?.border || '#334155'}`, outline: 'none', fontSize: '13px', width: '240px' }} 
               />
               <button 
@@ -593,35 +767,45 @@ const HrTab = ({
               </tr>
             </thead>
             <tbody>
-              {filteredIncentiveRecords.map(r => (
-                <tr key={r?.id} style={{ borderBottom: `1px solid ${theme?.border || '#334155'}` }}>
-                  <td style={{ padding: '10px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{r?.empName}</td>
-                  <td style={{ padding: '10px', color: '#2dd4bf' }}>{r?.empRole}</td>
-                  <td style={{ padding: '10px' }}>
-                    <span style={{ background: '#8b5cf620', color: '#8b5cf6', padding: '3px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>
-                      {r?.incentiveType || '-'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '10px', color: '#10b981', fontWeight: 'bold' }}>{r?.incentiveValue || '-'}</td>
-                  <td style={{ padding: '10px' }}>
-                    {r?.commissionType ? (
-                      <span style={{ background: '#d9770620', color: '#d97706', padding: '3px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>
-                        {tr(r.commissionType)}
+              {filteredIncentiveRecords.map(r => {
+                const numVal = parseNum(r?.incentiveValue) || parseNum(r?.incentiveType) || parseNum(r?.amount) || 0;
+                let reason = r?.reason || '';
+                if (!reason) {
+                  if (isNaN(Number(r?.incentiveValue)) && r?.incentiveValue) reason = r.incentiveValue;
+                  else if (isNaN(Number(r?.incentiveType)) && r?.incentiveType) reason = r.incentiveType;
+                  else reason = '-';
+                }
+
+                return (
+                  <tr key={r?.id} style={{ borderBottom: `1px solid ${theme?.border || '#334155'}` }}>
+                    <td style={{ padding: '10px', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{r?.empName}</td>
+                    <td style={{ padding: '10px', color: '#2dd4bf' }}>{r?.empRole}</td>
+                    <td style={{ padding: '10px' }}>
+                      <span style={{ background: '#8b5cf620', color: '#8b5cf6', padding: '4px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>
+                        {numVal > 0 ? `${numVal} ${currency}` : (r?.incentiveType || '-')}
                       </span>
-                    ) : <span style={{ color: theme?.textMuted || '#94a3b8' }}>-</span>}
-                  </td>
-                  <td style={{ padding: '10px', color: '#f59e0b', fontWeight: 'bold' }}>{formatCommissionDisplay(r?.commissionValue, r?.commissionType)}</td>
-                  <td style={{ padding: '10px', color: theme?.textMuted || '#94a3b8', fontSize: '12px' }}>{r?.date}</td>
-                  <td style={{ padding: '10px' }}>
-                    <button 
-                      type="button" 
-                      onClick={() => handleRemoveIncentive && handleRemoveIncentive(r?.id)} 
-                      style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>
-                      {tr('حذف 🗑️')}
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td style={{ padding: '10px', color: '#10b981', fontWeight: 'bold' }}>{reason}</td>
+                    <td style={{ padding: '10px' }}>
+                      {r?.commissionType && r.commissionType !== 'null' ? (
+                        <span style={{ background: '#d9770620', color: '#d97706', padding: '3px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold' }}>
+                          {tr(r.commissionType)}
+                        </span>
+                      ) : <span style={{ color: theme?.textMuted || '#94a3b8' }}>-</span>}
+                    </td>
+                    <td style={{ padding: '10px', color: '#f59e0b', fontWeight: 'bold' }}>{formatCommissionDisplay(r?.commissionValue, r?.commissionType)}</td>
+                    <td style={{ padding: '10px', color: theme?.textMuted || '#94a3b8', fontSize: '12px' }}>{r?.date}</td>
+                    <td style={{ padding: '10px' }}>
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemoveIncentive && handleRemoveIncentive(r?.id)} 
+                        style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>
+                        {tr('حذف 🗑️')}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
               {filteredIncentiveRecords.length === 0 && (
                 <tr>
                   <td colSpan="8" style={{ textAlign: 'center', padding: '25px', color: theme?.textMuted || '#94a3b8' }}>
@@ -646,8 +830,8 @@ const HrTab = ({
                 type="text" 
                 value={hrAlertsSearchQuery} 
                 onChange={e => setHrAlertsSearchQuery && setHrAlertsSearchQuery(e.target.value)} 
-                placeholder={tr('🔍 ابحث بالاسم أو رقم الهوية...')} 
-                style={{ padding: '8px 12px', borderRadius: '8px', background: theme?.bgMain || '#0f172a', color: theme?.textDark || '#fff', border: `1px solid ${theme?.border || '#334155'}`, outline: 'none', fontSize: '13px', width: '240px' }} 
+                placeholder={tr('🔍 ابحث بالاسم أو رقم الهوية أو نوع الوثيقة...')} 
+                style={{ padding: '8px 12px', borderRadius: '8px', background: theme?.bgMain || '#0f172a', color: theme?.textDark || '#fff', border: `1px solid ${theme?.border || '#334155'}`, outline: 'none', fontSize: '13px', width: '280px' }} 
               />
               <button 
                 type="button" 
@@ -659,15 +843,28 @@ const HrTab = ({
             </div>
           </div>
           
-          {(filteredAlerts || []).map(alert => {
+          {finalAlertsList.map(alert => {
             const isExpired = alert?.daysDiff < 0;
+            const isNear = alert?.daysDiff >= 0 && alert?.daysDiff <= 30;
+
+            let badgeBg = '#334155';
+            let badgeText = `${tr('يتبقى')} ${alert?.daysDiff || 0} ${tr('يوم')}`;
+
+            if (isExpired) {
+              badgeBg = '#991b1b';
+              badgeText = `${tr('منتهي منذ')} ${Math.abs(alert?.daysDiff || 0)} ${tr('يوم')}`;
+            } else if (isNear) {
+              badgeBg = '#d97706';
+              badgeText = `${tr('ينتهي قريباً (')} ${alert?.daysDiff} ${tr('يوم)')}`;
+            }
+
             return (
               <div 
                 key={alert?.id} 
                 style={{ 
                   background: theme?.cardBg || '#1e293b', 
                   borderRadius: '12px', 
-                  border: `1px solid ${isExpired ? '#7f1d1d' : (theme?.border || '#334155')}`, 
+                  border: `1px solid ${isExpired ? '#7f1d1d' : (isNear ? '#d97706' : (theme?.border || '#334155'))}`, 
                   padding: '16px 25px', 
                   display: 'flex', 
                   justifyContent: 'space-between', 
@@ -678,13 +875,15 @@ const HrTab = ({
                   <h4 style={{ margin: '0 0 5px 0', fontSize: '16px', fontWeight: '900', color: theme?.textDark || '#fff' }}>
                     {alert?.empName}
                   </h4>
-                  <span style={{ fontSize: '13px', color: theme?.textMuted || '#94a3b8' }}>
-                    {alert?.docType} ({tr('هوية:')} {alert?.empIdNumber})
-                  </span>
+                  <div style={{ fontSize: '13px', color: theme?.textMuted || '#94a3b8', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                    <span style={{ color: '#0284c7', fontWeight: 'bold' }}>📄 {alert?.docType}</span>
+                    <span>🆔 {tr('هوية:')} <strong>{alert?.empIdNumber}</strong></span>
+                    <span>📅 {tr('الانتهاء:')} {alert?.expiryDate}</span>
+                  </div>
                 </div>
                 <div>
                   <span style={{
-                    background: isExpired ? '#991b1b' : '#334155',
+                    background: badgeBg,
                     color: '#fff',
                     padding: '6px 20px',
                     borderRadius: '20px',
@@ -692,17 +891,15 @@ const HrTab = ({
                     fontWeight: 'bold',
                     display: 'inline-block'
                   }}>
-                    {isExpired ? `${tr('منتهي منذ')} ${Math.abs(alert?.daysDiff || 0)} ${tr('يوم')}` : `${tr('يتبقى')} ${alert?.daysDiff || 0} ${tr('يوم')}`}
+                    {badgeText}
                   </span>
                 </div>
               </div>
             );
           })}
-          {(!filteredAlerts || filteredAlerts.length === 0) && (
+          {finalAlertsList.length === 0 && (
             <div style={{ background: theme?.cardBg || '#1e293b', padding: '35px', borderRadius: '14px', textAlign: 'center', color: theme?.textMuted || '#94a3b8', border: `1px solid ${theme?.border || '#334155'}` }}>
-              {(documentAlerts || []).length === 0
-                ? tr('✅ جميع وثائق الموظفين (الإقامة، الشهادة الصحية، العقود) سارية ومحدثة ولا توجد تنبيهات منتهية!')
-                : tr('لا توجد نتائج مطابقة للبحث في التنبيهات.')}
+              {tr('✅ جميع وثائق الموظفين (الإقامة، الشهادة الصحية، العقود) سارية ومحدثة ولا توجد تنبيهات!')}
             </div>
           )}
         </div>

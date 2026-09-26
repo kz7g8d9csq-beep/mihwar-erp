@@ -1,0 +1,17 @@
+[33mcommit 7dfcfcfce7ec54dbcedf7efca7663207065d2657[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Ahmed Abdullah Helmy <ahmedhelmy82463@gmail.com>
+Date:   Sat Sep 26 01:27:26 2026 +0300
+
+    Standardize Excel exports, fix HR columns, and format reports
+
+ frontend/src/App.jsx                               |  95 [32m+[m[31m---[m
+ frontend/src/components/CustomersTab.jsx           | 256 [32m++++++++[m[31m-[m
+ frontend/src/components/HrTab.jsx                  | 385 [32m+++++++++++[m[31m--[m
+ frontend/src/components/InventoryTab.jsx           | 296 [32m++++++++[m[31m--[m
+ frontend/src/components/InvoicesListTab.jsx        | 156 [32m+++++[m[31m-[m
+ .../src/components/PurchaseInvoicesListTab.jsx     | 224 [32m+++++++[m[31m-[m
+ frontend/src/components/ReturnsTab.jsx             | 623 [32m+++++++++++++++++++++[m
+ frontend/src/components/SuppliersTab.jsx           | 236 [32m+++++++[m[31m-[m
+ update_app.js                                      |  51 [32m++[m
+ update_csv.js                                      |  55 [32m++[m
+ 10 files changed, 2139 insertions(+), 238 deletions(-)
