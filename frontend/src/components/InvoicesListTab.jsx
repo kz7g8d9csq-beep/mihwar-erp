@@ -178,6 +178,8 @@ const InvoicesListTab = ({
             <th style={{ padding: '12px' }}>{t(`العميل`)}</th>
             <th style={{ padding: '12px' }}>{t(`المبلغ الإجمالي`)}</th>
             <th style={{ padding: '12px' }}>{t(`حالة الدفع والاستحقاق`)}</th>
+            <th style={{ padding: '12px' }}>{t(`المندوب`)}</th>
+            <th style={{ padding: '12px' }}>{t(`عمولة المندوب`)}</th>
             <th style={{ padding: '12px' }}>{t(`الإجراءات`)}</th>
           </tr>
         </thead>
@@ -224,6 +226,14 @@ const InvoicesListTab = ({
                     </div>
                   )}
                 </td>
+                <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#6366f1' }}>
+                  {inv?.salesRepName || 'مبيعات مباشرة'}
+                </td>
+                <td style={{ padding: '12px', textAlign: 'center', fontWeight: 'bold', color: '#d97706' }}>
+                  {inv?.totalCommission !== undefined && inv?.totalCommission > 0
+                    ? (Number(inv.totalCommission).toFixed(2) + ' ر.س')
+                    : '-'}
+                </td>
                 <td style={{ padding: '12px' }}>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <button onClick={() => setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>{t(`معاينة وطباعة 👁️`)}</button>
@@ -245,7 +255,7 @@ const InvoicesListTab = ({
             );
           })}
           {!filteredInvoices.length && (
-            <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>{t(`لا توجد فواتير مبيعات مسجلة بعد.`)}</td></tr>
+            <tr><td colSpan="7" style={{ textAlign: 'center', padding: '20px', color: theme.textMuted }}>{t(`لا توجد فواتير مبيعات مسجلة بعد.`)}</td></tr>
           )}
         </tbody>
       </table>

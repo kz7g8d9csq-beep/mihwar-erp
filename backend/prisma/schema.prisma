@@ -80,6 +80,8 @@ model Product {
   cost                 Float
   stock                Int                   @default(0)
   sku                  String
+  boxSize              Int                   @default(12) // سعة الكرتون (عدد الحبات)
+  cartonCommission     Float                 @default(0)  // عمولة الكرتون للمندوب (ر.س)
   companyId            Int
   company              Company               @relation(fields: [companyId], references: [id])
   invoiceItems         InvoiceItem[]
@@ -89,33 +91,40 @@ model Product {
 }
 
 model Invoice {
-  id          Int           @id @default(autoincrement())
-  invoiceNo   String        @unique
-  subtotal    Float
-  taxRate     Float         @default(0.15)
-  taxAmount   Float
-  totalAmount Float
-  companyId   Int
-  company     Company       @relation(fields: [companyId], references: [id])
-  userId      Int?
-  user        User?         @relation(fields: [userId], references: [id])
-  customerId  Int?
-  customer    Customer?     @relation(fields: [customerId], references: [id])
-  items       InvoiceItem[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @default(now()) @updatedAt
+  id              Int           @id @default(autoincrement())
+  invoiceNo       String        @unique
+  subtotal        Float
+  taxRate         Float         @default(0.15)
+  taxAmount       Float
+  totalAmount     Float
+  companyId       Int
+  company         Company       @relation(fields: [companyId], references: [id])
+  userId          Int?
+  user            User?         @relation(fields: [userId], references: [id])
+  customerId      Int?
+  customer        Customer?     @relation(fields: [customerId], references: [id])
+  salesRepId      Int?          // رقم المندوب / البائع
+  salesRepName    String?       // اسم المندوب للأرشفة السريعة
+  totalCommission Float         @default(0) // إجمالي عمولات المندوب في الفاتورة
+  netProfit       Float?        // صافي ربح الفاتورة (المبيعات - التكلفة - العمولات)
+  items           InvoiceItem[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now()) @updatedAt
 }
 
 model InvoiceItem {
-  id        Int      @id @default(autoincrement())
-  invoiceId Int
-  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  productId Int
-  product   Product  @relation(fields: [productId], references: [id])
-  quantity  Int      @default(1)
-  unitPrice Float
-  subtotal  Float
-  createdAt DateTime @default(now())
+  id               Int      @id @default(autoincrement())
+  invoiceId        Int
+  invoice          Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  productId        Int
+  product          Product  @relation(fields: [productId], references: [id])
+  quantity         Int      @default(1)
+  cartonsCount     Float    @default(0) // عدد الكراتين المباعة من هذا الصنف
+  cartonCommission Float    @default(0) // عمولة الكرتون وقت البيع
+  itemCommission   Float    @default(0) // إجمالي عمولة هذا البند
+  unitPrice        Float
+  subtotal         Float
+  createdAt        DateTime @default(now())
 }
 
 model PurchaseInvoice {

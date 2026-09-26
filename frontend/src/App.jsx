@@ -320,6 +320,7 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
   const [newProdName, setNewProdName] = useState('');
+  const [newProdCommission, setNewProdCommission] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
   const [newItemCode, setNewItemCode] = useState('');
@@ -330,6 +331,8 @@ function App() {
   const [editProdPrice, setEditProdPrice] = useState('');
   const [editProdStock, setEditProdStock] = useState('');
   const [editItemCode, setEditItemCode] = useState('');
+  const [editCartonCommission, setEditCartonCommission] = useState('');
+  const [editBoxSize, setEditBoxSize] = useState(12);
 
   // العملاء
   const [customers, setCustomers] = useState(() => {
@@ -381,6 +384,7 @@ function App() {
   // المبيعات والفوترة
   const [salesCustomerSearch, setSalesCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [selectedSalesRepId, setSelectedSalesRepId] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
   const [salesUnitType, setSalesUnitType] = useState('قطعة');
   const [itemQty, setItemQty] = useState(1);
@@ -452,6 +456,8 @@ function App() {
   const [empIqamaEnd, setEmpIqamaEnd] = useState('');
   const [empHealthEnd, setEmpHealthEnd] = useState('');
   const [empContractEnd, setEmpContractEnd] = useState('');
+  const [empMaritalStatus, setEmpMaritalStatus] = useState('أعزب');
+  const [empChildrenCount, setEmpChildrenCount] = useState('');
   const [empCommission, setEmpCommission] = useState('');
   const [empCommissionType, setEmpCommissionType] = useState('');
   const [empAllowances, setEmpAllowances] = useState('');
@@ -794,6 +800,8 @@ function App() {
             iqamaEnd: empIqamaEnd || emp.iqamaEnd,
             healthEnd: empHealthEnd || emp.healthEnd,
             contractEnd: empContractEnd || emp.contractEnd,
+            maritalStatus: empMaritalStatus || emp.maritalStatus || 'أعزب',
+            childrenCount: empChildrenCount !== '' ? Number(empChildrenCount) : (emp.childrenCount || 0),
             commission: empCommission !== '' ? Number(empCommission) : (emp.commission || 0),
             commissionType: empCommissionType || emp.commissionType || '',
             allowances: empAllowances !== '' ? Number(empAllowances) : (emp.allowances || 0),
@@ -824,6 +832,8 @@ function App() {
         iqamaEnd: empIqamaEnd || '-',
         healthEnd: empHealthEnd || '-',
         contractEnd: empContractEnd || '-',
+        maritalStatus: empMaritalStatus || 'أعزب',
+        childrenCount: empChildrenCount !== '' ? Number(empChildrenCount) : 0,
         commission: empCommission !== '' ? Number(empCommission) : 0,
           commissionType: empCommissionType || '',
           allowances: empAllowances !== '' ? Number(empAllowances) : 0,
@@ -856,6 +866,8 @@ function App() {
     setEmpIqamaEnd(emp.iqamaEnd || '');
     setEmpHealthEnd(emp.healthEnd || '');
     setEmpContractEnd(emp.contractEnd || '');
+    setEmpMaritalStatus(emp.maritalStatus || 'أعزب');
+    setEmpChildrenCount(emp.childrenCount !== undefined ? emp.childrenCount : '');
     setEmpCommission(emp.commission !== undefined ? emp.commission : '');
       setEmpCommissionType(emp.commissionType || '');
       setEmpAllowances(emp.allowances !== undefined ? emp.allowances : '');
@@ -943,13 +955,20 @@ function App() {
   };
 
   const handleOpenEditProduct = (prod) => {
-    setEditingProdId(prod.id); setEditProdName(prod.name || ''); setEditProdPrice(prod.price || ''); setEditProdStock(prod.stock !== undefined ? prod.stock : 0); setEditItemCode(prod.itemCode || ''); setShowEditProdModal(true);
+    setEditingProdId(prod.id); 
+    setEditProdName(prod.name || ''); 
+    setEditProdPrice(prod.price || ''); 
+    setEditProdStock(prod.stock !== undefined ? prod.stock : 0); 
+    setEditItemCode(prod.itemCode || ''); 
+    setEditCartonCommission(prod.cartonCommission ?? 0);
+    setEditBoxSize(prod.boxSize ?? 12);
+    setShowEditProdModal(true);
   };
 
   const handleUpdateProduct = (e) => {
     e.preventDefault();
     if (!editProdName || !editProdPrice) return;
-    const updated = inventory.map(item => item.id === editingProdId ? { ...item, name: editProdName, price: Number(editProdPrice), stock: Number(editProdStock), itemCode: editItemCode.trim() || item.itemCode } : item);
+    const updated = inventory.map(item => item.id === editingProdId ? { ...item, name: editProdName, price: Number(editProdPrice), stock: Number(editProdStock), itemCode: editItemCode.trim() || item.itemCode, cartonCommission: parseFloat(editCartonCommission) || 0, boxSize: parseInt(editBoxSize) || 12 } : item);
     setInventory(updated);
     localStorage.setItem('mihwar_inventory', JSON.stringify(updated));
     setShowEditProdModal(false);
@@ -1116,9 +1135,46 @@ function App() {
     if (!cartItems.length) return;
     setIsSubmittingSale(true);
     try {
+      let totalCost = 0;
+      let totalCommission = 0;
+      const salesRep = employees.find(e => e.id === Number(selectedSalesRepId));
+
+      const updatedItems = cartItems.map(it => {
+        const prod = inventory.find(p => p.id === it.productId);
+        const cartonCommission = prod?.cartonCommission || 0;
+        const boxSize = prod?.boxSize || 1;
+        const purchasePrice = prod?.purchasePrice || 0;
+
+        let cartonsCount = 0;
+        if (it.unitType === 'كرتون') {
+          cartonsCount = it.quantity;
+        } else {
+          cartonsCount = it.quantity / boxSize;
+        }
+        
+        const itemCommission = cartonsCount * cartonCommission;
+        totalCommission += itemCommission;
+        
+        const multiplier = it.unitType === 'كرتون' ? boxSize : 1;
+        const piecesCount = it.quantity * multiplier;
+        const pieceCost = purchasePrice / boxSize;
+        totalCost += piecesCount * pieceCost;
+
+        return { 
+          product: { name: it.name }, 
+          productId: it.productId,
+          unitType: it.unitType, 
+          quantity: it.quantity, 
+          unitPrice: it.unitPrice, 
+          subtotal: it.subtotal,
+          commission: salesRep ? itemCommission : 0
+        };
+      });
+
       const sub = cartItems.reduce((s, it) => s + it.subtotal, 0);
       const tax = sub * 0.15;
       const tot = sub + tax;
+      const netProfit = sub - totalCost - (salesRep ? totalCommission : 0);
 
       const updatedInventory = inventory.map(prod => {
         const matchingItems = cartItems.filter(item => item.productId === prod.id);
@@ -1139,13 +1195,17 @@ function App() {
         invoiceNo: Math.floor(100000 + Math.random() * 900000),
         createdAt: new Date().toISOString(),
         customer: customers.find(c => c.id === Number(selectedCustomerId)) || null,
-        items: cartItems.map(it => ({ product: { name: it.name }, unitType: it.unitType, quantity: it.quantity, unitPrice: it.unitPrice, subtotal: it.subtotal })),
+        salesRepId: salesRep?.id || null,
+        salesRepName: salesRep?.name || 'مبيعات مباشرة',
+        totalCommission: salesRep ? totalCommission : 0,
+        netProfit: netProfit,
+        items: updatedItems,
         subtotal: sub.toFixed(2),
         taxAmount: tax.toFixed(2),
         totalAmount: tot.toFixed(2),
         paymentStatus: invoiceStatus,
-        paymentMethod: invoiceStatus === 'مدفوعة' ? paymentMethod : 'آجل',
-        dueDate: invoiceStatus === 'غير مدفوعة' ? dueDateInput : ''
+        paymentMethod: invoiceStatus === 'آجل' ? 'آجل' : paymentMethod,
+        dueDate: invoiceStatus === 'غير مدفوعة' || invoiceStatus === 'آجل' ? dueDateInput : ''
       };
 
       const updatedInvList = [newInv, ...invoices];
@@ -1154,13 +1214,14 @@ function App() {
 
       localStorage.setItem(`invoice_status_${newInv.id}`, invoiceStatus);
       localStorage.setItem(`invoice_method_${newInv.id}`, newInv.paymentMethod);
-      if (invoiceStatus === 'غير مدفوعة' && dueDateInput) {
+      if ((invoiceStatus === 'غير مدفوعة' || invoiceStatus === 'آجل') && dueDateInput) {
         localStorage.setItem(`invoice_duedate_${newInv.id}`, dueDateInput);
       }
       localStorage.setItem(`invoice_items_${newInv.id}`, JSON.stringify(newInv.items));
 
       setCartItems([]); 
       setDueDateInput('');
+      setSelectedSalesRepId('');
       setPrintingInvoice(newInv);
       setActiveTab('invoicesList');
     } catch (err) { 
@@ -1357,11 +1418,11 @@ function App() {
   const handleAddProduct = (e) => {
     e.preventDefault();
     if (!newProdName || !newProdPrice) return;
-    const newProd = { id: Date.now(), name: newProdName, price: Number(newProdPrice), stock: Number(newProdStock || 0), boxSize: 12, itemCode: newItemCode.trim() || 'SKU-' + Math.floor(100 + Math.random() * 900) };
+    const newProd = { id: Date.now(), name: newProdName, price: Number(newProdPrice), stock: Number(newProdStock || 0), boxSize: 12, cartonCommission: parseFloat(newProdCommission) || 0, itemCode: newItemCode.trim() || 'SKU-' + Math.floor(100 + Math.random() * 900) };
     const updated = [newProd, ...inventory];
     setInventory(updated);
     localStorage.setItem('mihwar_inventory', JSON.stringify(updated));
-    setNewProdName(''); setNewProdPrice(''); setNewProdStock(''); setNewItemCode('');
+    setNewProdName(''); setNewProdPrice(''); setNewProdStock(''); setNewItemCode(''); setNewProdCommission('');
   };
 
   const handleLogoFileChange = (e) => {
@@ -1906,6 +1967,9 @@ function App() {
               handleSaveSalesInvoice={handleSaveSalesInvoice}
               isSubmittingSale={isSubmittingSale}
               cartSubtotal={cartSubtotal} cartTax={cartTax} cartGrandTotal={cartGrandTotal}
+              selectedSalesRepId={selectedSalesRepId}
+              setSelectedSalesRepId={setSelectedSalesRepId}
+              employees={employees}
             />
           )}
 
@@ -2003,6 +2067,7 @@ function App() {
               newProdPrice={newProdPrice} setNewProdPrice={setNewProdPrice}
               newProdStock={newProdStock} setNewProdStock={setNewProdStock}
               newItemCode={newItemCode} setNewItemCode={setNewItemCode}
+              newProdCommission={newProdCommission} setNewProdCommission={setNewProdCommission}
               handleAddProduct={handleAddProduct}
               handleOpenEditProduct={handleOpenEditProduct}
               handleDeleteProduct={handleDeleteProduct}
@@ -2030,6 +2095,11 @@ function App() {
               t={t} theme={theme} isDark={isDark} lang={lang} user={user}
               hrSubTab={hrSubTab} setHrSubTab={setHrSubTab}
               employees={employees}
+              setEmployees={setEmployees}
+              incentiveRecords={incentiveRecords}
+              setIncentiveRecords={setIncentiveRecords}
+              deductionsList={deductionsList}
+              setDeductionsList={setDeductionsList}
               filteredEmployees={filteredEmployees}
               filteredDeductions={filteredDeductions}
               filteredAlerts={filteredAlerts}
@@ -2131,6 +2201,8 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodName}</label><input type="text" value={editProdName} onChange={e=>setEditProdName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodPrice}</label><input type="number" value={editProdPrice} onChange={e=>setEditProdPrice(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodStock}</label><input type="number" value={editProdStock} onChange={e=>setEditProdStock(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>عمولة الكرتون للمندوب (ر.س):</label><input type="number" step="0.01" min="0" placeholder="مثال: 5.00" value={editCartonCommission} onChange={e=>setEditCartonCommission(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>سعة الكرتون (عدد الحبات):</label><input type="number" min="1" placeholder="الافتراضي: 12" value={editBoxSize} onChange={e=>setEditBoxSize(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.updateProd}</button>
                 <button type="button" onClick={() => setShowEditProdModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
@@ -2149,36 +2221,46 @@ function App() {
               <button onClick={() => setShowAddEmpModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
             </div>
             <form onSubmit={handleSaveEmployee} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
-                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empName}</label><input type="text" value={empName} onChange={e=>setEmpName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empNumber}</label><input type="text" value={empNumber} onChange={e=>setEmpNumber(e.target.value)} placeholder="مثال: 22" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الاسم الكامل *</label><input type="text" value={empName} onChange={e=>setEmpName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الموظف</label><input type="text" value={empNumber} onChange={e=>setEmpNumber(e.target.value)} placeholder="مثال: 22" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empIdNumber}</label><input type="text" value={empIdNumber} onChange={e=>setEmpIdNumber(e.target.value)} placeholder="رقم الهوية أو الإقامة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empPhone}</label><input type="text" value={empPhone} onChange={e=>setEmpPhone(e.target.value)} placeholder="05xxxxxxxx" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهوية / الإقامة</label><input type="text" value={empIdNumber} onChange={e=>setEmpIdNumber(e.target.value)} placeholder="رقم الهوية أو الإقامة" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رقم الهاتف</label><input type="text" value={empPhone} onChange={e=>setEmpPhone(e.target.value)} placeholder="05xxxxxxxx" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empRole}</label><input type="text" value={empRole} onChange={e=>setEmpRole(e.target.value)} placeholder="المسمى الوظيفي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empDept}</label><input type="text" value={empDept} onChange={e=>setEmpDept(e.target.value)} placeholder="القسم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>المسمى الوظيفي</label><input type="text" value={empRole} onChange={e=>setEmpRole(e.target.value)} placeholder="المسمى الوظيفي" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>القسم</label><input type="text" value={empDept} onChange={e=>setEmpDept(e.target.value)} placeholder="القسم" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empSalary}</label><input type="number" value={empSalary} onChange={e=>setEmpSalary(e.target.value)} required placeholder="4000" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.empVacations}</label><input type="number" value={empVacations} onChange={e=>setEmpVacations(e.target.value)} placeholder="21" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الحالة الاجتماعية</label>
+                  <select value={empMaritalStatus} onChange={e=>setEmpMaritalStatus(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }}>
+                    <option value="أعزب">أعزب</option>
+                    <option value="متزوج">متزوج</option>
+                  </select>
+                </div>
+                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>عدد الأطفال</label><input type="number" value={empChildrenCount} onChange={e=>setEmpChildrenCount(e.target.value)} placeholder="0" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>الراتب الأساسي (ر.س)</label><input type="number" value={empSalary} onChange={e=>setEmpSalary(e.target.value)} required placeholder="4000" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+                <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>رصيد الإجازات (أيام)</label><input type="number" value={empVacations} onChange={e=>setEmpVacations(e.target.value)} placeholder="21" style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               </div>
 
               {/* البدلات */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: theme.bgMain, padding: '12px', borderRadius: '10px', border: `1px solid ${theme.border}` }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#10b981' }}>{t(`بدل سكن (ر.س)`)}</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#10b981' }}>بدل سكن (ر.س)</label>
                   <input type="number" value={empHousingAllowance} onChange={e=>setEmpHousingAllowance(e.target.value)} placeholder="0" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#10b981' }}>{t(`بدل مواصلات (ر.س)`)}</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#10b981' }}>بدل مواصلات (ر.س)</label>
                   <input type="number" value={empTransportAllowance} onChange={e=>setEmpTransportAllowance(e.target.value)} placeholder="0" style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} />
                 </div>
               </div>
 
-              {/* تواريخ انتهاء الوثائق */}
+              {/* تواريخ انتهاء المستندات */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', background: theme.bgMain, padding: '12px', borderRadius: '10px', border: `1px solid ${theme.border}` }}>
                 <div>
                   <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>انتهاء الإقامة</label>
@@ -2410,6 +2492,7 @@ function App() {
                 <p style={{ margin: '3px 0' }}><strong>{t.clientCol}</strong> {printingInvoice.customer?.name || 'عميل نقدي عام'}</p>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientPhone}</strong> {printingInvoice.customer?.phone || '0556682463'}</p>
                 <p style={{ margin: '3px 0' }}><strong>{t.clientEmail}</strong> {printingInvoice.customer?.email || 'customer@gmail.com'}</p>
+                <p style={{ margin: '3px 0' }}><strong>المندوب / مسؤول البيع:</strong> <span style={{ color: '#6366f1', fontWeight: 'bold' }}>{printingInvoice.salesRepName || 'مبيعات مباشرة'}</span></p>
               </div>
 
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px', fontSize: '13px' }}>
