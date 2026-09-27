@@ -9,6 +9,8 @@ const InventoryTab = ({
   newProdStock, setNewProdStock,
   newItemCode, setNewItemCode,
   newProdCommission = '', setNewProdCommission,
+    newBoxSize = '12', setNewBoxSize,
+    newCommissionType = 'بالكرتون', setNewCommissionType,
   handleAddProduct,
   handleOpenEditProduct,
   handleDeleteProduct,
@@ -200,20 +202,23 @@ const InventoryTab = ({
                 style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
               />
             </div>
-            <div>
-              <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#d97706' }}>
-                عمولة الكرتون للمندوب ({currencyText}):
-              </label>
-              <input 
-                type="number" 
-                step="0.01" 
-                min="0"
-                placeholder="مثال: 0.10 أو 0.30" 
-                value={newProdCommission} 
-                onChange={e => setNewProdCommission && setNewProdCommission(e.target.value)} 
-                style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
-              />
-            </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>نوع العمولة *:</label>
+                <select value={newCommissionType} onChange={e=>{if(setNewCommissionType) setNewCommissionType(e.target.value)}} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: '1px solid ' + (theme.border || '#334155'), boxSizing: 'border-box', outline: 'none' }}>
+                  <option value="بالقطعة">بالقطعة</option>
+                  <option value="بالكرتون">بالكرتون</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{newCommissionType === 'بالقطعة' ? 'عمولة القطعة / الحبة (ر.س) *:' : 'عمولة الكرتون (ر.س) *:'}</label>
+                <input type="number" step="0.01" min="0" placeholder="مثال: 5.00" value={newProdCommission} onChange={e=>{if(setNewProdCommission) setNewProdCommission(e.target.value)}} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: '1px solid ' + (theme.border || '#334155'), boxSizing: 'border-box', outline: 'none' }} />
+              </div>
+              {newCommissionType === 'بالكرتون' && (
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>سعة الكرتون (عدد الحبات) *:</label>
+                  <input type="number" min="1" placeholder="الافتراضي: 12" value={newBoxSize} onChange={e=>{if(setNewBoxSize) setNewBoxSize(e.target.value)}} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: '1px solid ' + (theme.border || '#334155'), boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+              )}
             <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '5px' }}>
               {getText('saveProd', 'حفظ المنتج')}
             </button>

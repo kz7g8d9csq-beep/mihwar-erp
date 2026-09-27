@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 const API_BASE = 'https://backend-6grl.onrender.com';
 
@@ -6,7 +6,8 @@ const HrTab = ({
   t, theme = {}, isDark, user,
   employees = [], setEmployees,
   incentiveRecords = [], setIncentiveRecords,
-  deductionsList = [], setDeductionsList
+  deductionsList = [], setDeductionsList,
+  invoices = []
 }) => {
   const defaultDepts = [
     { id: 1, name: 'المبيعات والتوزيع', desc: 'إدارة المبيعات والمندوبين' },
@@ -29,6 +30,16 @@ const HrTab = ({
   const [hrSubTab, setHrSubTab] = useState('employees');
   const [deptSearchQuery, setDeptSearchQuery] = useState('');
   const [empSearchQuery, setEmpSearchQuery] = useState('');
+
+  // إدارة العمولات المحذوفة / المصفاة لبدء دورات جديدة
+  const [clearedCommissionIds, setClearedCommissionIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mihwar_cleared_commissions');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Modals state
   const [showAddDeptModal, setShowAddDeptModal] = useState(false);
@@ -97,6 +108,16 @@ const HrTab = ({
     const h = String(now.getHours()).padStart(2, '0');
     const min = String(now.getMinutes()).padStart(2, '0');
     return `${y}-${m}-${d} ${h}:${min}`;
+  };
+
+  const checkExp = (dateStr) => {
+    if (!dateStr || dateStr === '-') return { status: 'none', label: 'غير محدد', color: '#64748b' };
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return { status: 'none', label: 'غير محدد', color: '#64748b' };
+    const diffDays = (d.getTime() - Date.now()) / (1000 * 3600 * 24);
+    if (diffDays < 0) return { status: 'expired', label: `منتهي منذ ${Math.abs(Math.floor(diffDays))} يوم`, color: '#ef4444' };
+    if (diffDays <= 30) return { status: 'warning', label: `باقي ${Math.floor(diffDays)} يوم`, color: '#d97706' };
+    return { status: 'ok', label: 'ساري', color: '#10b981' };
   };
 
   // مزامنة البيانات تلقائياً مع السيرفر
@@ -510,121 +531,6 @@ const HrTab = ({
     }
   };
 
-  // تصدير إكسيل
-  const exportDeptExcel = () => {
-    if (!selectedDepartment) return;
-
-    const deptEmpsList = employees.filter(e => 
-      (e.dept && e.dept.trim() === selectedDepartment.name.trim()) ||
-      (e.department && e.department.trim() === selectedDepartment.name.trim())
-    );
-
-    if (!deptEmpsList.length) {
-      alert(`لا يوجد موظفون مسجلون في قسم (${selectedDepartment.name}) لتصديرهم.`);
-      return;
-    }
-
-    const systemTitle = `نظام محور • كشف مسير رواتب وموظفي قسم (${selectedDepartment.name})`;
-    const exportDate = getCleanDateTime();
-
-    let tableRows = '';
-    let totalSalaries = 0;
-    let totalIncentives = 0;
-    let totalDeductions = 0;
-    let totalNet = 0;
-
-    deptEmpsList.forEach((emp, idx) => {
-      const bgColor = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
-      const salary = parseNum(emp.salary);
-      const inc = parseNum(emp.incentives);
-      const ded = parseNum(emp.deductions);
-      const net = Math.max(0, salary + inc - ded);
-
-      totalSalaries += salary;
-      totalIncentives += inc;
-      totalDeductions += ded;
-      totalNet += net;
-
-      tableRows += `<tr style="background-color: ${bgColor};">
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; mso-number-format:'\\@'; color: #d97706;">${emp.empNo || emp.id}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: right; font-weight: bold;">${emp.name || '-'}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: right;">${emp.role || '-'}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; mso-number-format:'\\@';">${emp.idNumber || '-'}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; mso-number-format:'\\@';" dir="ltr">${emp.phone || '-'}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">${emp.maritalStatus || 'أعزب'}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">${emp.childrenCount || 0}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: right;">${emp.address || '-'}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">${emp.medicalInsurance || '-'}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center;">${emp.contractEnd || '-'}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; color: #10b981;">${salary.toFixed(2)} ر.س</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; color: #8b5cf6;">${inc.toFixed(2)} ر.س</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; color: #ef4444;">${ded.toFixed(2)} ر.س</td>
-        <td style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; font-weight: bold; color: #0284c7; background-color: #f0f9ff;">${net.toFixed(2)} ر.س</td>
-      </tr>`;
-    });
-
-    tableRows += `<tr style="background-color: #e2e8f0; font-weight: bold;">
-      <td colspan="10" style="border: 1px solid #94a3b8; padding: 12px; text-align: center; font-size: 13px; color: #0f172a;">إجمالي مسيرات الرواتب والمستحقات لقسم (${selectedDepartment.name})</td>
-      <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #10b981; font-size: 13px;">${totalSalaries.toFixed(2)} ر.س</td>
-      <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #8b5cf6; font-size: 13px;">${totalIncentives.toFixed(2)} ر.س</td>
-      <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #ef4444; font-size: 13px;">${totalDeductions.toFixed(2)} ر.س</td>
-      <td style="border: 1px solid #94a3b8; padding: 12px; text-align: center; color: #0284c7; font-size: 14px; background-color: #e0f2fe;">${totalNet.toFixed(2)} ر.س</td>
-    </tr>`;
-
-    const excelTemplate = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">
-        <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
-        <x:Name>${selectedDepartment.name}</x:Name>
-        <x:WorksheetOptions><x:DisplayRightToLeft/></x:WorksheetOptions>
-        </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
-        <style>
-          body { font-family: Tahoma, Arial, sans-serif; direction: rtl; }
-          table { border-collapse: collapse; width: 100%; direction: rtl; }
-          th { border: 1px solid #94a3b8; background-color: #e2e8f0; color: #0f172a; padding: 12px; font-weight: bold; text-align: center; font-size: 13px; }
-          td { border: 1px solid #cbd5e1; padding: 10px; font-size: 12px; }
-        </style>
-      </head>
-      <body dir="rtl">
-        <table>
-          <thead>
-            <tr>
-              <th colspan="14" style="background-color: #1e293b; color: #ffffff; font-size: 18px; padding: 16px; text-align: center; font-weight: bold;">${systemTitle}</th>
-            </tr>
-            <tr>
-              <th colspan="14" style="background-color: #334155; color: #e2e8f0; font-size: 12px; padding: 8px; text-align: center;">تاريخ التصدير: ${exportDate} | تقرير مسير معتمد ومصدر آلياً من النظام</th>
-            </tr>
-            <tr style="background-color: #e2e8f0;">
-              <th>الرقم الوظيفي</th>
-              <th>اسم الموظف</th>
-              <th>المسمى الوظيفي</th>
-              <th>الهوية / الإقامة</th>
-              <th>رقم الهاتف</th>
-              <th>الحالة الاجتماعية</th>
-              <th>الأطفال</th>
-              <th>العنوان الوطني</th>
-              <th>التأمين الطبي</th>
-              <th>نهاية العقد</th>
-              <th>الراتب الأساسي</th>
-              <th>إجمالي الحوافز</th>
-              <th>إجمالي الخصومات</th>
-              <th>صافي الراتب المستحق</th>
-            </tr>
-          </thead>
-          <tbody>${tableRows}</tbody>
-        </table>
-      </body>
-    </html>`;
-
-    const blob = new Blob(['\ufeff' + excelTemplate], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `تقرير_موظفي_${selectedDepartment.name.replace(/\s+/g, '_')}_${Date.now()}.xls`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const inputStyle = { width: '100%', padding: '11px', borderRadius: '8px', background: theme?.bgMain || '#0f172a', color: theme?.textDark || '#fff', border: `1px solid ${theme?.border || '#334155'}`, boxSizing: 'border-box', outline: 'none' };
   const labelStyle = { fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: theme?.textDark || '#fff' };
 
@@ -663,19 +569,618 @@ const HrTab = ({
       .filter(inc => (inc.empName || '').includes(empSearchQuery) || (inc.idNumber || '').includes(empSearchQuery));
   }
 
+  // معالجة عمولات مناديب المبيعات
+  const deptCommissions = useMemo(() => {
+    if (!selectedDepartment || !deptEmps.length) return [];
+    const deptEmpIds = deptEmps.map(e => String(e.id));
+    const deptEmpNames = deptEmps.map(e => (e.name || '').trim());
+
+    return (invoices || [])
+      .filter(inv => {
+        if (clearedCommissionIds.includes(String(inv.id))) return false;
+        const matchId = inv.salesRepId && deptEmpIds.includes(String(inv.salesRepId));
+        const matchName = inv.salesRepName && deptEmpNames.includes(String(inv.salesRepName).trim());
+        return matchId || matchName;
+      })
+      .map(inv => {
+        const emp = deptEmps.find(e => 
+          (inv.salesRepId && String(e.id) === String(inv.salesRepId)) ||
+          (inv.salesRepName && e.name.trim() === String(inv.salesRepName).trim())
+        );
+
+        let cartonsTotal = 0;
+        let piecesTotal = 0;
+
+        if (Array.isArray(inv.items)) {
+          inv.items.forEach(it => {
+            const bSize = it.product?.boxSize || it.boxSize || 1;
+            const q = parseNum(it.quantity);
+            if (bSize > 1) {
+              cartonsTotal += Math.floor(q / bSize);
+              piecesTotal += (q % bSize);
+            } else {
+              piecesTotal += q;
+            }
+          });
+        }
+
+        let qtyText = '';
+        if (cartonsTotal > 0 && piecesTotal > 0) {
+          qtyText = `${cartonsTotal} كرتون و ${piecesTotal} قطعة`;
+        } else if (cartonsTotal > 0) {
+          qtyText = `${cartonsTotal} كرتون`;
+        } else if (piecesTotal > 0) {
+          qtyText = `${piecesTotal} قطعة`;
+        } else {
+          qtyText = '-';
+        }
+
+        return {
+          id: inv.id,
+          invoiceNo: inv.invoiceNo || `INV-${inv.id}`,
+          empName: inv.salesRepName || emp?.name || 'مندوب',
+          idNumber: emp?.idNumber || '-',
+          customerName: inv.customer?.name || (typeof inv.customer === 'string' ? inv.customer : 'عميل عام'),
+          date: inv.createdAt ? inv.createdAt.slice(0, 10) : (inv.date || '-'),
+          qtyDescription: qtyText,
+          cartonsCount: cartonsTotal,
+          piecesCount: piecesTotal,
+          totalAmount: parseNum(inv.totalAmount),
+          commission: parseNum(inv.totalCommission)
+        };
+      });
+  }, [selectedDepartment, deptEmps, invoices, clearedCommissionIds]);
+
+  const filteredCommissions = useMemo(() => {
+    return deptCommissions.filter(c => 
+      (c.empName || '').includes(empSearchQuery) ||
+      (c.idNumber || '').includes(empSearchQuery) ||
+      (c.invoiceNo || '').includes(empSearchQuery) ||
+      (c.customerName || '').includes(empSearchQuery)
+    );
+  }, [deptCommissions, empSearchQuery]);
+
+  const totalCommissionsAmount = useMemo(() => {
+    return filteredCommissions.reduce((sum, c) => sum + c.commission, 0);
+  }, [filteredCommissions]);
+
+  // حذف عمولة فردية
+  const handleDeleteSingleCommission = (invId) => {
+    if (window.confirm('هل أنت متأكد من حذف هذه العمولة من سجل الموارد البشرية؟')) {
+      const updated = [...clearedCommissionIds, String(invId)];
+      setClearedCommissionIds(updated);
+      localStorage.setItem('mihwar_cleared_commissions', JSON.stringify(updated));
+    }
+  };
+
+  // حذف الكل لبدء دورة جديدة
+  const handleDeleteAllCommissions = () => {
+    if (!deptCommissions.length) return;
+    if (window.confirm('هل أنت متأكد من حذف وتصفير جميع العمولات لبدء دورة جديدة لهذا القسم؟')) {
+      const currentIds = deptCommissions.map(c => String(c.id));
+      const updated = Array.from(new Set([...clearedCommissionIds, ...currentIds]));
+      setClearedCommissionIds(updated);
+      localStorage.setItem('mihwar_cleared_commissions', JSON.stringify(updated));
+    }
+  };
+
+  // دالة مساعدة لتنزيل ملف الإكسل
+  const downloadExcelFile = (htmlContent, fileName) => {
+    const excelWrapper = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8">
+        <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+        <x:Name>بيانات_الموارد_البشرية</x:Name>
+        <x:WorksheetOptions><x:DisplayRightToLeft/></x:WorksheetOptions>
+        </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+        <style>
+          body { font-family: Tahoma, Arial, sans-serif; direction: rtl; }
+          table { border-collapse: collapse; direction: rtl; margin-bottom: 25px; }
+          th { border: 1px solid #94a3b8; background-color: #e2e8f0; color: #0f172a; padding: 10px; font-weight: bold; text-align: center; font-size: 13px; }
+          td { border: 1px solid #cbd5e1; padding: 8px; font-size: 12px; }
+        </style>
+      </head>
+      <body dir="rtl">
+        ${htmlContent}
+      </body>
+    </html>`;
+
+    const blob = new Blob(['\ufeff' + excelWrapper], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${fileName}_${Date.now()}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // =========================================================================
+  // 1. تصدير إكسل الشامل لجميع الأقسام (أفقي متجاور بالكامل مع الملخص بجانبهم)
+  // =========================================================================
+  const exportAllDepartmentsExcel = () => {
+    if (!departments.length) {
+      alert('لا توجد أقسام مسجلة لتصديرها.');
+      return;
+    }
+
+    const exportDate = getCleanDateTime();
+
+    // تجهيز بيانات كل قسم
+    const deptsData = departments.map((dept, index) => {
+      const dEmps = employees.filter(e => 
+        (e.dept && e.dept.trim() === dept.name.trim()) ||
+        (e.department && e.department.trim() === dept.name.trim())
+      );
+
+      let deptSalaries = 0;
+      let deptIncentives = 0;
+      let deptDeductions = 0;
+      let deptNet = 0;
+
+      const formattedEmps = dEmps.map(emp => {
+        const salary = parseNum(emp.salary);
+        const inc = parseNum(emp.incentives);
+        const ded = parseNum(emp.deductions);
+        const net = Math.max(0, salary + inc - ded);
+
+        deptSalaries += salary;
+        deptIncentives += inc;
+        deptDeductions += ded;
+        deptNet += net;
+
+        return {
+          empNo: emp.empNo || emp.id,
+          name: emp.name,
+          role: emp.role || '-',
+          idNumber: emp.idNumber || '-',
+          phone: emp.phone || '-',
+          maritalStatus: emp.maritalStatus || 'أعزب',
+          contractEnd: emp.contractEnd || '-',
+          salary,
+          inc,
+          ded,
+          net
+        };
+      });
+
+      return {
+        dept,
+        index,
+        emps: formattedEmps,
+        totalEmployees: dEmps.length,
+        deptSalaries,
+        deptIncentives,
+        deptDeductions,
+        deptNet
+      };
+    });
+
+    const maxRows = Math.max(...deptsData.map(d => d.emps.length), 1);
+    const colsPerDept = 11;
+    const summaryCols = 5;
+    const totalCols = (deptsData.length * colsPerDept) + deptsData.length + summaryCols;
+
+    // حساب الإجماليات العامة للملخص المالي الموحد
+    const grandTotalEmployees = deptsData.reduce((s, d) => s + d.totalEmployees, 0);
+    const grandTotalSalaries = deptsData.reduce((s, d) => s + d.deptSalaries, 0);
+    const grandTotalIncentives = deptsData.reduce((s, d) => s + d.deptIncentives, 0);
+    const grandTotalDeductions = deptsData.reduce((s, d) => s + d.deptDeductions, 0);
+    const grandTotalNet = deptsData.reduce((s, d) => s + d.deptNet, 0);
+
+    // ترويسة العنوان الرئيسي
+    let tableHtml = `
+      <table>
+        <thead>
+          <tr>
+            <th colspan="${totalCols}" style="background-color: #0f172a; color: #ffffff; font-size: 18px; padding: 16px; text-align: center; font-weight: bold;">
+              نظام محور • التقرير المالي والإداري الشامل لكافة الأقسام والموظفين (تنسيق أفقي متجاور بالكامل)
+            </th>
+          </tr>
+          <tr>
+            <th colspan="${totalCols}" style="background-color: #334155; color: #e2e8f0; font-size: 12px; padding: 8px; text-align: center;">
+              تاريخ التصدير: ${exportDate} | جميع الأقسام مع الملخص المالي العام متجاورة أفقياً من اليمين إلى اليسار
+            </th>
+          </tr>
+    `;
+
+    // سطر رؤوس الأقسام مع رأس الملخص المالي في نفس السطر أفقياً
+    tableHtml += '<tr>';
+    deptsData.forEach(d => {
+      tableHtml += `
+        <th colspan="${colsPerDept}" style="background-color: #1e3a8a; color: #ffffff; font-size: 14px; padding: 12px; text-align: center; font-weight: bold; border: 1px solid #1e40af;">
+          📌 قسم (${d.dept.name}) — [${d.totalEmployees} موظف]
+        </th>
+        <th style="background-color: #f1f5f9; border-top: none; border-bottom: none; width: 30px;"></th>
+      `;
+    });
+    // إضافة رأس الملخص المالي الموحد مباشرة بجانب آخر قسم
+    tableHtml += `
+      <th colspan="${summaryCols}" style="background-color: #064e3b; color: #ffffff; font-size: 14px; padding: 12px; text-align: center; font-weight: bold; border: 1px solid #047857;">
+        🏢 الملخص المالي العام الموحد (${departments.length} أقسام)
+      </th>
+    `;
+    tableHtml += '</tr>';
+
+    // سطر أسماء الأعمدة الفرعية لكل قسم + أعمدة الملخص المالي
+    tableHtml += '<tr style="background-color: #e2e8f0;">';
+    deptsData.forEach(d => {
+      tableHtml += `
+        <th style="border: 1px solid #94a3b8; padding: 8px; font-size: 12px;">الرقم</th>
+        <th style="border: 1px solid #94a3b8; padding: 8px; font-size: 12px;">اسم الموظف</th>
+        <th style="border: 1px solid #94a3b8; padding: 8px; font-size: 12px;">المسمى</th>
+        <th style="border: 1px solid #94a3b8; padding: 8px; font-size: 12px;">الهوية</th>
+        <th style="border: 1px solid #94a3b8; padding: 8px; font-size: 12px;">الهاتف</th>
+        <th style="border: 1px solid #94a3b8; padding: 8px; font-size: 12px;">الحالة</th>
+        <th style="border: 1px solid #94a3b8; padding: 8px; font-size: 12px;">نهاية العقد</th>
+        <th style="border: 1px solid #94a3b8; padding: 8px; font-size: 12px;">الراتب</th>
+        <th style="border: 1px solid #94a3b8; padding: 8px; font-size: 12px;">الحوافز</th>
+        <th style="border: 1px solid #94a3b8; padding: 8px; font-size: 12px;">الخصومات</th>
+        <th style="border: 1px solid #94a3b8; padding: 8px; font-size: 12px;">الصافي</th>
+        <th style="background-color: #f1f5f9; border-top: none; border-bottom: none; width: 30px;"></th>
+      `;
+    });
+    // أعمدة الملخص المالي الجانبي
+    tableHtml += `
+      <th style="background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 8px; font-size: 12px; color: #064e3b; font-weight: bold;">إجمالي الكادر</th>
+      <th style="background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 8px; font-size: 12px; color: #064e3b; font-weight: bold;">مجموع الرواتب</th>
+      <th style="background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 8px; font-size: 12px; color: #064e3b; font-weight: bold;">مجموع الحوافز</th>
+      <th style="background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 8px; font-size: 12px; color: #064e3b; font-weight: bold;">مجموع الخصومات</th>
+      <th style="background-color: #10b981; border: 1px solid #059669; padding: 8px; font-size: 12px; color: #ffffff; font-weight: bold;">صافي المسير الكلي</th>
+    `;
+    tableHtml += '</tr></thead><tbody>';
+
+    // أسطر بيانات الموظفين جنباً إلى جنب مع خلايا الملخص الجانبي
+    for (let r = 0; r < maxRows; r++) {
+      const bg = r % 2 === 0 ? '#ffffff' : '#f8fafc';
+      tableHtml += `<tr style="background-color: ${bg};">`;
+      deptsData.forEach(d => {
+        const emp = d.emps[r];
+        if (emp) {
+          tableHtml += `
+            <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; font-weight: bold; mso-number-format:'\\@'; color: #d97706;">${emp.empNo}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: right; font-weight: bold;">${emp.name}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: right;">${emp.role}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; mso-number-format:'\\@';">${emp.idNumber}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; mso-number-format:'\\@';" dir="ltr">${emp.phone}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${emp.maritalStatus}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">${emp.contractEnd}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; font-weight: bold; color: #10b981;">${emp.salary.toFixed(2)} ر.س</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; font-weight: bold; color: #8b5cf6;">${emp.inc.toFixed(2)} ر.س</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; font-weight: bold; color: #ef4444;">${emp.ded.toFixed(2)} ر.س</td>
+            <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; font-weight: bold; color: #0284c7; background-color: #f0f9ff;">${emp.net.toFixed(2)} ر.س</td>
+          `;
+        } else {
+          tableHtml += `
+            <td style="border: 1px solid #f1f5f9; padding: 8px;"></td>
+            <td style="border: 1px solid #f1f5f9; padding: 8px;"></td>
+            <td style="border: 1px solid #f1f5f9; padding: 8px;"></td>
+            <td style="border: 1px solid #f1f5f9; padding: 8px;"></td>
+            <td style="border: 1px solid #f1f5f9; padding: 8px;"></td>
+            <td style="border: 1px solid #f1f5f9; padding: 8px;"></td>
+            <td style="border: 1px solid #f1f5f9; padding: 8px;"></td>
+            <td style="border: 1px solid #f1f5f9; padding: 8px;"></td>
+            <td style="border: 1px solid #f1f5f9; padding: 8px;"></td>
+            <td style="border: 1px solid #f1f5f9; padding: 8px;"></td>
+            <td style="border: 1px solid #f1f5f9; padding: 8px;"></td>
+          `;
+        }
+        tableHtml += `<td style="background-color: #f1f5f9; border-top: none; border-bottom: none; width: 30px;"></td>`;
+      });
+
+      // خلايا الملخص المالي في نفس السطر الأول (r === 0)
+      if (r === 0) {
+        tableHtml += `
+          <td style="border: 1px solid #a7f3d0; padding: 8px; text-align: center; font-weight: bold; color: #0f172a; background-color: #f0fdf4;">${grandTotalEmployees} موظف</td>
+          <td style="border: 1px solid #a7f3d0; padding: 8px; text-align: center; font-weight: bold; color: #047857; background-color: #f0fdf4;">${grandTotalSalaries.toFixed(2)} ر.س</td>
+          <td style="border: 1px solid #a7f3d0; padding: 8px; text-align: center; font-weight: bold; color: #6d28d9; background-color: #f0fdf4;">${grandTotalIncentives.toFixed(2)} ر.س</td>
+          <td style="border: 1px solid #a7f3d0; padding: 8px; text-align: center; font-weight: bold; color: #b91c1c; background-color: #f0fdf4;">${grandTotalDeductions.toFixed(2)} ر.س</td>
+          <td style="border: 1px solid #059669; padding: 8px; text-align: center; font-weight: bold; color: #047857; font-size: 13px; background-color: #d1fae5;">${grandTotalNet.toFixed(2)} ر.س</td>
+        `;
+      } else {
+        tableHtml += `
+          <td style="border: 1px solid #f1f5f9; padding: 8px; background-color: #f8fafc;"></td>
+          <td style="border: 1px solid #f1f5f9; padding: 8px; background-color: #f8fafc;"></td>
+          <td style="border: 1px solid #f1f5f9; padding: 8px; background-color: #f8fafc;"></td>
+          <td style="border: 1px solid #f1f5f9; padding: 8px; background-color: #f8fafc;"></td>
+          <td style="border: 1px solid #f1f5f9; padding: 8px; background-color: #f8fafc;"></td>
+        `;
+      }
+
+      tableHtml += '</tr>';
+    }
+
+    // سطر مجاميع الأقسام في الختام
+    tableHtml += '<tr style="background-color: #dbeafe; font-weight: bold;">';
+    deptsData.forEach(d => {
+      tableHtml += `
+        <td colspan="7" style="border: 1px solid #93c5fd; padding: 10px; text-align: center; color: #1e3a8a;">
+          مجموع مسير (${d.dept.name})
+        </td>
+        <td style="border: 1px solid #93c5fd; padding: 10px; text-align: center; color: #047857;">${d.deptSalaries.toFixed(2)} ر.س</td>
+        <td style="border: 1px solid #93c5fd; padding: 10px; text-align: center; color: #6d28d9;">${d.deptIncentives.toFixed(2)} ر.س</td>
+        <td style="border: 1px solid #93c5fd; padding: 10px; text-align: center; color: #b91c1c;">${d.deptDeductions.toFixed(2)} ر.س</td>
+        <td style="border: 1px solid #93c5fd; padding: 10px; text-align: center; color: #0369a1; font-size: 13px;">${d.deptNet.toFixed(2)} ر.س</td>
+        <td style="background-color: #f1f5f9; border-top: none; border-bottom: none; width: 30px;"></td>
+      `;
+    });
+    // ختام عمود الملخص المالي
+    tableHtml += `
+      <td colspan="${summaryCols}" style="border: 1px solid #059669; padding: 10px; text-align: center; font-weight: bold; background-color: #064e3b; color: #ffffff;">
+        ✅ مسير مالي معتمد ومغلق
+      </td>
+    `;
+    tableHtml += '</tr></tbody></table>';
+
+    downloadExcelFile(tableHtml, 'تقرير_شامل_أفقي_لكافة_الأقسام');
+  };
+
+  // =========================================================================
+  // 2. تصدير إكسل المخصص للتبويب المفتوح فقط داخل القسم
+  // =========================================================================
+  const exportActiveTabExcel = () => {
+    if (!selectedDepartment) return;
+    const exportDate = getCleanDateTime();
+    const deptName = selectedDepartment.name;
+
+    // A. تصدير الموظفين فقط
+    if (hrSubTab === 'employees') {
+      if (!deptEmps.length) return alert(`لا يوجد موظفون في قسم (${deptName}) للتصدير.`);
+      let rows = '';
+      let sumSal = 0, sumInc = 0, sumDed = 0, sumNet = 0;
+
+      deptEmps.forEach((emp, i) => {
+        const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+        const s = parseNum(emp.salary);
+        const inc = parseNum(emp.incentives);
+        const ded = parseNum(emp.deductions);
+        const net = Math.max(0, s + inc - ded);
+        sumSal += s; sumInc += inc; sumDed += ded; sumNet += net;
+
+        rows += `<tr style="background-color: ${bg};">
+          <td style="text-align: center; font-weight: bold; mso-number-format:'\\@'; color: #d97706;">${emp.empNo || emp.id}</td>
+          <td style="text-align: right; font-weight: bold;">${emp.name}</td>
+          <td style="text-align: right;">${emp.role || '-'}</td>
+          <td style="text-align: center; mso-number-format:'\\@';">${emp.idNumber || '-'}</td>
+          <td style="text-align: center; mso-number-format:'\\@';" dir="ltr">${emp.phone || '-'}</td>
+          <td style="text-align: center;">${emp.maritalStatus || 'أعزب'}</td>
+          <td style="text-align: center;">${emp.childrenCount || 0}</td>
+          <td style="text-align: right;">${emp.address || '-'}</td>
+          <td style="text-align: center;">${emp.medicalInsurance || '-'}</td>
+          <td style="text-align: center;">${emp.contractEnd || '-'}</td>
+          <td style="text-align: center; font-weight: bold; color: #10b981;">${s.toFixed(2)} ر.س</td>
+          <td style="text-align: center; font-weight: bold; color: #8b5cf6;">${inc.toFixed(2)} ر.س</td>
+          <td style="text-align: center; font-weight: bold; color: #ef4444;">${ded.toFixed(2)} ر.س</td>
+          <td style="text-align: center; font-weight: bold; color: #0284c7; background-color: #f0f9ff;">${net.toFixed(2)} ر.س</td>
+        </tr>`;
+      });
+
+      const html = `
+        <table>
+          <thead>
+            <tr><th colspan="14" style="background-color: #1e293b; color: #ffffff; font-size: 18px; padding: 15px;">نظام محور • كشف موظفي ومسير رواتب قسم (${deptName})</th></tr>
+            <tr><th colspan="14" style="background-color: #334155; color: #e2e8f0; font-size: 12px; padding: 6px;">تاريخ التصدير: ${exportDate}</th></tr>
+            <tr style="background-color: #e2e8f0;">
+              <th>الرقم الوظيفي</th><th>اسم الموظف</th><th>المسمى</th><th>الهوية / الإقامة</th><th>الهاتف</th><th>الحالة الاجتماعية</th><th>الأطفال</th><th>العنوان الوطني</th><th>التأمين الطبي</th><th>نهاية العقد</th><th>الراتب الأساسي</th><th>الحوافز</th><th>الخصومات</th><th>صافي المستحق</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+            <tr style="background-color: #e2e8f0; font-weight: bold;">
+              <td colspan="10" style="padding: 12px; text-align: center;">إجمالي مسير الرواتب</td>
+              <td style="text-align: center; color: #10b981;">${sumSal.toFixed(2)} ر.س</td>
+              <td style="text-align: center; color: #8b5cf6;">${sumInc.toFixed(2)} ر.س</td>
+              <td style="text-align: center; color: #ef4444;">${sumDed.toFixed(2)} ر.س</td>
+              <td style="text-align: center; color: #0284c7; font-size: 14px; background-color: #e0f2fe;">${sumNet.toFixed(2)} ر.س</td>
+            </tr>
+          </tbody>
+        </table>`;
+      return downloadExcelFile(html, `كشف_موظفي_${deptName.replace(/\s+/g, '_')}`);
+    }
+
+    // B. تصدير الخصومات فقط
+    if (hrSubTab === 'deductions') {
+      if (!deptDeductions.length) return alert(`لا توجد خصومات مسجلة في قسم (${deptName}) للتصدير.`);
+      let rows = '';
+      let sum = 0;
+      deptDeductions.forEach((d, i) => {
+        const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+        const val = parseNum(d.amount);
+        sum += val;
+        rows += `<tr style="background-color: ${bg};">
+          <td style="text-align: right; font-weight: bold;">${d.empName}</td>
+          <td style="text-align: center; mso-number-format:'\\@';">${d.idNumber}</td>
+          <td style="text-align: center; font-weight: bold; color: #ef4444;">${val.toFixed(2)} ر.س</td>
+          <td style="text-align: right;">${d.reason || '-'}</td>
+          <td style="text-align: center;" dir="ltr">${d.date}</td>
+        </tr>`;
+      });
+
+      const html = `
+        <table>
+          <thead>
+            <tr><th colspan="5" style="background-color: #991b1b; color: #ffffff; font-size: 18px; padding: 15px;">نظام محور • سجل خصومات واستقطاعات قسم (${deptName})</th></tr>
+            <tr><th colspan="5" style="background-color: #b91c1c; color: #e2e8f0; font-size: 12px; padding: 6px;">تاريخ التصدير: ${exportDate}</th></tr>
+            <tr style="background-color: #fee2e2;">
+              <th>اسم الموظف</th><th>رقم الهوية / الإقامة</th><th>مبلغ الخصم</th><th>سبب الاستقطاع</th><th>التاريخ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+            <tr style="background-color: #fecaca; font-weight: bold;">
+              <td colspan="2" style="text-align: center; padding: 12px; color: #7f1d1d;">إجمالي الخصومات المستقطعة</td>
+              <td style="text-align: center; color: #991b1b; font-size: 14px;">${sum.toFixed(2)} ر.س</td>
+              <td colspan="2"></td>
+            </tr>
+          </tbody>
+        </table>`;
+      return downloadExcelFile(html, `سجل_خصومات_${deptName.replace(/\s+/g, '_')}`);
+    }
+
+    // C. تصدير الحوافز فقط
+    if (hrSubTab === 'incentives') {
+      if (!deptIncentives.length) return alert(`لا توجد حوافز أو مكافآت مسجلة في قسم (${deptName}) للتصدير.`);
+      let rows = '';
+      let sum = 0;
+      deptIncentives.forEach((inc, i) => {
+        const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+        const val = parseNum(inc.amount);
+        sum += val;
+        rows += `<tr style="background-color: ${bg};">
+          <td style="text-align: right; font-weight: bold;">${inc.empName}</td>
+          <td style="text-align: center; mso-number-format:'\\@';">${inc.idNumber}</td>
+          <td style="text-align: center; font-weight: bold; color: #8b5cf6;">${val.toFixed(2)} ر.س</td>
+          <td style="text-align: right;">${inc.reason || '-'}</td>
+          <td style="text-align: center;" dir="ltr">${inc.date}</td>
+        </tr>`;
+      });
+
+      const html = `
+        <table>
+          <thead>
+            <tr><th colspan="5" style="background-color: #5b21b6; color: #ffffff; font-size: 18px; padding: 15px;">نظام محور • سجل حوافز ومكافآت قسم (${deptName})</th></tr>
+            <tr><th colspan="5" style="background-color: #6d28d9; color: #e2e8f0; font-size: 12px; padding: 6px;">تاريخ التصدير: ${exportDate}</th></tr>
+            <tr style="background-color: #ede9fe;">
+              <th>اسم الموظف</th><th>رقم الهوية / الإقامة</th><th>مبلغ المكافأة</th><th>السبب الوصفي</th><th>التاريخ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+            <tr style="background-color: #ddd6fe; font-weight: bold;">
+              <td colspan="2" style="text-align: center; padding: 12px; color: #4c1d95;">إجمالي مبالغ الحوافز والمكافآت</td>
+              <td style="text-align: center; color: #5b21b6; font-size: 14px;">${sum.toFixed(2)} ر.س</td>
+              <td colspan="2"></td>
+            </tr>
+          </tbody>
+        </table>`;
+      return downloadExcelFile(html, `سجل_حوافز_${deptName.replace(/\s+/g, '_')}`);
+    }
+
+    // D. تصدير العمولات فقط
+    if (hrSubTab === 'commissions') {
+      if (!deptCommissions.length) return alert(`لا توجد عمولات مناديب مسجلة في قسم (${deptName}) للتصدير.`);
+      let rows = '';
+      let sumSales = 0, sumComm = 0;
+      let sumCartons = 0, sumPieces = 0;
+
+      deptCommissions.forEach((c, i) => {
+        const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+        sumSales += c.totalAmount;
+        sumComm += c.commission;
+        sumCartons += c.cartonsCount;
+        sumPieces += c.piecesCount;
+
+        rows += `<tr style="background-color: ${bg};">
+          <td style="text-align: right; font-weight: bold;">${c.empName}</td>
+          <td style="text-align: center; mso-number-format:'\\@';">${c.idNumber}</td>
+          <td style="text-align: center; font-weight: bold; color: #0284c7; mso-number-format:'\\@';">${c.invoiceNo}</td>
+          <td style="text-align: right;">${c.customerName}</td>
+          <td style="text-align: center;" dir="ltr">${c.date}</td>
+          <td style="text-align: center; font-weight: bold; color: #d97706;">${c.qtyDescription}</td>
+          <td style="text-align: center; font-weight: bold;">${c.totalAmount.toFixed(2)} ر.س</td>
+          <td style="text-align: center; font-weight: bold; color: #10b981; background-color: #f0fdf4;">${c.commission.toFixed(2)} ر.س</td>
+        </tr>`;
+      });
+
+      const totalQtyStr = `${sumCartons} كرتون` + (sumPieces > 0 ? ` و ${sumPieces} قطعة` : '');
+
+      const html = `
+        <table>
+          <thead>
+            <tr><th colspan="8" style="background-color: #0369a1; color: #ffffff; font-size: 18px; padding: 15px;">نظام محور • سجل عمولات مبيعات مناديب قسم (${deptName})</th></tr>
+            <tr><th colspan="8" style="background-color: #0284c7; color: #e2e8f0; font-size: 12px; padding: 6px;">تاريخ التصدير: ${exportDate}</th></tr>
+            <tr style="background-color: #e0f2fe;">
+              <th>اسم المندوب</th><th>الهوية / الإقامة</th><th>رقم الفاتورة</th><th>اسم العميل</th><th>تاريخ الفاتورة</th><th>الكمية المباعة</th><th>إجمالي الفاتورة</th><th>مبلغ العمولة المستحقة</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+            <tr style="background-color: #bae6fd; font-weight: bold;">
+              <td colspan="5" style="text-align: center; padding: 12px; color: #0369a1;">إجمالي عمولات ومبيعات المناديب</td>
+              <td style="text-align: center; color: #d97706;">${totalQtyStr}</td>
+              <td style="text-align: center; color: #0f172a;">${sumSales.toFixed(2)} ر.س</td>
+              <td style="text-align: center; color: #047857; font-size: 14px;">${sumComm.toFixed(2)} ر.س</td>
+            </tr>
+          </tbody>
+        </table>`;
+      return downloadExcelFile(html, `سجل_عمولات_${deptName.replace(/\s+/g, '_')}`);
+    }
+
+    // E. تصدير الوثائق والتنبيهات فقط
+    if (hrSubTab === 'alerts') {
+      if (!filteredEmps.length) return alert(`لا يوجد موظفون في قسم (${deptName}) لتصدير وثائقهم.`);
+      let rows = '';
+      filteredEmps.forEach((emp, i) => {
+        const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+        const iqama = checkExp(emp.iqamaEnd);
+        const health = checkExp(emp.healthEnd);
+        const contract = checkExp(emp.contractEnd);
+
+        rows += `<tr style="background-color: ${bg};">
+          <td style="text-align: right; font-weight: bold;">${emp.name}</td>
+          <td style="text-align: center; mso-number-format:'\\@';">${emp.idNumber || '-'}</td>
+          <td style="text-align: right;">${emp.role || '-'}</td>
+          <td style="text-align: center;">${emp.iqamaEnd || '-'}</td>
+          <td style="text-align: center; font-weight: bold; color: ${iqama.color};">${iqama.label}</td>
+          <td style="text-align: center;">${emp.healthEnd || '-'}</td>
+          <td style="text-align: center; font-weight: bold; color: ${health.color};">${health.label}</td>
+          <td style="text-align: center;">${emp.contractEnd || '-'}</td>
+          <td style="text-align: center; font-weight: bold; color: ${contract.color};">${contract.label}</td>
+        </tr>`;
+      });
+
+      const html = `
+        <table>
+          <thead>
+            <tr><th colspan="9" style="background-color: #b45309; color: #ffffff; font-size: 18px; padding: 15px;">نظام محور • كشف وثائق وتنبيهات صلاحية عقود موظفي قسم (${deptName})</th></tr>
+            <tr><th colspan="9" style="background-color: #d97706; color: #e2e8f0; font-size: 12px; padding: 6px;">تاريخ التصدير: ${exportDate}</th></tr>
+            <tr style="background-color: #fef3c7;">
+              <th>اسم الموظف</th><th>رقم الهوية</th><th>المسمى الوظيفي</th><th>انتهاء الإقامة</th><th>حالة الإقامة</th><th>انتهاء التأمين الطبي</th><th>حالة التأمين</th><th>انتهاء العقد</th><th>حالة العقد</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>`;
+      return downloadExcelFile(html, `وثائق_وتنبيهات_${deptName.replace(/\s+/g, '_')}`);
+    }
+  };
+
+  // مسمى زر التصدير الديناميكي حسب التبويب المفتوح
+  const getExportButtonLabel = () => {
+    switch (hrSubTab) {
+      case 'commissions': return '📊 تصدير العمولات (Excel)';
+      case 'deductions': return '📊 تصدير الخصومات (Excel)';
+      case 'incentives': return '📊 تصدير الحوافز (Excel)';
+      case 'alerts': return '📊 تصدير الوثائق والتنبيهات (Excel)';
+      default: return '📊 تصدير مسير الموظفين (Excel)';
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
       
       {!selectedDepartment ? (
         <>
+          {/* رأس الشاشة الرئيسية للأقسام مع زر التصدير الشامل المضاف */}
           <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '16px', border: `1px solid ${theme?.border || '#334155'}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
             <div>
               <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900', color: theme?.textDark || '#fff' }}>إدارة الأقسام والموارد البشرية</h2>
-              <p style={{ margin: 0, color: theme?.textMuted || '#94a3b8', fontSize: '14px' }}>إدارة الأقسام والموظفين التابعين لها</p>
+              <p style={{ margin: 0, color: theme?.textMuted || '#94a3b8', fontSize: '14px' }}>إدارة الأقسام والموظفين التابعين لها والتقارير الشاملة</p>
             </div>
-            <button onClick={() => setShowAddDeptModal(true)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 18px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
-              ➕ إضافة قسم جديد
-            </button>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <button 
+                onClick={exportAllDepartmentsExcel} 
+                style={{ background: '#059669', color: '#fff', border: 'none', padding: '12px 18px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}
+              >
+                📊 تصدير شامل لجميع الأقسام (Excel)
+              </button>
+              <button 
+                onClick={() => setShowAddDeptModal(true)} 
+                style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 18px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}
+              >
+                ➕ إضافة قسم جديد
+              </button>
+            </div>
           </div>
           
           <div>
@@ -719,6 +1224,7 @@ const HrTab = ({
         </>
       ) : (
         <>
+          {/* تفاصيل القسم وزر التصدير الديناميكي للتبويب المفتوح */}
           <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '16px', border: `1px solid ${theme?.border || '#334155'}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
             <div>
               <button onClick={() => setSelectedDepartment(null)} style={{ background: 'transparent', color: '#38bdf8', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', padding: '0 0 10px 0' }}>
@@ -731,25 +1237,33 @@ const HrTab = ({
               <button onClick={() => setShowAddEmpModal(true)} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>➕ إضافة موظف جديد</button>
               <button onClick={() => setShowIncentiveModal(true)} style={{ background: '#8b5cf6', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>🎁 إضافة حافز / مكافأة</button>
               <button onClick={() => setShowDeductModal(true)} style={{ background: '#ef4444', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>🔻 إضافة خصم / استقطاع</button>
-              <button onClick={exportDeptExcel} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>📊 تصدير إكسل (Excel)</button>
+              
+              {/* زر التصدير الذكي الذي يتغير حسب التبويب المفتوح */}
+              <button 
+                onClick={exportActiveTabExcel} 
+                style={{ background: '#10b981', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                {getExportButtonLabel()}
+              </button>
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <input 
               type="text" 
-              placeholder="🔍 ابحث بالاسم أو برقم الهوية..." 
+              placeholder="🔍 ابحث بالاسم أو برقم الهوية أو الفاتورة..." 
               value={empSearchQuery} 
               onChange={e => setEmpSearchQuery(e.target.value)} 
               style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', border: `1px solid ${theme?.border || '#334155'}`, outline: 'none' }}
             />
 
-            {/* Sub-Tabs Bar */}
+            {/* Sub-Tabs Bar: تبويب العمولات */}
             <div style={{ display: 'flex', gap: '10px', background: theme?.cardBg || '#1e293b', padding: '10px', borderRadius: '12px', border: `1px solid ${theme?.border || '#334155'}`, overflowX: 'auto' }}>
               {[
                 { id: 'employees', label: 'الموظفون' },
                 { id: 'deductions', label: 'الخصومات' },
                 { id: 'incentives', label: 'الحوافز والمكافآت' },
+                { id: 'commissions', label: 'العمولات' },
                 { id: 'alerts', label: 'الوثائق والتنبيهات' }
               ].map(tab => (
                 <button
@@ -773,6 +1287,7 @@ const HrTab = ({
             </div>
           </div>
 
+          {/* تبويب الموظفون */}
           {hrSubTab === 'employees' && (
             <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '16px', border: `1px solid ${theme?.border || '#334155'}`, padding: '20px', overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '1000px' }}>
@@ -821,6 +1336,7 @@ const HrTab = ({
             </div>
           )}
 
+          {/* تبويب الخصومات */}
           {hrSubTab === 'deductions' && (
             <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '16px', border: `1px solid ${theme?.border || '#334155'}`, padding: '20px', overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '800px' }}>
@@ -857,6 +1373,7 @@ const HrTab = ({
             </div>
           )}
 
+          {/* تبويب الحوافز والمكافآت */}
           {hrSubTab === 'incentives' && (
             <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '16px', border: `1px solid ${theme?.border || '#334155'}`, padding: '20px', overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '800px' }}>
@@ -887,6 +1404,128 @@ const HrTab = ({
             </div>
           )}
 
+          {/* تبويب العمولات مع أزرار الحذف الفردي وحذف الكل */}
+          {hrSubTab === 'commissions' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              
+              {/* بطاقات الإحصاء السريعة */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '15px' }}>
+                <div style={{ background: theme?.cardBg || '#1e293b', border: `1px solid ${theme?.border || '#334155'}`, borderRadius: '14px', padding: '18px' }}>
+                  <div style={{ fontSize: '13px', color: theme?.textMuted || '#94a3b8', marginBottom: '6px' }}>إجمالي مبالغ العمولات المستحقة</div>
+                  <div style={{ fontSize: '22px', fontWeight: '900', color: '#10b981' }}>{totalCommissionsAmount.toFixed(2)} ر.س</div>
+                </div>
+                <div style={{ background: theme?.cardBg || '#1e293b', border: `1px solid ${theme?.border || '#334155'}`, borderRadius: '14px', padding: '18px' }}>
+                  <div style={{ fontSize: '13px', color: theme?.textMuted || '#94a3b8', marginBottom: '6px' }}>عدد الفواتير المرتبطة بالمناديب</div>
+                  <div style={{ fontSize: '22px', fontWeight: '900', color: '#38bdf8' }}>{filteredCommissions.length}</div>
+                </div>
+                <div style={{ background: theme?.cardBg || '#1e293b', border: `1px solid ${theme?.border || '#334155'}`, borderRadius: '14px', padding: '18px' }}>
+                  <div style={{ fontSize: '13px', color: theme?.textMuted || '#94a3b8', marginBottom: '6px' }}>إجمالي الكراتين المباعة</div>
+                  <div style={{ fontSize: '22px', fontWeight: '900', color: '#d97706' }}>
+                    {filteredCommissions.reduce((s, c) => s + c.cartonsCount, 0)} كرتون
+                  </div>
+                </div>
+              </div>
+
+              {/* الجدول التفصيلي للعمولات مع زر حذف الكل وزر حذف الفاتورة */}
+              <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '16px', border: `1px solid ${theme?.border || '#334155'}`, padding: '20px', overflowX: 'auto' }}>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
+                  <h4 style={{ margin: 0, color: theme?.textDark || '#fff', fontSize: '15px' }}>تفاصيل عمولات المناديب</h4>
+                  {deptCommissions.length > 0 && (
+                    <button
+                      onClick={handleDeleteAllCommissions}
+                      style={{
+                        background: '#7f1d1d',
+                        color: '#fca5a5',
+                        border: '1px solid #991b1b',
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        fontSize: '13px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      🗑️ حذف الكل (بدء دورة جديدة)
+                    </button>
+                  )}
+                </div>
+
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '1000px' }}>
+                  <thead>
+                    <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme?.border || '#334155'}` }}>
+                      <th style={{ padding: '12px' }}>اسم المندوب</th>
+                      <th style={{ padding: '12px' }}>رقم الهوية</th>
+                      <th style={{ padding: '12px' }}>رقم الفاتورة</th>
+                      <th style={{ padding: '12px' }}>اسم العميل</th>
+                      <th style={{ padding: '12px' }}>تاريخ الفاتورة</th>
+                      <th style={{ padding: '12px' }}>الكمية المباعة</th>
+                      <th style={{ padding: '12px' }}>قيمة الفاتورة</th>
+                      <th style={{ padding: '12px' }}>مبلغ العمولة</th>
+                      <th style={{ padding: '12px' }}>الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCommissions.map(c => (
+                      <tr key={c.id} style={{ borderBottom: `1px solid ${theme?.border || '#334155'}` }}>
+                        <td style={{ padding: '12px', fontWeight: 'bold' }}>{c.empName}</td>
+                        <td style={{ padding: '12px', color: theme?.textMuted || '#94a3b8' }}>{c.idNumber}</td>
+                        <td style={{ padding: '12px', fontWeight: 'bold', color: '#38bdf8' }} dir="ltr">{c.invoiceNo}</td>
+                        <td style={{ padding: '12px' }}>{c.customerName}</td>
+                        <td style={{ padding: '12px' }} dir="ltr">{c.date}</td>
+                        <td style={{ padding: '12px', fontWeight: 'bold', color: '#d97706' }}>{c.qtyDescription}</td>
+                        <td style={{ padding: '12px', fontWeight: 'bold' }}>{c.totalAmount.toFixed(2)} ر.س</td>
+                        <td style={{ padding: '12px', fontWeight: 'bold', color: '#10b981', fontSize: '14px' }}>{c.commission.toFixed(2)} ر.س</td>
+                        <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
+                          <button
+                            onClick={() => handleDeleteSingleCommission(c.id)}
+                            style={{
+                              background: '#7f1d1d',
+                              color: '#fca5a5',
+                              border: 'none',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontWeight: 'bold',
+                              fontSize: '12px'
+                            }}
+                          >
+                            حذف 🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredCommissions.length === 0 && (
+                      <tr>
+                        <td colSpan="9" style={{ textAlign: 'center', padding: '30px', color: theme?.textMuted || '#94a3b8' }}>
+                          لا توجد عمولات حالية مسجلة لمناديب هذا القسم (تم تصفير الدورة بنجاح).
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                  {filteredCommissions.length > 0 && (
+                    <tfoot>
+                      <tr style={{ background: isDark ? '#0f172a' : '#f1f5f9', fontWeight: 'bold', borderTop: `2px solid ${theme?.border || '#334155'}` }}>
+                        <td colSpan="6" style={{ padding: '14px', textAlign: 'center', color: '#38bdf8' }}>إجمالي عمولات القسم</td>
+                        <td style={{ padding: '14px', color: theme?.textDark || '#fff' }}>
+                          {filteredCommissions.reduce((s, c) => s + c.totalAmount, 0).toFixed(2)} ر.س
+                        </td>
+                        <td style={{ padding: '14px', color: '#10b981', fontSize: '15px' }}>
+                          {totalCommissionsAmount.toFixed(2)} ر.س
+                        </td>
+                        <td style={{ padding: '14px' }}></td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+
+            </div>
+          )}
+
+          {/* تبويب الوثائق والتنبيهات */}
           {hrSubTab === 'alerts' && (
             <div>
               <h3 style={{ margin: '0 0 20px 0', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -894,16 +1533,6 @@ const HrTab = ({
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
                 {filteredEmps.map(emp => {
-                  const checkExp = (dateStr) => {
-                    if (!dateStr || dateStr === '-') return { status: 'none' };
-                    const d = new Date(dateStr);
-                    if (isNaN(d.getTime())) return { status: 'none' };
-                    const diffDays = (d.getTime() - Date.now()) / (1000 * 3600 * 24);
-                    if (diffDays < 0) return { status: 'expired', days: Math.abs(Math.floor(diffDays)) };
-                    if (diffDays <= 30) return { status: 'warning', days: Math.floor(diffDays) };
-                    return { status: 'ok' };
-                  };
-                  
                   const iqama = checkExp(emp.iqamaEnd);
                   const health = checkExp(emp.healthEnd);
                   const contract = checkExp(emp.contractEnd);
@@ -919,9 +1548,7 @@ const HrTab = ({
                             <div style={{ fontSize: '12px', color: theme?.textMuted || '#94a3b8' }}>هوية مقيم / إقامة</div>
                             <div style={{ fontWeight: 'bold', fontSize: '13px' }}>{emp.iqamaEnd || '-'}</div>
                           </div>
-                          {iqama.status === 'expired' && <span style={{ background: '#fef2f2', color: '#ef4444', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>منتهية</span>}
-                          {iqama.status === 'warning' && <span style={{ background: '#fffbeb', color: '#d97706', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>باقي {iqama.days} يوم</span>}
-                          {iqama.status === 'ok' && <span style={{ color: '#10b981', fontSize: '12px', fontWeight: 'bold' }}>سارية</span>}
+                          <span style={{ color: iqama.color, padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>{iqama.label}</span>
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: isDark ? '#0f172a' : '#f1f5f9', borderRadius: '8px' }}>
@@ -929,9 +1556,7 @@ const HrTab = ({
                             <div style={{ fontSize: '12px', color: theme?.textMuted || '#94a3b8' }}>شهادة صحية وتأمين طبي</div>
                             <div style={{ fontWeight: 'bold', fontSize: '13px' }}>{emp.healthEnd || '-'}</div>
                           </div>
-                          {health.status === 'expired' && <span style={{ background: '#fef2f2', color: '#ef4444', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>منتهي</span>}
-                          {health.status === 'warning' && <span style={{ background: '#fffbeb', color: '#d97706', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>باقي {health.days} يوم</span>}
-                          {health.status === 'ok' && <span style={{ color: '#10b981', fontSize: '12px', fontWeight: 'bold' }}>ساري</span>}
+                          <span style={{ color: health.color, padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>{health.label}</span>
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: isDark ? '#0f172a' : '#f1f5f9', borderRadius: '8px' }}>
@@ -939,9 +1564,7 @@ const HrTab = ({
                             <div style={{ fontSize: '12px', color: theme?.textMuted || '#94a3b8' }}>العقد الوظيفي</div>
                             <div style={{ fontWeight: 'bold', fontSize: '13px' }}>{emp.contractEnd || '-'}</div>
                           </div>
-                          {contract.status === 'expired' && <span style={{ background: '#fef2f2', color: '#ef4444', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>منتهي</span>}
-                          {contract.status === 'warning' && <span style={{ background: '#fffbeb', color: '#d97706', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>باقي {contract.days} يوم</span>}
-                          {contract.status === 'ok' && <span style={{ color: '#10b981', fontSize: '12px', fontWeight: 'bold' }}>ساري</span>}
+                          <span style={{ color: contract.color, padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>{contract.label}</span>
                         </div>
                       </div>
                     </div>

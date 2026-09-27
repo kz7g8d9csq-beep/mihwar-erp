@@ -321,6 +321,8 @@ function App() {
   });
   const [newProdName, setNewProdName] = useState('');
   const [newProdCommission, setNewProdCommission] = useState('');
+  const [newBoxSize, setNewBoxSize] = useState('12');
+  const [newCommissionType, setNewCommissionType] = useState('بالكرتون');
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
   const [newItemCode, setNewItemCode] = useState('');
@@ -333,6 +335,7 @@ function App() {
   const [editItemCode, setEditItemCode] = useState('');
   const [editCartonCommission, setEditCartonCommission] = useState('');
   const [editBoxSize, setEditBoxSize] = useState(12);
+  const [editCommissionType, setEditCommissionType] = useState('بالكرتون');
 
   // العملاء
   const [customers, setCustomers] = useState(() => {
@@ -962,13 +965,15 @@ function App() {
     setEditItemCode(prod.itemCode || ''); 
     setEditCartonCommission(prod.cartonCommission ?? 0);
     setEditBoxSize(prod.boxSize ?? 12);
+    setEditCommissionType(prod.commissionType || (prod.boxSize === 1 ? 'بالقطعة' : 'بالكرتون'));
     setShowEditProdModal(true);
   };
 
   const handleUpdateProduct = (e) => {
     e.preventDefault();
     if (!editProdName || !editProdPrice) return;
-    const updated = inventory.map(item => item.id === editingProdId ? { ...item, name: editProdName, price: Number(editProdPrice), stock: Number(editProdStock), itemCode: editItemCode.trim() || item.itemCode, cartonCommission: parseFloat(editCartonCommission) || 0, boxSize: parseInt(editBoxSize) || 12 } : item);
+    const finalBoxSize = editCommissionType === 'بالقطعة' ? 1 : (parseInt(editBoxSize) || 12);
+    const updated = inventory.map(item => item.id === editingProdId ? { ...item, name: editProdName, price: Number(editProdPrice), stock: Number(editProdStock), itemCode: editItemCode.trim() || item.itemCode, cartonCommission: parseFloat(editCartonCommission) || 0, boxSize: finalBoxSize, commissionType: editCommissionType } : item);
     setInventory(updated);
     localStorage.setItem('mihwar_inventory', JSON.stringify(updated));
     setShowEditProdModal(false);
@@ -1418,11 +1423,12 @@ function App() {
   const handleAddProduct = (e) => {
     e.preventDefault();
     if (!newProdName || !newProdPrice) return;
-    const newProd = { id: Date.now(), name: newProdName, price: Number(newProdPrice), stock: Number(newProdStock || 0), boxSize: 12, cartonCommission: parseFloat(newProdCommission) || 0, itemCode: newItemCode.trim() || 'SKU-' + Math.floor(100 + Math.random() * 900) };
+    const finalBoxSize = newCommissionType === 'بالقطعة' ? 1 : Number(newBoxSize || 12);
+    const newProd = { id: Date.now(), name: newProdName, price: Number(newProdPrice), stock: Number(newProdStock || 0), boxSize: finalBoxSize, commissionType: newCommissionType, cartonCommission: parseFloat(newProdCommission) || 0, itemCode: newItemCode.trim() || 'SKU-' + Math.floor(100 + Math.random() * 900) };
     const updated = [newProd, ...inventory];
     setInventory(updated);
     localStorage.setItem('mihwar_inventory', JSON.stringify(updated));
-    setNewProdName(''); setNewProdPrice(''); setNewProdStock(''); setNewItemCode(''); setNewProdCommission('');
+    setNewProdName(''); setNewProdPrice(''); setNewProdStock(''); setNewItemCode(''); setNewProdCommission(''); setNewBoxSize('12'); setNewCommissionType('بالكرتون');
   };
 
   const handleLogoFileChange = (e) => {
@@ -2068,6 +2074,8 @@ function App() {
               newProdStock={newProdStock} setNewProdStock={setNewProdStock}
               newItemCode={newItemCode} setNewItemCode={setNewItemCode}
               newProdCommission={newProdCommission} setNewProdCommission={setNewProdCommission}
+              newBoxSize={newBoxSize} setNewBoxSize={setNewBoxSize}
+              newCommissionType={newCommissionType} setNewCommissionType={setNewCommissionType}
               handleAddProduct={handleAddProduct}
               handleOpenEditProduct={handleOpenEditProduct}
               handleDeleteProduct={handleDeleteProduct}
@@ -2102,7 +2110,7 @@ function App() {
               setDeductionsList={setDeductionsList}
               filteredEmployees={filteredEmployees}
               filteredDeductions={filteredDeductions}
-              filteredAlerts={filteredAlerts}
+              filteredAlerts={filteredAlerts} invoices={invoices}
               documentAlerts={documentAlerts}
               urgentAlertsCount={urgentAlertsCount}
               hrSearchQuery={hrSearchQuery} setHrSearchQuery={setHrSearchQuery}
@@ -2201,8 +2209,23 @@ function App() {
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodName}</label><input type="text" value={editProdName} onChange={e=>setEditProdName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodPrice}</label><input type="number" value={editProdPrice} onChange={e=>setEditProdPrice(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
               <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{t.prodStock}</label><input type="number" value={editProdStock} onChange={e=>setEditProdStock(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>عمولة الكرتون للمندوب (ر.س):</label><input type="number" step="0.01" min="0" placeholder="مثال: 5.00" value={editCartonCommission} onChange={e=>setEditCartonCommission(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
-              <div><label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>سعة الكرتون (عدد الحبات):</label><input type="number" min="1" placeholder="الافتراضي: 12" value={editBoxSize} onChange={e=>setEditBoxSize(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} /></div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>نوع العمولة:</label>
+                <select value={editCommissionType} onChange={e=>setEditCommissionType(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: '1px solid ' + (theme.border || '#334155'), boxSizing: 'border-box', outline: 'none' }}>
+                  <option value="بالقطعة">بالقطعة</option>
+                  <option value="بالكرتون">بالكرتون</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{editCommissionType === 'بالقطعة' ? 'عمولة القطعة / الحبة (ر.س)' : 'عمولة الكرتون (ر.س)'}</label>
+                <input type="number" step="0.01" min="0" placeholder="مثال: 5.00" value={editCartonCommission} onChange={e=>setEditCartonCommission(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: '1px solid ' + (theme.border || '#334155'), boxSizing: 'border-box', outline: 'none' }} />
+              </div>
+              {editCommissionType === 'بالكرتون' && (
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>سعة الكرتون (عدد الحبات):</label>
+                  <input type="number" min="1" placeholder="الافتراضي: 12" value={editBoxSize} onChange={e=>setEditBoxSize(e.target.value)} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: '1px solid ' + (theme.border || '#334155'), boxSizing: 'border-box', outline: 'none' }} />
+                </div>
+              )}
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
                 <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.updateProd}</button>
                 <button type="button" onClick={() => setShowEditProdModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t.closeModal}</button>
