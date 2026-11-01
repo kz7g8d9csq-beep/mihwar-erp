@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import API from './services/api';
 import emailjs from 'emailjs-com';
+import './mihwar-design.css';
 import DashboardTab from './components/DashboardTab';
 import PosTab from './components/PosTab';
 import SalesBillingTab from './components/SalesBillingTab';
@@ -609,17 +610,19 @@ function App() {
   Object.assign(t, dict[lang] || dict['ar']);
 
   const theme = {
-    primary: '#d97706',
-    primaryHover: '#b45309',
-    bgMain: isDark ? '#141824' : '#f8fafc',
-    cardBg: isDark ? '#1b2230' : '#ffffff',
-    sidebarBg: '#11151f',
-    textDark: isDark ? '#f8fafc' : '#0f172a',
-    textMuted: isDark ? '#94a3b8' : '#64748b',
-    border: isDark ? '#263147' : '#e2e8f0',
-    accentGreen: '#10b981',
-    accentAmber: '#d97706',
-    accentRose: '#f43f5e'
+    primary: '#4A90E2',
+    primaryHover: '#3A7BD5',
+    bgMain: isDark ? '#18191E' : '#F4F5F7',
+    cardBg: isDark ? '#1F2026' : '#FFFFFF',
+    sidebarBg: '#1B1C21',
+    textDark: isDark ? '#F0F1F3' : '#1A1A2E',
+    textMuted: isDark ? '#8B8FA3' : '#7C819B',
+    border: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+    accentGreen: '#34D399',
+    accentAmber: '#FBBF24',
+    accentRose: '#F87171',
+    shadow: isDark ? '0 10px 30px rgba(0,0,0,0.25)' : '0 8px 30px rgba(0,0,0,0.035)',
+    inputBg: isDark ? '#25262D' : '#F8F9FB'
   };
 
   useEffect(() => {
@@ -1723,18 +1726,108 @@ function App() {
   if (!user && showLanding) {
     return (
       <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', minHeight: '100vh', color: '#f8fafc', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        <header style={{ background: '#1b2230', borderBottom: '1px solid #263147', padding: '18px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {companyLogo ? (
-              <img src={companyLogo} alt="Logo" style={{ width: '36px', height: '36px', objectFit: 'contain', borderRadius: '8px', background: '#fff', padding: '2px' }} />
-            ) : (
-              <div style={{ background: '#d97706', color: '#fff', padding: '6px 14px', borderRadius: '8px', fontWeight: '900', fontSize: '14px' }}>مح</div>
-            )}
-            <span style={{ fontWeight: '900', color: '#f8fafc', fontSize: '18px' }}>نظام محور</span>
+        <header style={{
+          background: theme.cardBg,
+          borderRadius: '24px',
+          padding: '16px 28px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          boxShadow: theme.shadow,
+          border: isDark ? '1px solid rgba(255,255,255,0.06)' : 'none',
+          marginBottom: '20px'
+        }}>
+          {/* Greetings section */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #4A90E2, #70A1FF)',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '20px',
+              fontWeight: '800',
+              boxShadow: '0 4px 14px rgba(74, 144, 226, 0.25)',
+              flexShrink: 0
+            }}>
+              👨‍💼
+            </div>
+            <div>
+              <div style={{ fontSize: '16px', fontWeight: '800', color: theme.textDark, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>مرحباً بك! 👋</span>
+                {user?.name && <span style={{ fontSize: '13px', fontWeight: '700', color: '#4A90E2' }}>({user.name})</span>}
+              </div>
+              <p style={{ margin: 0, fontSize: '12px', color: theme.textMuted }}>
+                ابدأ يومك بنشاط مع نظام محور ERP
+              </p>
+            </div>
           </div>
-          <button onClick={() => { setShowLanding(false); setAuthMode('register'); }} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '10px 22px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
-            {t.enterAppBtn}
-          </button>
+
+          {/* Central Pill Search Bar */}
+          <div style={{
+            background: isDark ? '#25262D' : '#F4F5F7',
+            borderRadius: '999px',
+            padding: '10px 22px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            width: '320px',
+            border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.04)'
+          }}>
+            <span style={{ fontSize: '14px', color: theme.textMuted }}>🔍</span>
+            <input
+              type="text"
+              placeholder="بحث في النظام..."
+              style={{
+                border: 'none',
+                background: 'transparent',
+                outline: 'none',
+                fontSize: '13px',
+                color: theme.textDark,
+                width: '100%',
+                fontFamily: 'Cairo, Tahoma, sans-serif'
+              }}
+            />
+          </div>
+
+          {/* My Account Pill (Capsule with Avatar, Name, Dropdown) */}
+          <div
+            onClick={() => setActiveTab('settings')}
+            style={{
+              background: '#1B1C21',
+              color: '#FFFFFF',
+              borderRadius: '999px',
+              padding: '6px 18px 6px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.12)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px'
+            }}>
+              👤
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <span style={{ fontSize: '12.5px', fontWeight: '700', display: 'block', lineHeight: 1.2 }}>
+                {user?.name || user?.businessName || 'حسابي (My account)'}
+              </span>
+            </div>
+            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>▾</span>
+          </div>
         </header>
         <main style={{ padding: '80px 20px', maxWidth: '1100px', margin: 'auto', textAlign: 'center' }}>
           <h1 style={{ fontSize: '44px', fontWeight: '900', margin: '0 0 20px 0', color: '#f8fafc' }}>نظام إدارة الموارد المؤسسية</h1>
@@ -1755,7 +1848,7 @@ function App() {
   if (!user) {
     return (
       <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', minHeight: '100vh', color: '#f8fafc', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-        <div style={{ width: '100%', maxWidth: '460px', background: '#1b2230', padding: '35px', borderRadius: '20px', border: '1px solid #263147', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4)' }}>
+        <div style={{ width: '100%', maxWidth: '460px', background: '#1b2230', padding: '35px', borderRadius: '24px', border: '1px solid #263147', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4)' }}>
           
           <div style={{ textAlign: 'center', marginBottom: '25px' }}>
             <h2 style={{ color: '#f8fafc', fontSize: '24px', fontWeight: '900', margin: '0 0 8px 0' }}>{authMode === 'login' ? 'تسجيل الدخول' : 'فتح حساب جديد'}</h2>
@@ -1826,7 +1919,7 @@ function App() {
         {/* نافذة التحقق الأمني OTP Modal */}
         {showOtpModal && (
           <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4000, padding: '15px' }}>
-            <div style={{ background: '#1b2230', color: '#f8fafc', padding: '35px', borderRadius: '20px', maxWidth: '400px', width: '100%', border: '1px solid #d97706', boxSizing: 'border-box', textAlign: 'center' }}>
+            <div style={{ background: '#1b2230', color: '#f8fafc', padding: '35px', borderRadius: '24px', maxWidth: '400px', width: '100%', border: '1px solid #d97706', boxSizing: 'border-box', textAlign: 'center' }}>
               <h3 style={{ margin: '0 0 10px 0', fontSize: '20px', fontWeight: '900', color: '#d97706' }}>رمز التحقق الأمني (OTP)</h3>
               <p style={{ fontSize: '13px', color: '#94a3b8', margin: '0 0 20px 0', lineHeight: '1.6' }}>
                 تم إرسال رمز التحقق المكون من 6 أرقام إلى بريدك الإلكتروني بنجاح. أدخله أدناه:
@@ -1867,7 +1960,7 @@ function App() {
     : allTabs;
 
   return (
-    <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark, display: 'flex' }}>
+    <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark, display: 'flex', padding: '14px', gap: '14px', boxSizing: 'border-box' }}>
       <style>{`
         @media print {
           body * { visibility: hidden !important; }
@@ -1879,13 +1972,28 @@ function App() {
       `}</style>
 
       {/* Sidebar */}
-      <aside className="sidebar-nav" style={{ width: '260px', background: theme.sidebarBg, borderLeft: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '20px 0', boxSizing: 'border-box', minHeight: '100vh', position: 'sticky', top: 0, zIndex: 100 }}>
+      <aside className="sidebar-nav" style={{
+        width: '260px',
+        background: '#1B1C21',
+        borderRadius: '28px',
+        boxShadow: '0 12px 35px rgba(0,0,0,0.25)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: '24px 14px',
+        boxSizing: 'border-box',
+        minHeight: 'calc(100vh - 28px)',
+        position: 'sticky',
+        top: '14px',
+        zIndex: 100,
+        border: '1px solid rgba(255,255,255,0.06)'
+      }}>
         <div>
-          <div style={{ padding: '0 20px 20px 20px', borderBottom: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ padding: '4px 10px 22px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: '12px' }}>
             {companyLogo ? (
               <img src={companyLogo} alt="Logo" style={{ width: '38px', height: '38px', objectFit: 'contain', borderRadius: '8px', background: '#fff', padding: '2px', border: '1px solid #d97706' }} />
             ) : (
-              <div style={{ background: '#d97706', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontWeight: '900', fontSize: '15px' }}>مح</div>
+              <div style={{ background: 'linear-gradient(135deg, #4A90E2, #70A1FF)', color: '#fff', padding: '8px 14px', borderRadius: '16px', fontWeight: '900', fontSize: '15px', boxShadow: '0 4px 14px rgba(74, 144, 226, 0.35)' }}>مح</div>
             )}
             <div>
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '900', color: '#fff' }}>نظام محور</h3>
@@ -1898,7 +2006,7 @@ function App() {
               return (
                 <button 
                   key={tab.id} onClick={() => setActiveTab(tab.id)} 
-                  style={{ background: isActive ? '#d97706' : 'transparent', border: 'none', color: '#fff', cursor: 'pointer', padding: '12px 16px', borderRadius: '10px', fontWeight: isActive ? 'bold' : 'normal', fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'right', width: '100%', transition: '0.2s' }}>
+                  style={{ background: isActive ? 'rgba(74, 144, 226, 0.16)' : 'transparent', border: 'none', color: isActive ? '#70A1FF' : 'rgba(255,255,255,0.65)', cursor: 'pointer', padding: '12px 16px', borderRadius: '16px', fontWeight: isActive ? '700' : '500', fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'right', width: '100%', transition: 'all 0.25s ease' }}>
                   <span style={{ fontSize: '16px' }}>{tab.icon}</span>
                   <span>{tab.label}</span>
                 </button>
@@ -1907,9 +2015,9 @@ function App() {
           </div>
         </div>
         <div style={{ padding: '0 20px' }}>
-          <div style={{ background: '#141824', padding: '12px', borderRadius: '10px', border: '1px solid #263147', textAlign: 'center' }}>
+          <div style={{ background: 'rgba(255,255,255,0.04)', padding: '14px', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
             <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>مساحة العمل النشطة</span>
-            <strong style={{ fontSize: '12.5px', color: '#d97706' }}>{businessName}</strong>
+            <strong style={{ fontSize: '12.5px', color: '#70A1FF', fontWeight: '700' }}>{businessName}</strong>
           </div>
         </div>
       </aside>
@@ -1921,7 +2029,7 @@ function App() {
           </div>
         </header>
 
-        <main style={{ padding: '30px', flex: 1, boxSizing: 'border-box' }}>
+        <main style={{ padding: '0', flex: 1, boxSizing: 'border-box' }}>
 
           {/* TAB 1: Dashboard */}
           {activeTab === 'dashboard' && user.role !== 'cashier' && (
@@ -2151,8 +2259,8 @@ function App() {
 
       {/* Edit Customer Modal */}
       {showEditCustModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '24px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>تعديل بيانات العميل</h3>
               <button onClick={() => setShowEditCustModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
@@ -2175,8 +2283,8 @@ function App() {
 
       {/* Edit Supplier Modal */}
       {showEditSuppModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '24px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>تعديل بيانات المورد</h3>
               <button onClick={() => setShowEditSuppModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
@@ -2198,8 +2306,8 @@ function App() {
 
       {/* Edit Product Modal */}
       {showEditProdModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '24px', maxWidth: '450px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>تعديل بيانات المنتج</h3>
               <button onClick={() => setShowEditProdModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
@@ -2237,8 +2345,8 @@ function App() {
 
       {/* نافذة إضافة وتعديل الموظف */}
       {showAddEmpModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '720px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '24px', maxWidth: '720px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
               <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '900' }}>{editingEmpId ? 'تعديل بيانات الموظف' : 'إضافة موظف جديد'}</h3>
               <button onClick={() => setShowAddEmpModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
@@ -2310,8 +2418,8 @@ function App() {
 
       {/* نافذة تسجيل خصم على موظف */}
       {showDeductModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '520px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '24px', maxWidth: '520px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900' }}>تسجيل خصم مالي على موظف</h3>
               <button onClick={() => setShowDeductModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
@@ -2348,8 +2456,8 @@ function App() {
 
       {/* نافذة إضافة حافز أو مكافأة */}
       {showIncentiveModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '580px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '24px', maxWidth: '580px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#8b5cf6' }}>{t('إضافة حافز أو مكافأة')}</h3>
               <button onClick={() => setShowIncentiveModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
@@ -2399,8 +2507,8 @@ function App() {
 
       {/* Pay Confirm Modal */}
       {showPayConfirmModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3100, padding: '15px' }}>
-          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '420px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3100, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '24px', maxWidth: '420px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '900', color: '#10b981' }}>تأكيد سداد الفاتورة</h3>
               <button onClick={() => setShowPayConfirmModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>

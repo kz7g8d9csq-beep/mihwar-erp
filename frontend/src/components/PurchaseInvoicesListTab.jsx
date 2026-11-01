@@ -131,7 +131,7 @@ const PurchaseInvoicesListTab = ({
   const currencyLabel = (t && t.currency) || 'ر.س';
 
   return (
-    <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+    <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <h2 style={{ margin: 0, fontSize: '18px' }}>{t ? t('📥 سجل فواتير الشراء') : '📥 سجل فواتير الشراء'}</h2>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -140,11 +140,11 @@ const PurchaseInvoicesListTab = ({
             value={purchaseInvoicesListSearch} 
             onChange={e => setPurchaseInvoicesListSearch(e.target.value)} 
             placeholder={t ? t('🔍 ابحث برقم الفاتورة أو المنتج أو المورد...') : '🔍 ابحث برقم الفاتورة أو المنتج أو المورد...'} 
-            style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '280px' }} 
+            style={{ padding: '10px 20px', borderRadius: '999px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '280px' }} 
           />
           <button 
             onClick={handleExportPurchasesToExcel} 
-            style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+            style={{ background: 'linear-gradient(135deg, #4A90E2, #3A7BD5)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '999px', boxShadow: '0 4px 14px rgba(74,144,226,0.25)', fontWeight: 'bold', cursor: 'pointer' }}
           >
             {t ? t('تصدير إلى Excel 📥') : 'تصدير إلى Excel 📥'}
           </button>
@@ -200,7 +200,7 @@ const PurchaseInvoicesListTab = ({
                 </td>
                 <td style={{ padding: '12px', color: theme.textMuted, textAlign: 'center' }}>{formatDateOnly(pi.date || pi.createdAt)}</td>
                 <td style={{ padding: '12px', textAlign: 'center' }}>
-                  <button onClick={() => setPrintingPurchaseInvoice(pi)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                  <button onClick={() => setPrintingPurchaseInvoice(pi)} style={{ background: '#4A90E2', color: '#fff', border: 'none', padding: '6px 16px', borderRadius: '999px', cursor: 'pointer', fontWeight: 'bold' }}>
                     {t ? t('معاينة وطباعة 👁️') : 'معاينة وطباعة 👁️'}
                   </button>
                 </td>

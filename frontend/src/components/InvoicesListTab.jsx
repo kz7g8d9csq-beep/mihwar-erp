@@ -150,10 +150,10 @@ const InvoicesListTab = ({
   };
 
   return (
-    <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+    <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
       
       {dueSoonInvoicesCount > 0 && (
-        <div style={{ background: '#06261e22', border: '1px solid #25D366', padding: '12px 18px', borderRadius: '10px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ background: '#06261e22', border: '1px solid #25D366', padding: '12px 18px', borderRadius: '18px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '18px' }}>🔔</span>
             <span style={{ fontSize: '13px', color: '#25D366', fontWeight: 'bold' }}>
@@ -166,8 +166,8 @@ const InvoicesListTab = ({
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <h2 style={{ margin: 0, fontSize: '18px' }}>{t(`📑 سجل فواتير المبيعات`)}</h2>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <input type="text" value={invoiceSearchQuery} onChange={e => setInvoiceSearchQuery(e.target.value)} placeholder={t(`🔍 ابحث برقم الفاتورة أو العميل...`)} style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '240px' }} />
-          <button onClick={handleExportInvoicesToExcel} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{t(`تصدير إلى Excel 📥`)}</button>
+          <input type="text" value={invoiceSearchQuery} onChange={e => setInvoiceSearchQuery(e.target.value)} placeholder={t(`🔍 ابحث برقم الفاتورة أو العميل...`)} style={{ padding: '10px 20px', borderRadius: '999px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '13px', width: '240px' }} />
+          <button onClick={handleExportInvoicesToExcel} style={{ background: 'linear-gradient(135deg, #4A90E2, #3A7BD5)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '999px', boxShadow: '0 4px 14px rgba(74,144,226,0.25)', fontWeight: 'bold', cursor: 'pointer' }}>{t(`تصدير إلى Excel 📥`)}</button>
         </div>
       </div>
 
@@ -236,7 +236,7 @@ const InvoicesListTab = ({
                 </td>
                 <td style={{ padding: '12px' }}>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <button onClick={() => setPrintingInvoice(inv)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>{t(`معاينة وطباعة 👁️`)}</button>
+                    <button onClick={() => setPrintingInvoice(inv)} style={{ background: '#4A90E2', color: '#fff', border: 'none', padding: '6px 16px', borderRadius: '999px', cursor: 'pointer', fontWeight: 'bold' }}>{t(`معاينة وطباعة 👁️`)}</button>
                     
                     {needsPayment && (
                       <button 

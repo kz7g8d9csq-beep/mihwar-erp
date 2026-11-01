@@ -381,18 +381,18 @@ const ReturnsTab = ({
   const currentTextMuted = theme.textMuted || '#94a3b8';
 
   return (
-    <div style={{ background: currentCardBg, borderRadius: '16px', border: '1px solid ' + currentThemeBorder, padding: '25px', color: currentTextDark }}>
+    <div style={{ background: currentCardBg, borderRadius: '24px', boxShadow: '0 8px 30px rgba(0,0,0,0.035)', border: '1px solid ' + currentThemeBorder, padding: '25px', color: currentTextDark }}>
       
       <div style={{ display: 'flex', gap: '15px', borderBottom: '1px solid ' + currentThemeBorder, paddingBottom: '15px', marginBottom: '20px' }}>
         <button 
           onClick={() => { setActiveSubTab('salesReturns'); setFoundInvoice(null); setSearchInvoiceNo(''); }} 
-          style={{ background: activeSubTab === 'salesReturns' ? '#d97706' : 'transparent', color: activeSubTab === 'salesReturns' ? '#fff' : currentTextMuted, border: activeSubTab === 'salesReturns' ? 'none' : '1px solid ' + currentThemeBorder, padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+          style={{ background: activeSubTab === 'salesReturns' ? '#4A90E2' : 'transparent', color: activeSubTab === 'salesReturns' ? '#fff' : currentTextMuted, border: activeSubTab === 'salesReturns' ? 'none' : '1px solid ' + currentThemeBorder, padding: '10px 20px', borderRadius: '999px', fontWeight: 'bold', cursor: 'pointer' }}
         >
           مرتجعات المبيعات 📉
         </button>
         <button 
           onClick={() => { setActiveSubTab('purchaseReturns'); setFoundInvoice(null); setSearchInvoiceNo(''); }} 
-          style={{ background: activeSubTab === 'purchaseReturns' ? '#d97706' : 'transparent', color: activeSubTab === 'purchaseReturns' ? '#fff' : currentTextMuted, border: activeSubTab === 'purchaseReturns' ? 'none' : '1px solid ' + currentThemeBorder, padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+          style={{ background: activeSubTab === 'purchaseReturns' ? '#4A90E2' : 'transparent', color: activeSubTab === 'purchaseReturns' ? '#fff' : currentTextMuted, border: activeSubTab === 'purchaseReturns' ? 'none' : '1px solid ' + currentThemeBorder, padding: '10px 20px', borderRadius: '999px', fontWeight: 'bold', cursor: 'pointer' }}
         >
           مرتجعات المشتريات 📦
         </button>
@@ -402,7 +402,7 @@ const ReturnsTab = ({
         <h2 style={{ margin: 0, fontSize: '18px' }}>
           {activeSubTab === 'salesReturns' ? 'إدارة مرتجعات المبيعات' : 'إدارة مرتجعات المشتريات'}
         </h2>
-        <button onClick={handleExport} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <button onClick={handleExport} style={{ background: '#10b981', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: '999px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
           تصدير إكسيل 📊
         </button>
       </div>
@@ -415,10 +415,10 @@ const ReturnsTab = ({
             value={searchInvoiceNo} 
             onChange={e => setSearchInvoiceNo(e.target.value)} 
             placeholder="أدخل رقم الفاتورة للبحث..." 
-            style={{ width: '100%', padding: '11px', borderRadius: '8px', background: currentCardBg, color: currentTextDark, border: '1px solid ' + currentThemeBorder, outline: 'none', boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: '12px 16px', borderRadius: '16px', background: currentCardBg, color: currentTextDark, border: '1px solid ' + currentThemeBorder, outline: 'none', boxSizing: 'border-box' }}
           />
         </div>
-        <button onClick={handleSearch} style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '11px 22px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', height: '42px' }}>
+        <button onClick={handleSearch} style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '11px 22px', borderRadius: '999px', fontWeight: 'bold', cursor: 'pointer', height: '42px' }}>
           بحث 🔍
         </button>
       </div>
@@ -490,7 +490,7 @@ const ReturnsTab = ({
                 <option value="رصيد دائن">رصيد حساب</option>
               </select>
             </div>
-            <button onClick={handleProcessReturn} style={{ background: '#f59e0b', color: '#fff', border: 'none', padding: '11px 25px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', flex: 1, minWidth: '180px' }}>
+            <button onClick={handleProcessReturn} style={{ background: '#f59e0b', color: '#fff', border: 'none', padding: '11px 25px', borderRadius: '999px', fontWeight: 'bold', cursor: 'pointer', flex: 1, minWidth: '180px' }}>
               تسجيل طلب الإرجاع 🔄
             </button>
           </div>
@@ -558,7 +558,7 @@ const ReturnsTab = ({
 
       {printingReturn && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '10px' }}>
-          <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '16px', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div style={{ background: '#fff', color: '#0f172a', padding: '30px', borderRadius: '24px', boxShadow: '0 8px 30px rgba(0,0,0,0.035)', maxWidth: '700px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="no-print-zone" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '15px', marginBottom: '20px' }}>
               <button onClick={() => window.print()} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
                 طباعة الإشعار 🖨️

@@ -1,0 +1,264 @@
+/* ══════════════════════════════════════════════════════════════
+   Mihwar ERP — Modern Design System (image_10.png inspired)
+   ══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ── CSS Custom Properties ── */
+:root {
+  --mihwar-radius-xl: 24px;
+  --mihwar-radius-lg: 16px;
+  --mihwar-radius-md: 12px;
+  --mihwar-radius-pill: 999px;
+  --mihwar-radius-sidebar: 28px;
+  --mihwar-shadow-light: 0 8px 30px rgba(0,0,0,0.035);
+  --mihwar-shadow-dark: 0 8px 30px rgba(0,0,0,0.18);
+  --mihwar-shadow-hover: 0 12px 40px rgba(0,0,0,0.08);
+  --mihwar-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --mihwar-blue: #4A90E2;
+  --mihwar-blue-light: #70A1FF;
+  --mihwar-blue-bg: rgba(74, 144, 226, 0.08);
+  --mihwar-green: #34D399;
+  --mihwar-green-bg: rgba(52, 211, 153, 0.1);
+  --mihwar-amber: #FBBF24;
+  --mihwar-amber-bg: rgba(251, 191, 36, 0.1);
+  --mihwar-rose: #F87171;
+  --mihwar-rose-bg: rgba(248, 113, 113, 0.1);
+  --mihwar-purple: #A78BFA;
+  --mihwar-purple-bg: rgba(167, 139, 250, 0.1);
+}
+
+/* ── Global Reset ── */
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: 'Cairo', 'Tahoma', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* ── Selection ── */
+::selection {
+  background: var(--mihwar-blue);
+  color: #fff;
+}
+
+/* ── Sidebar Navigation ── */
+.sidebar-nav {
+  border-radius: 0 var(--mihwar-radius-sidebar) var(--mihwar-radius-sidebar) 0 !important;
+  border: none !important;
+  box-shadow: 4px 0 20px rgba(0,0,0,0.15) !important;
+  transition: var(--mihwar-transition);
+  overflow: hidden;
+}
+
+[dir="rtl"] .sidebar-nav {
+  border-radius: var(--mihwar-radius-sidebar) 0 0 var(--mihwar-radius-sidebar) !important;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.15) !important;
+}
+
+.sidebar-nav button {
+  transition: var(--mihwar-transition) !important;
+  border-radius: var(--mihwar-radius-md) !important;
+  letter-spacing: 0.01em;
+}
+
+.sidebar-nav button:hover {
+  background: rgba(255,255,255,0.06) !important;
+  transform: translateX(-2px);
+}
+
+[dir="rtl"] .sidebar-nav button:hover {
+  transform: translateX(2px);
+}
+
+/* ── Cards ── */
+.mihwar-card {
+  border-radius: var(--mihwar-radius-xl) !important;
+  border: none !important;
+  transition: var(--mihwar-transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.mihwar-card:hover {
+  transform: translateY(-2px);
+}
+
+/* ── Inputs ── */
+input, select, textarea {
+  transition: var(--mihwar-transition) !important;
+  font-family: 'Cairo', 'Tahoma', sans-serif !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--mihwar-blue) !important;
+  box-shadow: 0 0 0 3px var(--mihwar-blue-bg) !important;
+  outline: none !important;
+}
+
+/* ── Buttons ── */
+button {
+  font-family: 'Cairo', 'Tahoma', sans-serif !important;
+  transition: var(--mihwar-transition) !important;
+  letter-spacing: 0.01em;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+button:active {
+  transform: translateY(0);
+  filter: brightness(0.95);
+}
+
+/* ── Tables ── */
+table {
+  border-collapse: separate !important;
+  border-spacing: 0 8px !important;
+}
+
+table thead th {
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  font-weight: 600 !important;
+  padding: 12px 16px !important;
+  border: none !important;
+}
+
+table tbody tr {
+  transition: var(--mihwar-transition);
+  border-radius: var(--mihwar-radius-lg) !important;
+}
+
+table tbody tr:hover {
+  transform: scale(1.005);
+}
+
+table tbody td {
+  padding: 14px 16px !important;
+  border: none !important;
+  vertical-align: middle !important;
+}
+
+table tbody tr td:first-child {
+  border-radius: 0 var(--mihwar-radius-lg) var(--mihwar-radius-lg) 0;
+}
+
+table tbody tr td:last-child {
+  border-radius: var(--mihwar-radius-lg) 0 0 var(--mihwar-radius-lg);
+}
+
+[dir="ltr"] table tbody tr td:first-child {
+  border-radius: var(--mihwar-radius-lg) 0 0 var(--mihwar-radius-lg);
+}
+
+[dir="ltr"] table tbody tr td:last-child {
+  border-radius: 0 var(--mihwar-radius-lg) var(--mihwar-radius-lg) 0;
+}
+
+/* ── Status Badges ── */
+.badge-success {
+  background: var(--mihwar-green-bg) !important;
+  color: #059669 !important;
+  padding: 4px 14px !important;
+  border-radius: var(--mihwar-radius-pill) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.badge-warning {
+  background: var(--mihwar-amber-bg) !important;
+  color: #d97706 !important;
+  padding: 4px 14px !important;
+  border-radius: var(--mihwar-radius-pill) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.badge-danger {
+  background: var(--mihwar-rose-bg) !important;
+  color: #dc2626 !important;
+  padding: 4px 14px !important;
+  border-radius: var(--mihwar-radius-pill) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+/* ── Modal Overlay ── */
+.mihwar-modal-overlay {
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+}
+
+/* ── Animations ── */
+@keyframes mihwarFadeIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes mihwarSlideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes mihwarPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ── Print Styles (preserved) ── */
+@media print {
+  body * { visibility: hidden !important; }
+  #zatca-printable-invoice, #zatca-printable-invoice * { visibility: visible !important; }
+  #zatca-printable-invoice {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    padding: 15mm !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-sizing: border-box !important;
+  }
+  .no-print-zone { display: none !important; }
+  .sidebar-nav { display: none !important; }
+  @page { size: A4 portrait; margin: 0mm; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .sidebar-nav {
+    width: 70px !important;
+    border-radius: 0 !important;
+  }
+  .sidebar-nav span:not([style*="fontSize: '16px'"]) {
+    display: none;
+  }
+}
+

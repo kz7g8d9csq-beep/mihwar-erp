@@ -90,8 +90,8 @@ const SalesBillingTab = ({
     <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
       
       {/* القسم الرئيسي: إدخال الفاتورة والأصناف */}
-      <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px' }}>
-        <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#d97706' }}>
+      <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '25px' }}>
+        <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#4A90E2' }}>
           {tr('⚡ إصدار فاتورة بيع جديدة')}
         </h2>
 
@@ -108,12 +108,12 @@ const SalesBillingTab = ({
               value={salesCustomerSearch} 
               onChange={e => setSalesCustomerSearch(e.target.value)} 
               placeholder={tr('اكتب اسم المنشأة أو العميل...')} 
-              style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '6px', boxSizing: 'border-box', fontSize: '12px' }} 
+              style={{ width: '100%', padding: '10px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', marginBottom: '6px', boxSizing: 'border-box', fontSize: '12px' }} 
             />
             <select 
               value={selectedCustomerId} 
               onChange={e => setSelectedCustomerId(e.target.value)} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '13px' }}>
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '13px' }}>
               <option value="">{tr('-- عميل نقدي عام (افتراضي) --')}</option>
               {(filteredCustomersForSales || []).map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -134,7 +134,7 @@ const SalesBillingTab = ({
             <select 
               value={currentSalesRepId} 
               onChange={e => setCurrentSalesRepId(e.target.value)} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${currentSalesRepId ? '#8b5cf6' : theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '13px', fontWeight: currentSalesRepId ? 'bold' : 'normal' }}>
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${currentSalesRepId ? '#8b5cf6' : theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '13px', fontWeight: currentSalesRepId ? 'bold' : 'normal' }}>
               <option value="">{tr('-- بدون مندوب (مبيعات مباشرة) --')}</option>
               {salesRepsList.length === 0 && (
                 <option value="" disabled>-- لا يوجد موظفون مسجلون في قسم المبيعات --</option>
@@ -160,7 +160,7 @@ const SalesBillingTab = ({
                 const p = (inventory || []).find(x => x.id === Number(e.target.value)); 
                 if (p) setItemPrice(p.price); 
               }} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '13px' }}>
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '13px' }}>
               <option value="">{tr('-- اختر المنتج --')}</option>
               {(inventory || []).map(p => (
                 <option key={p.id} value={p.id}>{p.name} ({tr('متوفر:')} {p.stock})</option>
@@ -173,7 +173,7 @@ const SalesBillingTab = ({
             <select 
               value={salesUnitType} 
               onChange={e => setSalesUnitType(e.target.value)} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '13px' }}>
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '13px' }}>
               <option value="قطعة">{tr('قطعة')}</option>
               <option value="كرتون">{tr('كرتون')}</option>
             </select>
@@ -184,7 +184,7 @@ const SalesBillingTab = ({
             <div style={{ display: 'flex', alignItems: 'center', background: theme.bgMain, borderRadius: '8px', border: `1px solid ${theme.border}`, padding: '3px' }}>
               <button type="button" onClick={() => setItemQty(Math.max(1, itemQty - 1))} style={{ background: '#ef4444', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>-</button>
               <input type="number" min="1" value={itemQty} onChange={e => setItemQty(Math.max(1, Number(e.target.value)))} style={{ width: '35px', textAlign: 'center', border: 'none', background: 'transparent', fontWeight: 'bold', color: theme.textDark, outline: 'none', fontSize: '13px' }} />
-              <button type="button" onClick={() => setItemQty(itemQty + 1)} style={{ background: '#d97706', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>+</button>
+              <button type="button" onClick={() => setItemQty(itemQty + 1)} style={{ background: 'linear-gradient(135deg, #4A90E2, #3A7BD5)', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>+</button>
             </div>
           </div>
 
@@ -195,14 +195,14 @@ const SalesBillingTab = ({
               value={itemPrice} 
               onChange={e => setItemPrice(e.target.value)} 
               placeholder={tr('السعر')} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '13px' }} 
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '13px' }} 
             />
           </div>
 
           <button 
             type="button"
             onClick={handleAddItemToSalesCart} 
-            style={{ background: '#d97706', color: '#fff', border: 'none', padding: '11px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            style={{ background: 'linear-gradient(135deg, #4A90E2, #3A7BD5)', color: '#fff', border: 'none', padding: '11px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', whiteSpace: 'nowrap' }}>
             {tr('➕ إضافة')}
           </button>
         </div>
@@ -293,13 +293,13 @@ const SalesBillingTab = ({
           type="button"
           onClick={handleSaveSalesInvoice} 
           disabled={!cartItems.length || isSubmittingSale} 
-          style={{ width: '100%', background: '#10b981', color: '#fff', padding: '14px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', opacity: (!cartItems.length || isSubmittingSale) ? 0.6 : 1 }}>
+          style={{ width: '100%', background: '#10b981', color: '#fff', padding: '14px', borderRadius: '18px', border: 'none', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer', opacity: (!cartItems.length || isSubmittingSale) ? 0.6 : 1 }}>
           {isSubmittingSale ? tr('جاري الحفظ...') : tr('إتمام الدفع وإصدار الفاتورة 💳')}
         </button>
       </div>
 
       {/* القسم الجانبي: ملخص الحسبة والأرباح والعمولات */}
-      <div style={{ background: '#020617', borderRadius: '16px', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div style={{ background: '#020617', borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', color: '#fff', padding: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <div>
           <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: '#38bdf8' }}>{tr('ملخص الحسبة التلقائية')}</h3>
           
@@ -321,7 +321,7 @@ const SalesBillingTab = ({
             </div>
 
             {/* تفصيل عمولة المندوب وصافي ربح الفاتورة */}
-            <div style={{ background: '#0f172a', padding: '14px', borderRadius: '10px', marginTop: '15px', border: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ background: '#0f172a', padding: '14px', borderRadius: '18px', marginTop: '15px', border: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#a855f7' }}>
                 📊 تحليل أرباح وعمولات الفاتورة:
               </div>

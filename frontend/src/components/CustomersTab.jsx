@@ -115,7 +115,7 @@ const CustomersTab = ({
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
       
       {/* نموذج فتح حساب عميل جديد */}
-      <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', height: 'fit-content' }}>
+      <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '25px', height: 'fit-content' }}>
         <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{getText('فتح حساب عميل جديد', 'فتح حساب عميل جديد')}</h3>
         <form onSubmit={handleAddCustomer} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div>
@@ -126,7 +126,7 @@ const CustomersTab = ({
               value={custName} 
               onChange={e => setCustName(e.target.value)} 
               required 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
             />
           </div>
           <div>
@@ -136,7 +136,7 @@ const CustomersTab = ({
               placeholder={getText('رقم الهوية / السجل التجاري', 'رقم الهوية / السجل التجاري')} 
               value={custNationalId} 
               onChange={e => setCustNationalId(e.target.value)} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
             />
           </div>
           <div>
@@ -146,7 +146,7 @@ const CustomersTab = ({
               placeholder={getText('رقم الهاتف', 'رقم الهاتف')} 
               value={custPhone} 
               onChange={e => setCustPhone(e.target.value)} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
             />
           </div>
           <div>
@@ -156,7 +156,7 @@ const CustomersTab = ({
               placeholder={getText('البريد الإلكتروني', 'البريد الإلكتروني')} 
               value={custEmail} 
               onChange={e => setCustEmail(e.target.value)} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
             />
           </div>
           <div>
@@ -166,7 +166,7 @@ const CustomersTab = ({
               placeholder={getText('العنوان (مثال: جدة - حي الروضة)', 'العنوان (مثال: جدة - حي الروضة)')} 
               value={custAddress} 
               onChange={e => setCustAddress(e.target.value)} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} 
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} 
             />
           </div>
           <div>
@@ -176,12 +176,12 @@ const CustomersTab = ({
               placeholder={getText('فترة السماح (مثال: 15 يوم / 30 يوم)', 'فترة السماح (مثال: 15 يوم / 30 يوم)')} 
               value={custGracePeriod} 
               onChange={e => setCustGracePeriod(e.target.value)} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} 
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} 
             />
           </div>
           <button 
             type="submit" 
-            style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '6px' }}
+            style={{ background: 'linear-gradient(135deg, #4A90E2, #3A7BD5)', color: '#fff', padding: '12px 24px', borderRadius: '999px', boxShadow: '0 4px 14px rgba(74,144,226,0.3)', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '6px' }}
           >
             {getText('حفظ العميل', 'حفظ العميل')}
           </button>
@@ -189,7 +189,7 @@ const CustomersTab = ({
       </div>
 
       {/* جدول دليل العملاء */}
-      <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+      <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <h3 style={{ margin: 0, fontSize: '17px' }}>{getText('دليل العملاء', 'دليل العملاء')}</h3>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -198,7 +198,7 @@ const CustomersTab = ({
               value={customerSearchQuery} 
               onChange={e => setCustomerSearchQuery(e.target.value)} 
               placeholder={getText('🔍 ابحث بالاسم، الهوية، الهاتف أو البريد...', '🔍 ابحث بالاسم، الهوية، الهاتف أو البريد...')} 
-              style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '230px' }} 
+              style={{ padding: '8px 12px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '230px' }} 
             />
             <button 
               onClick={handleExportCustomersToExcel} 
@@ -234,7 +234,7 @@ const CustomersTab = ({
                   <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                     <button 
                       onClick={() => handleOpenEditCustomer(c)} 
-                      style={{ background: '#d97706', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}
+                      style={{ background: '#4A90E2', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '999px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}
                     >
                       {getText('تعديل ✏️', 'تعديل ✏️')}
                     </button>

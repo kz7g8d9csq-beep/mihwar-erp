@@ -108,7 +108,7 @@ const SuppliersTab = ({
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
       
       {/* نموذج فتح حساب مورد جديد */}
-      <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', height: 'fit-content' }}>
+      <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '25px', height: 'fit-content' }}>
         <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{getText('فتح حساب مورد جديد', 'فتح حساب مورد جديد')}</h3>
         <form onSubmit={handleAddSupplier} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div>
@@ -119,7 +119,7 @@ const SuppliersTab = ({
               value={suppName} 
               onChange={e => setSuppName(e.target.value)} 
               required 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
             />
           </div>
           <div>
@@ -129,7 +129,7 @@ const SuppliersTab = ({
               placeholder={getText('الرقم الضريبي', 'الرقم الضريبي')} 
               value={suppTaxNumber} 
               onChange={e => setSuppTaxNumber(e.target.value)} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
             />
           </div>
           <div>
@@ -139,7 +139,7 @@ const SuppliersTab = ({
               placeholder={getText('رقم الهاتف', 'رقم الهاتف')} 
               value={suppPhone} 
               onChange={e => setSuppPhone(e.target.value)} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
             />
           </div>
           <div>
@@ -149,7 +149,7 @@ const SuppliersTab = ({
               placeholder={getText('العنوان (مثال: جدة - المنطقة الصناعية)', 'العنوان (مثال: جدة - المنطقة الصناعية)')} 
               value={suppAddress} 
               onChange={e => setSuppAddress(e.target.value)} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} 
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} 
             />
           </div>
           <div>
@@ -159,12 +159,12 @@ const SuppliersTab = ({
               placeholder={getText('فترة السماح (مثال: 15 يوم / 30 يوم)', 'فترة السماح (مثال: 15 يوم / 30 يوم)')} 
               value={suppGracePeriod} 
               onChange={e => setSuppGracePeriod(e.target.value)} 
-              style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} 
+              style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.cardBg, color: theme.textDark, border: `1px solid ${theme.border}`, boxSizing: 'border-box', outline: 'none' }} 
             />
           </div>
           <button 
             type="submit" 
-            style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '6px' }}
+            style={{ background: 'linear-gradient(135deg, #4A90E2, #3A7BD5)', color: '#fff', padding: '12px 24px', borderRadius: '999px', boxShadow: '0 4px 14px rgba(74,144,226,0.3)', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '6px' }}
           >
             {getText('حفظ المورد', 'حفظ المورد')}
           </button>
@@ -172,7 +172,7 @@ const SuppliersTab = ({
       </div>
 
       {/* جدول دليل الموردين */}
-      <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+      <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <h3 style={{ margin: 0, fontSize: '17px' }}>{getText('دليل الموردين', 'دليل الموردين')}</h3>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -181,7 +181,7 @@ const SuppliersTab = ({
               value={supplierSearchQuery} 
               onChange={e => setSupplierSearchQuery(e.target.value)} 
               placeholder={getText('🔍 ابحث بالاسم، الرقم الضريبي أو العنوان...', '🔍 ابحث بالاسم، الرقم الضريبي أو العنوان...')} 
-              style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '240px' }} 
+              style={{ padding: '8px 12px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '240px' }} 
             />
             <button 
               onClick={handleExportSuppliersToExcel} 
@@ -215,7 +215,7 @@ const SuppliersTab = ({
                   <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                     <button 
                       onClick={() => handleOpenEditSupplier(s)} 
-                      style={{ background: '#d97706', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}
+                      style={{ background: '#4A90E2', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: '999px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}
                     >
                       {getText('تعديل ✏️', 'تعديل ✏️')}
                     </button>

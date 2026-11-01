@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
-const API_BASE = 'https://backend-6grl.onrender.com';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const HrTab = ({
   t, theme = {}, isDark, user,
@@ -1162,7 +1162,7 @@ const HrTab = ({
       {!selectedDepartment ? (
         <>
           {/* رأس الشاشة الرئيسية للأقسام مع زر التصدير الشامل المضاف */}
-          <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '16px', border: `1px solid ${theme?.border || '#334155'}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+          <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '24px', border: `1px solid ${theme?.border || '#334155'}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
             <div>
               <h2 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '900', color: theme?.textDark || '#fff' }}>إدارة الأقسام والموارد البشرية</h2>
               <p style={{ margin: 0, color: theme?.textMuted || '#94a3b8', fontSize: '14px' }}>إدارة الأقسام والموظفين التابعين لها والتقارير الشاملة</p>
@@ -1176,7 +1176,7 @@ const HrTab = ({
               </button>
               <button 
                 onClick={() => setShowAddDeptModal(true)} 
-                style={{ background: '#d97706', color: '#fff', border: 'none', padding: '12px 18px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}
+                style={{ background: '#4A90E2', color: '#fff', border: 'none', padding: '12px 18px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}
               >
                 ➕ إضافة قسم جديد
               </button>
@@ -1189,7 +1189,7 @@ const HrTab = ({
               placeholder="🔍 ابحث باسم القسم..." 
               value={deptSearchQuery} 
               onChange={e => setDeptSearchQuery(e.target.value)} 
-              style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', border: `1px solid ${theme?.border || '#334155'}`, outline: 'none' }}
+              style={{ width: '100%', padding: '12px 15px', borderRadius: '999px', background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', border: `1px solid ${theme?.border || '#334155'}`, outline: 'none' }}
             />
           </div>
 
@@ -1198,7 +1198,7 @@ const HrTab = ({
               const dEmps = employees.filter(e => (e.dept && e.dept.trim() === dept.name.trim()) || (e.department && e.department.trim() === dept.name.trim()));
               const deptPayroll = dEmps.reduce((acc, e) => acc + parseNum(e.salary), 0);
               return (
-                <div key={dept.id} onClick={() => { setSelectedDepartment(dept); setHrSubTab('employees'); setEmpSearchQuery(''); }} style={{ background: theme?.cardBg || '#1e293b', border: `1px solid ${theme?.border || '#334155'}`, borderRadius: '16px', padding: '20px', cursor: 'pointer', transition: 'transform 0.2s', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                <div key={dept.id} onClick={() => { setSelectedDepartment(dept); setHrSubTab('employees'); setEmpSearchQuery(''); }} style={{ background: theme?.cardBg || '#1e293b', border: `1px solid ${theme?.border || '#334155'}`, borderRadius: '24px', padding: '20px', cursor: 'pointer', transition: 'transform 0.2s', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
                   <h3 style={{ margin: '0 0 10px 0', color: '#38bdf8', fontSize: '18px' }}>{dept.name}</h3>
                   <p style={{ margin: '0 0 15px 0', color: theme?.textMuted || '#94a3b8', fontSize: '13px' }}>{dept.desc}</p>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', borderTop: `1px solid ${theme?.border || '#334155'}`, paddingTop: '15px' }}>
@@ -1225,7 +1225,7 @@ const HrTab = ({
       ) : (
         <>
           {/* تفاصيل القسم وزر التصدير الديناميكي للتبويب المفتوح */}
-          <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '16px', border: `1px solid ${theme?.border || '#334155'}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+          <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '24px', border: `1px solid ${theme?.border || '#334155'}`, padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
             <div>
               <button onClick={() => setSelectedDepartment(null)} style={{ background: 'transparent', color: '#38bdf8', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', padding: '0 0 10px 0' }}>
                 ⬅ العودة إلى قائمة الأقسام
@@ -1254,7 +1254,7 @@ const HrTab = ({
               placeholder="🔍 ابحث بالاسم أو برقم الهوية أو الفاتورة..." 
               value={empSearchQuery} 
               onChange={e => setEmpSearchQuery(e.target.value)} 
-              style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', border: `1px solid ${theme?.border || '#334155'}`, outline: 'none' }}
+              style={{ width: '100%', padding: '12px 15px', borderRadius: '999px', background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', border: `1px solid ${theme?.border || '#334155'}`, outline: 'none' }}
             />
 
             {/* Sub-Tabs Bar: تبويب العمولات */}
@@ -1289,7 +1289,7 @@ const HrTab = ({
 
           {/* تبويب الموظفون */}
           {hrSubTab === 'employees' && (
-            <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '16px', border: `1px solid ${theme?.border || '#334155'}`, padding: '20px', overflowX: 'auto' }}>
+            <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '24px', border: `1px solid ${theme?.border || '#334155'}`, padding: '20px', overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '1000px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme?.border || '#334155'}` }}>
@@ -1322,7 +1322,7 @@ const HrTab = ({
                         <td style={{ padding: '12px', fontWeight: 'bold', fontSize: '14px', color: theme?.textDark || '#fff' }}>{net.toFixed(2)}</td>
                         <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
                           <button onClick={() => setViewingEmpProfile(emp)} style={{ background: '#0284c7', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', marginLeft: '5px' }}>👁️ تفاصيل</button>
-                          <button onClick={() => handleOpenEditModal(emp)} style={{ background: '#d97706', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', marginLeft: '5px' }}>تعديل ✏️</button>
+                          <button onClick={() => handleOpenEditModal(emp)} style={{ background: '#4A90E2', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', marginLeft: '5px' }}>تعديل ✏️</button>
                           <button onClick={() => handleDeleteEmployeeLocal(emp.id)} style={{ background: '#7f1d1d', color: '#fca5a5', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>حذف 🗑️</button>
                         </td>
                       </tr>
@@ -1338,7 +1338,7 @@ const HrTab = ({
 
           {/* تبويب الخصومات */}
           {hrSubTab === 'deductions' && (
-            <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '16px', border: `1px solid ${theme?.border || '#334155'}`, padding: '20px', overflowX: 'auto' }}>
+            <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '24px', border: `1px solid ${theme?.border || '#334155'}`, padding: '20px', overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '800px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme?.border || '#334155'}` }}>
@@ -1375,7 +1375,7 @@ const HrTab = ({
 
           {/* تبويب الحوافز والمكافآت */}
           {hrSubTab === 'incentives' && (
-            <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '16px', border: `1px solid ${theme?.border || '#334155'}`, padding: '20px', overflowX: 'auto' }}>
+            <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '24px', border: `1px solid ${theme?.border || '#334155'}`, padding: '20px', overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '800px' }}>
                 <thead>
                   <tr style={{ background: isDark ? '#141824' : '#f8fafc', borderBottom: `2px solid ${theme?.border || '#334155'}` }}>
@@ -1427,7 +1427,7 @@ const HrTab = ({
               </div>
 
               {/* الجدول التفصيلي للعمولات مع زر حذف الكل وزر حذف الفاتورة */}
-              <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '16px', border: `1px solid ${theme?.border || '#334155'}`, padding: '20px', overflowX: 'auto' }}>
+              <div style={{ background: theme?.cardBg || '#1e293b', borderRadius: '24px', border: `1px solid ${theme?.border || '#334155'}`, padding: '20px', overflowX: 'auto' }}>
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
                   <h4 style={{ margin: 0, color: theme?.textDark || '#fff', fontSize: '15px' }}>تفاصيل عمولات المناديب</h4>
@@ -1538,7 +1538,7 @@ const HrTab = ({
                   const contract = checkExp(emp.contractEnd);
 
                   return (
-                    <div key={emp.id} style={{ background: theme?.cardBg || '#1e293b', border: `1px solid ${theme?.border || '#334155'}`, borderRadius: '16px', padding: '20px' }}>
+                    <div key={emp.id} style={{ background: theme?.cardBg || '#1e293b', border: `1px solid ${theme?.border || '#334155'}`, borderRadius: '24px', padding: '20px' }}>
                       <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '5px', color: '#38bdf8' }}>{emp.name}</div>
                       <div style={{ fontSize: '13px', color: theme?.textMuted || '#94a3b8', marginBottom: '15px' }}>الهوية: {emp.idNumber || '-'}</div>
                       
@@ -1581,8 +1581,8 @@ const HrTab = ({
 
       {/* نافذة إضافة قسم جديد */}
       {showAddDeptModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '400px', width: '100%', border: `1px solid ${theme?.border || '#334155'}` }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '24px', maxWidth: '400px', width: '100%', border: `1px solid ${theme?.border || '#334155'}` }}>
             <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px' }}>إضافة قسم جديد</h3>
             <form onSubmit={handleAddDept} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div>
@@ -1594,7 +1594,7 @@ const HrTab = ({
                 <input type="text" value={newDeptDesc} onChange={e=>setNewDeptDesc(e.target.value)} style={inputStyle} placeholder="مثال: إدارة الحملات التسويقية" />
               </div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إضافة القسم</button>
+                <button type="submit" style={{ flex: 1, background: '#4A90E2', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إضافة القسم</button>
                 <button type="button" onClick={() => setShowAddDeptModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إلغاء</button>
               </div>
             </form>
@@ -1604,8 +1604,8 @@ const HrTab = ({
 
       {/* نافذة إضافة موظف جديد */}
       {showAddEmpModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', border: `1px solid ${theme?.border || '#334155'}`, maxHeight: '92vh', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '24px', maxWidth: '700px', width: '100%', border: `1px solid ${theme?.border || '#334155'}`, maxHeight: '92vh', overflowY: 'auto' }}>
             <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px' }}>إضافة موظف (قسم {selectedDepartment?.name})</h3>
             <form onSubmit={handleAddEmp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               
@@ -1678,7 +1678,7 @@ const HrTab = ({
               </div>
 
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
-                <button type="submit" style={{ flex: 1, background: '#d97706', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ الموظف</button>
+                <button type="submit" style={{ flex: 1, background: '#4A90E2', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>حفظ الموظف</button>
                 <button type="button" onClick={() => setShowAddEmpModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '14px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>إلغاء</button>
               </div>
             </form>
@@ -1688,8 +1688,8 @@ const HrTab = ({
 
       {/* نافذة تعديل بيانات الموظف المدمجة */}
       {showEditEmpModal && editEmpData && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '700px', width: '100%', border: `1px solid ${theme?.border || '#334155'}`, maxHeight: '92vh', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '24px', maxWidth: '700px', width: '100%', border: `1px solid ${theme?.border || '#334155'}`, maxHeight: '92vh', overflowY: 'auto' }}>
             <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px', color: '#f59e0b' }}>تعديل بيانات الموظف: {editEmpData.name}</h3>
             <form onSubmit={handleSaveEditEmp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               
@@ -1799,8 +1799,8 @@ const HrTab = ({
 
       {/* نافذة الحوافز */}
       {showIncentiveModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '400px', width: '100%', border: `1px solid ${theme?.border || '#334155'}` }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '24px', maxWidth: '400px', width: '100%', border: `1px solid ${theme?.border || '#334155'}` }}>
             <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px' }}>إضافة حافز / مكافأة</h3>
             <form onSubmit={handleAddIncentive} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div>
@@ -1831,8 +1831,8 @@ const HrTab = ({
 
       {/* نافذة الخصومات */}
       {showDeductModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '400px', width: '100%', border: `1px solid ${theme?.border || '#334155'}` }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '24px', maxWidth: '400px', width: '100%', border: `1px solid ${theme?.border || '#334155'}` }}>
             <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px' }}>إضافة استقطاع / جزاء</h3>
             <form onSubmit={handleAddDeduction} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div>
@@ -1863,8 +1863,8 @@ const HrTab = ({
 
       {/* نافذة الملف الشخصي للموظف */}
       {viewingEmpProfile && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
-          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '20px', maxWidth: '650px', width: '100%', border: `1px solid ${theme?.border || '#334155'}`, maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: '15px' }}>
+          <div style={{ background: theme?.cardBg || '#1e293b', color: theme?.textDark || '#fff', padding: '30px', borderRadius: '24px', maxWidth: '650px', width: '100%', border: `1px solid ${theme?.border || '#334155'}`, maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '20px', color: '#38bdf8' }}>الملف الشخصي الشامل للموظف</h3>
               <button onClick={() => setViewingEmpProfile(null)} style={{ background: 'transparent', border: 'none', color: '#ef4444', fontSize: '20px', cursor: 'pointer', fontWeight: 'bold' }}>✖</button>

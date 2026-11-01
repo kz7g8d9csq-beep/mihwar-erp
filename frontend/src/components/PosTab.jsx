@@ -12,7 +12,7 @@ const PosTab = ({
   return (
     <>
       <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '20px' }}>
-        <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '20px' }}>
+        <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '20px' }}>
           <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{t(`🛒 نقطة البيع السريعة`)}</h3>
           <div style={{ marginBottom: '15px', background: theme.bgMain, padding: '10px', borderRadius: '10px', border: `1px solid ${theme.border}` }}>
             <label style={{ fontSize: '11px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#d97706' }}>{t(`🔍 البحث واختيار العميل للفاتورة:`)}</label>
@@ -37,21 +37,21 @@ const PosTab = ({
                 <div key={prod.id} style={{ background: theme.bgMain, border: `1px solid ${qty > 0 ? '#d97706' : theme.border}`, borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '8px' }}>
                   <div><h4 style={{ margin: '0 0 4px 0', fontSize: '13px' }}>{prod.name}</h4><span style={{ color: '#d97706', fontWeight: 'bold', fontSize: '12px' }}>{prod.price} {t.currency}</span></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: theme.cardBg, borderRadius: '6px', padding: '2px', border: `1px solid ${theme.border}` }}>
-                    <button onClick={() => updateQty(qty - 1)} style={{ background: '#ef4444', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>-</button>
+                    <button onClick={() => updateQty(qty - 1)} style={{ background: '#ef4444', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '999px', cursor: 'pointer', fontWeight: 'bold' }}>-</button>
                     <input type="number" min="0" max={prod.stock} value={qty} onChange={(e) => updateQty(Number(e.target.value))} style={{ width: '45px', textAlign: 'center', border: 'none', background: 'transparent', fontWeight: 'bold', fontSize: '13px', color: theme.textDark, outline: 'none' }} />
-                    <button onClick={() => updateQty(qty + 1)} style={{ background: '#d97706', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>+</button>
+                    <button onClick={() => updateQty(qty + 1)} style={{ background: '#d97706', color: '#fff', border: 'none', width: '24px', height: '24px', borderRadius: '999px', cursor: 'pointer', fontWeight: 'bold' }}>+</button>
                   </div>
                 </div>
               );
             })}
           </div>
         </div>
-        <div style={{ background: '#020617', borderRadius: '16px', color: '#fff', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div style={{ background: '#1B1C21', borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', color: '#fff', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{t(`محتويات السلة`)}</h3>
             <div style={{ maxHeight: '250px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {cartItems.map((item, idx) => (
-                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', background: '#0f172a', padding: '8px', borderRadius: '8px', fontSize: '12px' }}>
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.05)', padding: '10px 14px', borderRadius: '14px', fontSize: '12px' }}>
                   <span>{item.name} ({item.quantity})</span><strong style={{ color: '#38bdf8' }}>{item.subtotal} {t.currency}</strong>
                 </div>
               ))}
@@ -61,15 +61,15 @@ const PosTab = ({
             <div style={{ borderTop: '1px dashed #334155', paddingTop: '10px', margin: '15px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold' }}><span>{t(`الإجمالي المستحق:`)}</span><span style={{ color: '#38bdf8' }}>{cartGrandTotal.toFixed(2)} {t.currency}</span></div>
             </div>
-            <button onClick={() => setShowPosPayModal(true)} disabled={!cartItems.length} style={{ width: '100%', background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t(`إتمام الدفع وإصدار الفاتورة 💳`)}</button>
+            <button onClick={() => setShowPosPayModal(true)} disabled={!cartItems.length} style={{ width: '100%', background: 'linear-gradient(135deg, #4A90E2, #3A7BD5)', color: '#fff', padding: '14px 24px', borderRadius: '999px', boxShadow: '0 4px 16px rgba(74,144,226,0.35)', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t(`إتمام الدفع وإصدار الفاتورة 💳`)}</button>
           </div>
         </div>
       </div>
 
       {/* نافذة اختيار طريقة الدفع في POS */}
       {showPosPayModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3100, padding: '15px' }}>
-          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '20px', maxWidth: '420px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3100, padding: '15px' }}>
+          <div style={{ background: theme.cardBg, color: theme.textDark, padding: '30px', borderRadius: '24px', maxWidth: '420px', width: '100%', boxSizing: 'border-box', border: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: `1px solid ${theme.border}`, paddingBottom: '12px', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '900', color: '#10b981' }}>{t(`اختيار طريقة الدفع السريع`)}</h3>
               <button onClick={() => setShowPosPayModal(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: theme.textMuted }}>✖</button>
@@ -83,8 +83,8 @@ const PosTab = ({
                 </select>
               </div>
               <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
-                <button type="button" onClick={handleSavePosInvoice} disabled={isSubmittingSale} style={{ flex: 1, background: '#10b981', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t(`تأكيد وإصدار الفاتورة 🚀`)}</button>
-                <button type="button" onClick={() => setShowPosPayModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t(`إلغاء`)}</button>
+                <button type="button" onClick={handleSavePosInvoice} disabled={isSubmittingSale} style={{ flex: 1, background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', padding: '12px 24px', borderRadius: '999px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t(`تأكيد وإصدار الفاتورة 🚀`)}</button>
+                <button type="button" onClick={() => setShowPosPayModal(false)} style={{ flex: 1, background: 'rgba(255,255,255,0.08)', color: '#ccc', padding: '12px 24px', borderRadius: '999px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>{t(`إلغاء`)}</button>
               </div>
             </div>
           </div>

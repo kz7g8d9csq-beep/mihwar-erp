@@ -156,7 +156,7 @@ const InventoryTab = ({
       
       {/* نموذج إضافة منتج جديد */}
       {user?.role !== 'cashier' && (
-        <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', height: 'fit-content' }}>
+        <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '25px', height: 'fit-content' }}>
           <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{getText('➕ إضافة منتج', '➕ إضافة منتج')}</h3>
           <form onSubmit={handleAddProduct} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
@@ -166,7 +166,7 @@ const InventoryTab = ({
                 placeholder="مثال: SKU-001" 
                 value={newItemCode} 
                 onChange={e => setNewItemCode(e.target.value)} 
-                style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
+                style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
               />
             </div>
             <div>
@@ -177,7 +177,7 @@ const InventoryTab = ({
                 value={newProdName} 
                 onChange={e => setNewProdName(e.target.value)} 
                 required 
-                style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
+                style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
               />
             </div>
             <div>
@@ -189,7 +189,7 @@ const InventoryTab = ({
                 value={newProdPrice} 
                 onChange={e => setNewProdPrice(e.target.value)} 
                 required 
-                style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
+                style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
               />
             </div>
             <div>
@@ -199,27 +199,27 @@ const InventoryTab = ({
                 placeholder={getText('prodStock', 'المخزون')} 
                 value={newProdStock} 
                 onChange={e => setNewProdStock(e.target.value)} 
-                style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
+                style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box' }} 
               />
             </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>نوع العمولة *:</label>
-                <select value={newCommissionType} onChange={e=>{if(setNewCommissionType) setNewCommissionType(e.target.value)}} style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: '1px solid ' + (theme.border || '#334155'), boxSizing: 'border-box', outline: 'none' }}>
+                <select value={newCommissionType} onChange={e=>{if(setNewCommissionType) setNewCommissionType(e.target.value)}} style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: '1px solid ' + (theme.border || '#334155'), boxSizing: 'border-box', outline: 'none' }}>
                   <option value="بالقطعة">بالقطعة</option>
                   <option value="بالكرتون">بالكرتون</option>
                 </select>
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>{newCommissionType === 'بالقطعة' ? 'عمولة القطعة / الحبة (ر.س) *:' : 'عمولة الكرتون (ر.س) *:'}</label>
-                <input type="number" step="0.01" min="0" placeholder="مثال: 5.00" value={newProdCommission} onChange={e=>{if(setNewProdCommission) setNewProdCommission(e.target.value)}} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: '1px solid ' + (theme.border || '#334155'), boxSizing: 'border-box', outline: 'none' }} />
+                <input type="number" step="0.01" min="0" placeholder="مثال: 5.00" value={newProdCommission} onChange={e=>{if(setNewProdCommission) setNewProdCommission(e.target.value)}} required style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: '1px solid ' + (theme.border || '#334155'), boxSizing: 'border-box', outline: 'none' }} />
               </div>
               {newCommissionType === 'بالكرتون' && (
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>سعة الكرتون (عدد الحبات) *:</label>
-                  <input type="number" min="1" placeholder="الافتراضي: 12" value={newBoxSize} onChange={e=>{if(setNewBoxSize) setNewBoxSize(e.target.value)}} required style={{ width: '100%', padding: '11px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: '1px solid ' + (theme.border || '#334155'), boxSizing: 'border-box', outline: 'none' }} />
+                  <input type="number" min="1" placeholder="الافتراضي: 12" value={newBoxSize} onChange={e=>{if(setNewBoxSize) setNewBoxSize(e.target.value)}} required style={{ width: '100%', padding: '11px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: '1px solid ' + (theme.border || '#334155'), boxSizing: 'border-box', outline: 'none' }} />
                 </div>
               )}
-            <button type="submit" style={{ background: '#d97706', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '5px' }}>
+            <button type="submit" style={{ background: 'linear-gradient(135deg, #4A90E2, #3A7BD5)', color: '#fff', padding: '12px 24px', borderRadius: '999px', boxShadow: '0 4px 14px rgba(74,144,226,0.3)', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '5px' }}>
               {getText('saveProd', 'حفظ المنتج')}
             </button>
           </form>
@@ -227,7 +227,7 @@ const InventoryTab = ({
       )}
 
       {/* جدول مستودع المخزون */}
-      <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
+      <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '25px', overflowX: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <h3 style={{ margin: 0, fontSize: '17px' }}>{getText('stockRepo', 'مستودع المخزون')}</h3>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -236,7 +236,7 @@ const InventoryTab = ({
               value={inventorySearchQuery} 
               onChange={e => setInventorySearchQuery(e.target.value)} 
               placeholder={getText('🔍 ابحث برقم الصنف أو الاسم...', '🔍 ابحث برقم الصنف أو الاسم...')} 
-              style={{ padding: '8px 12px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} 
+              style={{ padding: '8px 12px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', fontSize: '12px', width: '220px' }} 
             />
             <button 
               onClick={handleExportInventoryToExcel} 

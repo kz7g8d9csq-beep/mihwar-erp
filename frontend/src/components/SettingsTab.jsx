@@ -10,31 +10,31 @@ const SettingsTab = ({
 }) => {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-      <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
+      <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '22px' }}>
         <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{t.prefTitle}</h3>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
-          <button style={{ flex: 1, padding: '10px', borderRadius: '8px', background: '#d97706', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'default' }}>{t(`🇸🇦 العربية`)}</button>
+          <button style={{ flex: 1, padding: '10px', borderRadius: '999px', background: '#4A90E2', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'default' }}>{t(`🇸🇦 العربية`)}</button>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={()=>setIsDark(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: !isDark?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>{t(`☀️ النهاري`)}</button>
-          <button onClick={()=>setIsDark(true)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: isDark?'#d97706':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>{t(`🌙 الداكن`)}</button>
+          <button onClick={()=>setIsDark(false)} style={{ flex: 1, padding: '10px', borderRadius: '999px', background: !isDark?'#4A90E2':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>{t(`☀️ النهاري`)}</button>
+          <button onClick={()=>setIsDark(true)} style={{ flex: 1, padding: '10px', borderRadius: '999px', background: isDark?'#4A90E2':'transparent', color: '#fff', border: `1px solid ${theme.border}`, fontWeight: 'bold', cursor: 'pointer' }}>{t(`🌙 الداكن`)}</button>
         </div>
       </div>
 
       {/* بطاقة رفع شعار المنشأة والنظام وتعديل الحجم والعنوان المطبوع */}
-      <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px' }}>
+      <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '22px' }}>
         <h3 style={{ margin: '0 0 5px 0', fontSize: '17px' }}>{t.companyLogoTitle}</h3>
         <p style={{ fontSize: '12px', color: theme.textMuted, margin: '0 0 12px 0' }}>{t.companyLogoDesc}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#d97706', marginBottom: '4px' }}>{t.logoUrlLabel}</label>
-            <input type="file" accept="image/png, image/jpeg, image/jpg" onChange={handleLogoFileChange} style={{ padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', cursor: 'pointer', width: '100%', boxSizing: 'border-box' }} />
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#4A90E2', marginBottom: '4px' }}>{t.logoUrlLabel}</label>
+            <input type="file" accept="image/png, image/jpeg, image/jpg" onChange={handleLogoFileChange} style={{ padding: '10px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', cursor: 'pointer', width: '100%', boxSizing: 'border-box' }} />
           </div>
           
           {/* خيار تكبير وتحديد حجم الشعار في الفاتورة المطبوعة */}
           <div style={{ background: theme.bgMain, padding: '12px', borderRadius: '8px', border: `1px solid ${theme.border}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#d97706' }}>{t(`حجم / تكبير الشعار في الفاتورة:`)}</label>
+              <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#4A90E2' }}>{t(`حجم / تكبير الشعار في الفاتورة:`)}</label>
               <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#10b981' }}>{invoiceLogoSize} {t(`بكسل`)}</span>
             </div>
             <input 
@@ -48,12 +48,12 @@ const SettingsTab = ({
                 setInvoiceLogoSize(val);
                 localStorage.setItem('mihwar_invoice_logo_size', val);
               }} 
-              style={{ width: '100%', accentColor: '#d97706', cursor: 'pointer' }} 
+              style={{ width: '100%', accentColor: '#4A90E2', cursor: 'pointer' }} 
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#d97706', marginBottom: '4px' }}>{t(`عنوان / مقر المنشأة المطبوع على الفاتورة:`)}</label>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#4A90E2', marginBottom: '4px' }}>{t(`عنوان / مقر المنشأة المطبوع على الفاتورة:`)}</label>
             <input 
               type="text" 
               value={companyAddress} 
@@ -62,7 +62,7 @@ const SettingsTab = ({
                 localStorage.setItem('mihwar_company_address', e.target.value);
               }} 
               placeholder={t(`مثال: المملكة العربية السعودية - الرياض أو جدة أو الخبر`)} 
-              style={{ width: '100%', padding: '10px', borderRadius: '8px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '13px' }} 
+              style={{ width: '100%', padding: '10px', borderRadius: '16px', background: theme.bgMain, color: theme.textDark, border: `1px solid ${theme.border}`, outline: 'none', boxSizing: 'border-box', fontSize: '13px' }} 
             />
           </div>
 
@@ -76,7 +76,7 @@ const SettingsTab = ({
       </div>
 
       {/* بطاقة إدارة الحساب والجلسة */}
-      <div style={{ background: theme.cardBg, borderRadius: '16px', border: `1px solid ${theme.border}`, padding: '22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '15px' }}>
+      <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '15px' }}>
         <div>
           <h3 style={{ margin: '0 0 6px 0', fontSize: '17px', color: theme.textDark }}>{t(`🔒 إدارة الحساب والجلسة`)}</h3>
           <p style={{ fontSize: '12px', color: theme.textMuted, margin: 0, lineHeight: '1.6' }}>
@@ -87,13 +87,13 @@ const SettingsTab = ({
           <button 
             type="button" 
             onClick={handleLogout}
-            style={{ background: '#334155', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            style={{ background: '#334155', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '999px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <span>{t(`تسجيل الخروج`)}</span> 🚪
           </button>
           <button 
             type="button" 
             onClick={handleDeleteAccountPermanently}
-            style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '999px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <span>{t(`حذف الحساب بشكل نهائي`)}</span> 🗑️
           </button>
         </div>

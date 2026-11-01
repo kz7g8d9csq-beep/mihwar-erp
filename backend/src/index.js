@@ -360,11 +360,11 @@ app.get(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res)
 });
 
 app.post(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res) => {
-  const { name, price, cost, stock } = req.body;
+  const { name, price, cost, stock, boxSize, cartonCommission, sku, itemCode } = req.body;
   try {
     if (!name || price === undefined) return res.status(400).json({ error: 'اسم المنتج والسعر مطلوبان' });
-    const numericPrice = Number(price);
-    const numericCost = cost !== undefined ? Number(cost) : numericPrice;
+    const numericPrice = parseFloat(price);
+    const numericCost = cost !== undefined && cost !== '' ? parseFloat(cost) : numericPrice;
 
     const newProduct = await prisma.product.create({
       data: {
@@ -372,13 +372,50 @@ app.post(['/inventory', '/api/inventory', '/api/api/inventory'], async (req, res
         name: String(name),
         price: numericPrice,
         cost: numericCost,
-        stock: Number(stock) || 0,
-        sku: `SKU-${Date.now().toString().slice(-6)}`
+        stock: parseInt(stock, 10) || 0,
+        boxSize: parseInt(boxSize, 10) || 12,
+        cartonCommission: parseFloat(cartonCommission) || 0,
+        sku: String(sku || itemCode || `SKU-${Date.now().toString().slice(-6)}`)
       }
     });
     res.json({ message: 'تم إضافة المنتج للمخزون بنجاح', product: newProduct });
   } catch (error) {
     res.status(500).json({ error: 'تعذر حفظ المنتج' });
+  }
+});
+
+app.put([
+  '/inventory/:id', '/api/inventory/:id', '/api/api/inventory/:id',
+  '/products/:id', '/api/products/:id', '/api/api/products/:id'
+], async (req, res) => {
+  const { id } = req.params;
+  const { name, price, cost, stock, boxSize, cartonCommission, sku, itemCode } = req.body;
+  try {
+    const existing = await prisma.product.findFirst({
+      where: { id: Number(id), companyId: req.companyId }
+    });
+    if (!existing) return res.status(404).json({ error: 'المنتج غير موجود' });
+
+    const data = {};
+    if (name !== undefined) data.name = String(name);
+    if (price !== undefined && price !== '') data.price = parseFloat(price);
+    if (cost !== undefined && cost !== '') data.cost = parseFloat(cost);
+    if (stock !== undefined && stock !== '') data.stock = parseInt(stock, 10) || 0;
+    if (boxSize !== undefined && boxSize !== '') data.boxSize = parseInt(boxSize, 10) || 12;
+    if (cartonCommission !== undefined && cartonCommission !== '') {
+      data.cartonCommission = parseFloat(cartonCommission) || 0;
+    }
+    const skuVal = sku || itemCode;
+    if (skuVal) data.sku = String(skuVal);
+
+    const updated = await prisma.product.update({
+      where: { id: Number(id) },
+      data
+    });
+    res.json({ message: 'تم تحديث المنتج بنجاح', product: updated });
+  } catch (error) {
+    console.error('Product update error:', error);
+    res.status(500).json({ error: 'تعذر تعديل المنتج' });
   }
 });
 
