@@ -34,9 +34,11 @@
 }
 
 html, body, #root {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 100vh !important;
   font-family: 'Cairo', 'Tahoma', 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

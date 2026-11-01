@@ -1960,7 +1960,7 @@ function App() {
     : allTabs;
 
   return (
-    <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', color: theme.textDark, display: 'flex', padding: '14px', gap: '14px', boxSizing: 'border-box' }}>
+    <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', width: '100%', color: theme.textDark, display: 'flex', padding: '14px', gap: '14px', boxSizing: 'border-box' }}>
       <style>{`
         @media print {
           body * { visibility: hidden !important; }
