@@ -28,8 +28,8 @@
   --mihwar-purple-bg: rgba(167, 139, 250, 0.1);
 }
 
-/* ── Global Reset ── */
-* {
+/* ── Global Reset & Full Viewport Enforcement ── */
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
@@ -39,9 +39,16 @@ html, body, #root {
   width: 100% !important;
   max-width: 100% !important;
   min-height: 100vh !important;
+  min-height: 100dvh !important;
+  background-color: #18191E !important;
+  color: #F0F1F3;
   font-family: 'Cairo', 'Tahoma', 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  overflow-x: hidden;
 }
 
 /* ── Scrollbar ── */
@@ -66,18 +73,51 @@ html, body, #root {
   color: #fff;
 }
 
-/* ── Sidebar Navigation ── */
-.sidebar-nav {
-  border-radius: 0 var(--mihwar-radius-sidebar) var(--mihwar-radius-sidebar) 0 !important;
-  border: none !important;
-  box-shadow: 4px 0 20px rgba(0,0,0,0.15) !important;
-  transition: var(--mihwar-transition);
-  overflow: hidden;
+/* ── Fluid App Shell ── */
+.app-shell {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  display: flex !important;
+  flex-direction: row;
+  padding: 16px;
+  gap: 16px;
+  box-sizing: border-box !important;
+  background-color: #18191E;
 }
 
-[dir="rtl"] .sidebar-nav {
-  border-radius: var(--mihwar-radius-sidebar) 0 0 var(--mihwar-radius-sidebar) !important;
-  box-shadow: -4px 0 20px rgba(0,0,0,0.15) !important;
+/* ── Main Content Layout ── */
+.main-content-layout {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* ── Sidebar Navigation ── */
+.sidebar-nav {
+  width: 260px;
+  min-width: 260px;
+  max-width: 260px;
+  flex-shrink: 0;
+  min-height: calc(100vh - 32px);
+  position: sticky;
+  top: 16px;
+  z-index: 100;
+  border-radius: 24px !important;
+  background: #1B1C21 !important;
+  box-shadow: 0 12px 35px rgba(0,0,0,0.25) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  display: flex;
+  flex-direction: column;
+  justifyContent: space-between;
+  padding: 24px 14px;
+  box-sizing: border-box;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 .sidebar-nav button {
@@ -93,6 +133,21 @@ html, body, #root {
 
 [dir="rtl"] .sidebar-nav button:hover {
   transform: translateX(2px);
+}
+
+/* ── Top Header ── */
+.app-top-header {
+  background: #1F2026;
+  border-radius: 24px;
+  padding: 16px 24px;
+  display: flex;
+  justifyContent: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
 
 /* ── Cards ── */
@@ -141,6 +196,7 @@ button:active {
 table {
   border-collapse: separate !important;
   border-spacing: 0 8px !important;
+  width: 100%;
 }
 
 table thead th {
@@ -181,6 +237,12 @@ table tbody tr td:last-child {
 
 [dir="ltr"] table tbody tr td:last-child {
   border-radius: 0 var(--mihwar-radius-lg) var(--mihwar-radius-lg) 0;
+}
+
+.table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Status Badges ── */
@@ -253,14 +315,207 @@ table tbody tr td:last-child {
   @page { size: A4 portrait; margin: 0mm; }
 }
 
-/* ── Responsive ── */
-@media (max-width: 1024px) {
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE DESIGN SYSTEM (Multi-Viewport Grid & Shell)
+   ══════════════════════════════════════════════════════════════ */
+
+/* Dashboard Grid */
+.dashboard-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(320px, 1fr);
+  gap: 24px;
+  align-items: start;
+  width: 100%;
+}
+
+.dashboard-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.dashboard-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 14px;
+  width: 100%;
+}
+
+.recent-sales-row {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1fr 1.2fr;
+  align-items: center;
+  width: 100%;
+}
+
+/* 2-Column Module Grids (Sales, POS, Customers, Suppliers, Inventory) */
+.sales-main-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr;
+  gap: 20px;
+  width: 100%;
+}
+
+.pos-main-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.6fr;
+  gap: 20px;
+  width: 100%;
+}
+
+.two-col-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+  width: 100%;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: 1fr 2.5fr;
+  gap: 20px;
+  width: 100%;
+}
+
+/* ── Large Desktop & Small Desktop (1280px - 1440px) ── */
+@media (max-width: 1280px) and (min-width: 1025px) {
   .sidebar-nav {
-    width: 70px !important;
-    border-radius: 0 !important;
-  }
-  .sidebar-nav span:not([style*="fontSize: '16px'"]) {
-    display: none;
+    width: 230px;
+    min-width: 230px;
+    max-width: 230px;
+    padding: 20px 10px;
   }
 }
 
+/* ── Medium Screen & Small Laptop Breakpoints (1100px) ── */
+@media (max-width: 1100px) {
+  .dashboard-main-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px;
+  }
+}
+
+/* ── Tablet Breakpoints (769px - 1024px) ── */
+@media (max-width: 1024px) {
+  .app-shell {
+    padding: 12px;
+    gap: 12px;
+  }
+  .sidebar-nav {
+    width: 76px !important;
+    min-width: 76px !important;
+    max-width: 76px !important;
+    padding: 16px 8px !important;
+    border-radius: 20px !important;
+  }
+  .sidebar-brand-text,
+  .sidebar-tab-label,
+  .sidebar-footer-card {
+    display: none !important;
+  }
+  .sidebar-nav button {
+    justify-content: center !important;
+    padding: 12px 0 !important;
+  }
+  .sales-main-grid,
+  .pos-main-grid,
+  .inventory-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 992px) {
+  .two-col-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .header-search-pill {
+    display: none !important;
+  }
+}
+
+/* ── Mobile Breakpoints (<= 768px) ── */
+@media (max-width: 768px) {
+  .app-shell {
+    padding: 8px !important;
+    gap: 10px !important;
+    flex-direction: column !important;
+  }
+  .sidebar-nav {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    position: sticky !important;
+    top: 8px !important;
+    z-index: 200 !important;
+    border-radius: 18px !important;
+    padding: 10px 14px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justifyContent: space-between !important;
+  }
+  .sidebar-footer-card {
+    display: none !important;
+  }
+  .sidebar-top-section {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+  .sidebar-brand-header {
+    padding: 0 !important;
+    border-bottom: none !important;
+    flex-shrink: 0 !important;
+  }
+  .sidebar-tabs-container {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    gap: 6px !important;
+    padding: 2px 0 !important;
+    width: 100% !important;
+    scrollbar-width: none !important;
+  }
+  .sidebar-tabs-container::-webkit-scrollbar {
+    display: none;
+  }
+  .sidebar-nav button {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    width: auto !important;
+  }
+  .sidebar-tab-label {
+    display: inline !important;
+  }
+  .app-top-header {
+    padding: 12px 14px !important;
+    border-radius: 18px !important;
+    margin-bottom: 12px !important;
+  }
+  .header-user-text {
+    display: none !important;
+  }
+  .recent-sales-row {
+    grid-template-columns: 1.6fr 1fr !important;
+    gap: 8px !important;
+  }
+  .recent-sales-row > *:nth-child(2),
+  .recent-sales-row > *:nth-child(3) {
+    display: none !important;
+  }
+}
+
+/* ── Small Mobile (<= 480px) ── */
+@media (max-width: 480px) {
+  .dashboard-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .dashboard-actions-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}

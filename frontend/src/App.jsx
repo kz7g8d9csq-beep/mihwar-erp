@@ -279,10 +279,16 @@ function App() {
         return null;
       }
     }
+    if (typeof window !== 'undefined' && window.location.search.includes('demo=1')) {
+      return { id: 1, name: 'المدير العام', role: 'admin', businessName: 'مؤسسة محور التقنية' };
+    }
     return null;
   });
 
-  const [showLanding, setShowLanding] = useState(() => !localStorage.getItem('mihwar_user'));
+  const [showLanding, setShowLanding] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('demo=1')) return false;
+    return !localStorage.getItem('mihwar_user');
+  });
   const [authMode, setAuthMode] = useState('login');
   const [loginType, setLoginType] = useState('admin');
   
@@ -1725,7 +1731,7 @@ function App() {
 
   if (!user && showLanding) {
     return (
-      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', minHeight: '100vh', color: '#f8fafc', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#18191E', minHeight: '100vh', width: '100%', color: '#f8fafc', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxSizing: 'border-box' }}>
         <header style={{
           background: theme.cardBg,
           borderRadius: '24px',
@@ -1847,7 +1853,7 @@ function App() {
 
   if (!user) {
     return (
-      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#141824', minHeight: '100vh', color: '#f8fafc', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
+      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#18191E', minHeight: '100vh', width: '100%', color: '#f8fafc', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', boxSizing: 'border-box' }}>
         <div style={{ width: '100%', maxWidth: '460px', background: '#1b2230', padding: '35px', borderRadius: '24px', border: '1px solid #263147', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4)' }}>
           
           <div style={{ textAlign: 'center', marginBottom: '25px' }}>
@@ -1960,7 +1966,7 @@ function App() {
     : allTabs;
 
   return (
-    <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', width: '100%', color: theme.textDark, display: 'flex', padding: '14px', gap: '14px', boxSizing: 'border-box' }}>
+    <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className="app-shell" style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: theme.bgMain, minHeight: '100vh', width: '100%', color: theme.textDark, boxSizing: 'border-box' }}>
       <style>{`
         @media print {
           body * { visibility: hidden !important; }
@@ -1972,49 +1978,35 @@ function App() {
       `}</style>
 
       {/* Sidebar */}
-      <aside className="sidebar-nav" style={{
-        width: '260px',
-        background: '#1B1C21',
-        borderRadius: '28px',
-        boxShadow: '0 12px 35px rgba(0,0,0,0.25)',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '24px 14px',
-        boxSizing: 'border-box',
-        minHeight: 'calc(100vh - 28px)',
-        position: 'sticky',
-        top: '14px',
-        zIndex: 100,
-        border: '1px solid rgba(255,255,255,0.06)'
-      }}>
-        <div>
-          <div style={{ padding: '4px 10px 22px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <aside className="sidebar-nav">
+        <div className="sidebar-top-section">
+          <div className="sidebar-brand-header" style={{ padding: '4px 10px 22px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: '12px' }}>
             {companyLogo ? (
               <img src={companyLogo} alt="Logo" style={{ width: '38px', height: '38px', objectFit: 'contain', borderRadius: '8px', background: '#fff', padding: '2px', border: '1px solid #d97706' }} />
             ) : (
               <div style={{ background: 'linear-gradient(135deg, #4A90E2, #70A1FF)', color: '#fff', padding: '8px 14px', borderRadius: '16px', fontWeight: '900', fontSize: '15px', boxShadow: '0 4px 14px rgba(74, 144, 226, 0.35)' }}>مح</div>
             )}
-            <div>
+            <div className="sidebar-brand-text">
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '900', color: '#fff' }}>نظام محور</h3>
               <span style={{ fontSize: '11px', color: '#94a3b8' }}>Cloud ERP</span>
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '15px 10px' }}>
+          <div className="sidebar-tabs-container" style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '15px 10px' }}>
             {availableTabs.map(tab => {
               const isActive = activeTab === tab.id;
               return (
                 <button 
                   key={tab.id} onClick={() => setActiveTab(tab.id)} 
+                  className="sidebar-tab-button"
                   style={{ background: isActive ? 'rgba(74, 144, 226, 0.16)' : 'transparent', border: 'none', color: isActive ? '#70A1FF' : 'rgba(255,255,255,0.65)', cursor: 'pointer', padding: '12px 16px', borderRadius: '16px', fontWeight: isActive ? '700' : '500', fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'right', width: '100%', transition: 'all 0.25s ease' }}>
                   <span style={{ fontSize: '16px' }}>{tab.icon}</span>
-                  <span>{tab.label}</span>
+                  <span className="sidebar-tab-label">{tab.label}</span>
                 </button>
               );
             })}
           </div>
         </div>
-        <div style={{ padding: '0 20px' }}>
+        <div className="sidebar-footer-card" style={{ padding: '0 20px' }}>
           <div style={{ background: 'rgba(255,255,255,0.04)', padding: '14px', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
             <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>مساحة العمل النشطة</span>
             <strong style={{ fontSize: '12.5px', color: '#70A1FF', fontWeight: '700' }}>{businessName}</strong>
@@ -2022,14 +2014,134 @@ function App() {
         </div>
       </aside>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <header style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.border}`, padding: '16px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <span style={{ fontSize: '16px', fontWeight: '800', color: theme.textDark }}>{availableTabs.find(t => t.id === activeTab)?.icon} {availableTabs.find(t => t.id === activeTab)?.label}</span>
+      <div className="main-content-layout">
+        <header className="app-top-header">
+          {/* Greetings section / Current tab */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #4A90E2, #70A1FF)',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '20px',
+              fontWeight: '800',
+              boxShadow: '0 4px 14px rgba(74, 144, 226, 0.25)',
+              flexShrink: 0
+            }}>
+              👨‍💼
+            </div>
+            <div>
+              <div style={{ fontSize: '15px', fontWeight: '800', color: theme.textDark, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>مرحباً بك! 👋</span>
+                <span style={{ fontSize: '13px', fontWeight: '700', color: '#4A90E2' }}>({user?.name || user?.businessName || 'المدير العام'})</span>
+              </div>
+              <p style={{ margin: 0, fontSize: '12px', color: theme.textMuted }}>
+                {availableTabs.find(t => t.id === activeTab)?.icon} {availableTabs.find(t => t.id === activeTab)?.label}
+              </p>
+            </div>
+          </div>
+
+          {/* Central Pill Search Bar */}
+          <div className="header-search-pill" style={{
+            background: isDark ? '#25262D' : '#F4F5F7',
+            borderRadius: '999px',
+            padding: '10px 22px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            width: '280px',
+            maxWidth: '100%',
+            border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.04)'
+          }}>
+            <span style={{ fontSize: '14px', color: theme.textMuted }}>🔍</span>
+            <input
+              type="text"
+              placeholder="بحث سريع في النظام..."
+              value={invoiceSearchQuery}
+              onChange={e => setInvoiceSearchQuery(e.target.value)}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                outline: 'none',
+                fontSize: '13px',
+                color: theme.textDark,
+                width: '100%',
+                fontFamily: 'Cairo, Tahoma, sans-serif'
+              }}
+            />
+          </div>
+
+          {/* User Account / Settings Pill */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div
+              onClick={() => setActiveTab('settings')}
+              style={{
+                background: '#1B1C21',
+                color: '#FFFFFF',
+                borderRadius: '999px',
+                padding: '6px 16px 6px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+                transition: 'all 0.2s ease',
+                border: '1px solid rgba(255,255,255,0.08)'
+              }}
+              title="الإعدادات والملف الشخصي"
+            >
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.12)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '14px'
+              }}>
+                👤
+              </div>
+              <div className="header-user-text" style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: '12px', fontWeight: '700', display: 'block', lineHeight: 1.2 }}>
+                  {user?.name || user?.businessName || 'حسابي'}
+                </span>
+                <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                  {user?.role === 'admin' ? 'مدير كامل' : 'كاشير'}
+                </span>
+              </div>
+              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>▾</span>
+            </div>
+            
+            <button
+              onClick={handleLogout}
+              title="تسجيل الخروج"
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                border: 'none',
+                background: 'rgba(239, 68, 68, 0.12)',
+                color: '#EF4444',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '15px',
+                fontWeight: 'bold',
+                transition: 'all 0.2s'
+              }}
+            >
+              🚪
+            </button>
           </div>
         </header>
 
-        <main style={{ padding: '0', flex: 1, boxSizing: 'border-box' }}>
+        <main style={{ padding: '0', flex: 1, boxSizing: 'border-box', width: '100%' }}>
 
           {/* TAB 1: Dashboard */}
           {activeTab === 'dashboard' && user.role !== 'cashier' && (

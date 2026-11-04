@@ -87,7 +87,7 @@ const SalesBillingTab = ({
   });
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '20px' }}>
+    <div className="sales-main-grid">
       
       {/* القسم الرئيسي: إدخال الفاتورة والأصناف */}
       <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '25px' }}>

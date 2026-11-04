@@ -23,7 +23,7 @@ const DashboardTab = ({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       
       {/* ── Main Top Grid: 2 Columns (Main Content + Statistic Sidebar) ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.9fr) minmax(320px, 1fr)', gap: '24px', alignItems: 'start' }}>
+      <div className="dashboard-main-grid" style={{ alignItems: 'start' }}>
         
         {/* ── Left Column: Cards, Quick Actions & Recent Sales ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -39,7 +39,7 @@ const DashboardTab = ({
           </div>
 
           {/* Cards Row (Credit Cards Style from image_10.png) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+          <div className="dashboard-cards-grid">
             
             {/* Card 1: Dark Premium Card (Total Sales) */}
             <div style={{
@@ -163,7 +163,7 @@ const DashboardTab = ({
           </div>
 
           {/* Quick Action Pills Row (from image_10.png: Transfer, Utility, Taxes, Transport) */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '14px' }}>
+          <div className="dashboard-actions-grid">
             
             {/* Pill 1: Transfer (Active Accent) */}
             <button style={{
@@ -272,7 +272,7 @@ const DashboardTab = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               
               {/* Header row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.2fr 1fr 1.2fr', padding: '8px 16px', fontSize: '11.5px', color: theme.textMuted, fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <div className="recent-sales-row" style={{ padding: '8px 16px', fontSize: '11.5px', color: theme.textMuted, fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 <span>الطرف / العميل</span>
                 <span style={{ textAlign: 'center' }}>التاريخ</span>
                 <span style={{ textAlign: 'center' }}>الحالة</span>
@@ -288,9 +288,7 @@ const DashboardTab = ({
                   const isPartial = inv.paymentStatus === 'مدفوعة جزئياً';
 
                   return (
-                    <div key={idx} style={{
-                      display: 'grid',
-                      gridTemplateColumns: '2fr 1.2fr 1fr 1.2fr',
+                    <div key={idx} className="recent-sales-row" style={{
                       alignItems: 'center',
                       padding: '14px 16px',
                       borderRadius: '16px',
@@ -354,9 +352,7 @@ const DashboardTab = ({
                   { name: 'شركة السهم الذهبي', date: 'أمس، 04:15 م', status: 'Process', amount: '+880.0' },
                   { name: 'مركز الرضا للتوزيع', date: 'أمس، 01:20 م', status: 'Success', amount: '+1,240.0' }
                 ].map((row, idx) => (
-                  <div key={idx} style={{
-                    display: 'grid',
-                    gridTemplateColumns: '2fr 1.2fr 1fr 1.2fr',
+                  <div key={idx} className="recent-sales-row" style={{
                     alignItems: 'center',
                     padding: '14px 16px',
                     borderRadius: '16px',

@@ -11,7 +11,7 @@ const PosTab = ({
 }) => {
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.6fr', gap: '20px' }}>
+      <div className="pos-main-grid">
         <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '20px' }}>
           <h3 style={{ margin: '0 0 15px 0', fontSize: '17px' }}>{t(`🛒 نقطة البيع السريعة`)}</h3>
           <div style={{ marginBottom: '15px', background: theme.bgMain, padding: '10px', borderRadius: '10px', border: `1px solid ${theme.border}` }}>

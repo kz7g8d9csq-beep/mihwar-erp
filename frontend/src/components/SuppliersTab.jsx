@@ -105,7 +105,7 @@ const SuppliersTab = ({
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
+    <div className="two-col-grid">
       
       {/* نموذج فتح حساب مورد جديد */}
       <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '25px', height: 'fit-content' }}>

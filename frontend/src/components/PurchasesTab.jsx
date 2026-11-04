@@ -15,7 +15,7 @@ const PurchasesTab = ({
   handleSavePurchase
 }) => {
   return (
-    <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '650px', margin: 'auto' }}>
+    <div style={{ background: theme.cardBg, borderRadius: '24px', boxShadow: theme.shadow || '0 8px 30px rgba(0,0,0,0.035)', border: `1px solid ${theme.border}`, padding: '25px', maxWidth: '900px', width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
       <h2 style={{ margin: '0 0 20px 0', fontSize: '18px' }}>{t(`تسجيل فاتورة شراء وتوريد بضاعة`)}</h2>
       <div style={{ marginBottom: '15px' }}>
         <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '5px' }}>{t(`المورد`)}</label>

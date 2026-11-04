@@ -152,7 +152,7 @@ const InventoryTab = ({
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: user?.role === 'cashier' ? '1fr' : '1fr 2.5fr', gap: '20px' }}>
+    <div className="inventory-grid" style={user?.role === 'cashier' ? { gridTemplateColumns: '1fr' } : {}}>
       
       {/* نموذج إضافة منتج جديد */}
       {user?.role !== 'cashier' && (
