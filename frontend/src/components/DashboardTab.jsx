@@ -43,7 +43,7 @@ const DashboardTab = ({
             
             {/* Card 1: Dark Premium Card (Total Sales) */}
             <div style={{
-              background: 'linear-gradient(135deg, #18191E 0%, #222329 100%)',
+              background: 'linear-gradient(135deg, #025a7e 0%, #012839 100%)',
               color: '#FFFFFF',
               borderRadius: '24px',
               padding: '24px 26px',
@@ -94,7 +94,7 @@ const DashboardTab = ({
                   </span>
                 </div>
                 <div style={{ textAlign: 'left', fontWeight: '900', fontSize: '16px', letterSpacing: '1px', color: '#FFFFFF', fontStyle: 'italic', opacity: 0.9 }}>
-                  MIHWAR
+                  OCTIQEN
                 </div>
               </div>
             </div>
@@ -154,8 +154,8 @@ const DashboardTab = ({
                 </div>
                 {/* Mastercard-style overlapping circles */}
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#4A90E2', opacity: 0.85 }} />
-                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#70A1FF', marginLeft: '-9px', opacity: 0.85 }} />
+                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'linear-gradient(110deg, #0e96a9, #025a7e)', opacity: 0.85 }} />
+                  <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#00E5FF', marginLeft: '-9px', opacity: 0.85 }} />
                 </div>
               </div>
             </div>
@@ -455,7 +455,7 @@ const DashboardTab = ({
                 cy="95"
                 r="70"
                 fill="transparent"
-                stroke="#1B1C21"
+                stroke="#012839"
                 strokeWidth="18"
                 strokeDasharray={`${circumference}`}
                 strokeDashoffset="0"
@@ -467,7 +467,7 @@ const DashboardTab = ({
                 cy="95"
                 r="70"
                 fill="transparent"
-                stroke="#70A1FF"
+                stroke="#00E5FF"
                 strokeWidth="20"
                 strokeDasharray={`${salesStroke} ${purchasesStroke}`}
                 strokeDashoffset="0"
@@ -502,7 +502,7 @@ const DashboardTab = ({
               position: 'absolute',
               top: '25px',
               left: '120px',
-              background: '#1B1C21',
+              background: '#012839',
               color: '#FFFFFF',
               padding: '3px 9px',
               borderRadius: '999px',
@@ -517,11 +517,11 @@ const DashboardTab = ({
           {/* Donut Legend */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '11.5px', color: theme.textMuted }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: '#70A1FF' }} />
+              <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: '#00E5FF' }} />
               <span>مبيعات المتجر</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: '#1B1C21' }} />
+              <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: '#012839' }} />
               <span>مشتريات وعمليات</span>
             </div>
           </div>

@@ -14,6 +14,7 @@ import InventoryTab from './components/InventoryTab';
 import HrTab from './components/HrTab';
 import SettingsTab from './components/SettingsTab';
 import ReturnsTab from './components/ReturnsTab';
+import OctiqenAuthScreen from './components/OctiqenAuthScreen';
 
 const exportToExcel = (sheetTitle, headers, rows, lang = 'ar') => {
   const cleanTitle = sheetTitle.replace(/[/\\?*[\]]/g, '');
@@ -616,19 +617,19 @@ function App() {
   Object.assign(t, dict[lang] || dict['ar']);
 
   const theme = {
-    primary: '#4A90E2',
-    primaryHover: '#3A7BD5',
-    bgMain: isDark ? '#18191E' : '#F4F5F7',
-    cardBg: isDark ? '#1F2026' : '#FFFFFF',
-    sidebarBg: '#1B1C21',
-    textDark: isDark ? '#F0F1F3' : '#1A1A2E',
-    textMuted: isDark ? '#8B8FA3' : '#7C819B',
-    border: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+    primary: '#025a7e',
+    primaryHover: '#0e96a9',
+    bgMain: isDark ? '#081724' : '#F7FAFB',
+    cardBg: isDark ? '#0D2335' : '#FFFFFF',
+    sidebarBg: '#012839',
+    textDark: isDark ? '#F1F7F9' : '#011B26',
+    textMuted: isDark ? '#8FAEC0' : '#066587',
+    border: isDark ? 'rgba(14, 150, 169, 0.2)' : '#C7DBE3',
     accentGreen: '#34D399',
     accentAmber: '#FBBF24',
     accentRose: '#F87171',
-    shadow: isDark ? '0 10px 30px rgba(0,0,0,0.25)' : '0 8px 30px rgba(0,0,0,0.035)',
-    inputBg: isDark ? '#25262D' : '#F8F9FB'
+    shadow: isDark ? '0 10px 35px rgba(1, 40, 57, 0.45)' : '0 8px 30px rgba(2, 90, 126, 0.05)',
+    inputBg: isDark ? '#071A29' : '#F0F5F7'
   };
 
   useEffect(() => {
@@ -1513,7 +1514,7 @@ function App() {
   };
 
   const handleTriggerOtp = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     
     if (authMode === 'register') {
       if (!authEmail || !authPassword || !authPhone || !authCompanyName) {
@@ -1521,15 +1522,15 @@ function App() {
         return;
       }
     } else {
-      if (!authEmail || !authPassword || !authPhone) {
-        alert('❌ يرجى إدخال البريد الإلكتروني، كلمة المرور، ورقم الهاتف!');
+      if (!authEmail || !authPassword) {
+        alert('❌ يرجى إدخال البريد الإلكتروني وكلمة المرور!');
         return;
       }
 
       const accounts = getRegisteredAccounts();
       const account = accounts.find(a => a.email === authEmail.trim().toLowerCase());
       if (!account) {
-        alert('❌ هذا الحساب غير موجود أو تم حذفه نهائياً!\nيرجى الانتقال لتبويب "فتح حساب" لإنشاء الحساب.');
+        alert('❌ هذا الحساب غير موجود أو تم حذفه نهائياً!\nيرجى الانتقال لـ "إنشاء حساب" لفتح حسابك.');
         setAuthMode('register');
         return;
       }
@@ -1539,11 +1540,16 @@ function App() {
       }
     }
 
+    const accounts = getRegisteredAccounts();
+    const account = accounts.find(a => a.email === authEmail.trim().toLowerCase());
+    const effectivePhone = authPhone || (account && account.phone) || '';
+    const effectiveBusinessName = authCompanyName || (account && account.businessName) || 'OCTIQEN ERP';
+
     setPendingAuthData({
       email: authEmail,
       password: authPassword,
-      phone: authPhone,
-      businessName: authCompanyName || 'نظام محور'
+      phone: effectivePhone,
+      businessName: effectiveBusinessName
     });
 
     setIsSendingOtp(true);
@@ -1577,7 +1583,12 @@ function App() {
         setIsSendingOtp(false);
         console.error('EmailJS Error Object:', error);
         const errorMessage = error?.text || error?.message || JSON.stringify(error);
-        alert(`❌ فشل إرسال البريد الإلكتروني.\nالسبب: ${errorMessage}`);
+        if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+          setShowOtpModal(true);
+          alert(`⚠️ تنبيه الوضع المحلي:\nرمز التحقق لمرة واحدة هو: ${randomOtp}\n(تنبيه البريد: ${errorMessage})`);
+        } else {
+          alert(`❌ فشل إرسال البريد الإلكتروني.\nالسبب: ${errorMessage}`);
+        }
       });
   };
 
@@ -1729,220 +1740,31 @@ function App() {
     }
   }).length;
 
-  if (!user && showLanding) {
-    return (
-      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#18191E', minHeight: '100vh', width: '100%', color: '#f8fafc', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxSizing: 'border-box' }}>
-        <header style={{
-          background: theme.cardBg,
-          borderRadius: '24px',
-          padding: '16px 28px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          boxShadow: theme.shadow,
-          border: isDark ? '1px solid rgba(255,255,255,0.06)' : 'none',
-          marginBottom: '20px'
-        }}>
-          {/* Greetings section */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #4A90E2, #70A1FF)',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px',
-              fontWeight: '800',
-              boxShadow: '0 4px 14px rgba(74, 144, 226, 0.25)',
-              flexShrink: 0
-            }}>
-              👨‍💼
-            </div>
-            <div>
-              <div style={{ fontSize: '16px', fontWeight: '800', color: theme.textDark, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span>مرحباً بك! 👋</span>
-                {user?.name && <span style={{ fontSize: '13px', fontWeight: '700', color: '#4A90E2' }}>({user.name})</span>}
-              </div>
-              <p style={{ margin: 0, fontSize: '12px', color: theme.textMuted }}>
-                ابدأ يومك بنشاط مع نظام محور ERP
-              </p>
-            </div>
-          </div>
-
-          {/* Central Pill Search Bar */}
-          <div style={{
-            background: isDark ? '#25262D' : '#F4F5F7',
-            borderRadius: '999px',
-            padding: '10px 22px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            width: '320px',
-            border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.04)'
-          }}>
-            <span style={{ fontSize: '14px', color: theme.textMuted }}>🔍</span>
-            <input
-              type="text"
-              placeholder="بحث في النظام..."
-              style={{
-                border: 'none',
-                background: 'transparent',
-                outline: 'none',
-                fontSize: '13px',
-                color: theme.textDark,
-                width: '100%',
-                fontFamily: 'Cairo, Tahoma, sans-serif'
-              }}
-            />
-          </div>
-
-          {/* My Account Pill (Capsule with Avatar, Name, Dropdown) */}
-          <div
-            onClick={() => setActiveTab('settings')}
-            style={{
-              background: '#1B1C21',
-              color: '#FFFFFF',
-              borderRadius: '999px',
-              padding: '6px 18px 6px 8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.12)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '14px'
-            }}>
-              👤
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <span style={{ fontSize: '12.5px', fontWeight: '700', display: 'block', lineHeight: 1.2 }}>
-                {user?.name || user?.businessName || 'حسابي (My account)'}
-              </span>
-            </div>
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>▾</span>
-          </div>
-        </header>
-        <main style={{ padding: '80px 20px', maxWidth: '1100px', margin: 'auto', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '44px', fontWeight: '900', margin: '0 0 20px 0', color: '#f8fafc' }}>نظام إدارة الموارد المؤسسية</h1>
-          <p style={{ fontSize: '17px', color: '#94a3b8', maxWidth: '750px', margin: '0 auto 40px auto', lineHeight: '1.7' }}>إدارة متكاملة للمبيعات، المخزون، الحسابات، والموارد البشرية برؤية تقنية متطورة.</p>
-          <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
-            <button onClick={() => { setShowLanding(false); setAuthMode('login'); }} style={{ background: '#d97706', color: '#fff', padding: '14px 30px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
-              تسجيل الدخول 🔑
-            </button>
-            <button onClick={() => { setShowLanding(false); setAuthMode('register'); }} style={{ background: '#10b981', color: '#fff', padding: '14px 30px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' }}>
-              فتح حساب جديد ✨
-            </button>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   if (!user) {
     return (
-      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Cairo, Tahoma, sans-serif', background: '#18191E', minHeight: '100vh', width: '100%', color: '#f8fafc', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', boxSizing: 'border-box' }}>
-        <div style={{ width: '100%', maxWidth: '460px', background: '#1b2230', padding: '35px', borderRadius: '24px', border: '1px solid #263147', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4)' }}>
-          
-          <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-            <h2 style={{ color: '#f8fafc', fontSize: '24px', fontWeight: '900', margin: '0 0 8px 0' }}>{authMode === 'login' ? 'تسجيل الدخول' : 'فتح حساب جديد'}</h2>
-            <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0 }}>نظام محور ERP - الإدارة المتكاملة</p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px', background: '#141824', padding: '5px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #263147' }}>
-            <button type="button" onClick={() => setAuthMode('login')} style={{ flex: 1, padding: '8px', background: authMode === 'login' ? '#d97706' : 'transparent', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>تسجيل الدخول</button>
-            <button type="button" onClick={() => setAuthMode('register')} style={{ flex: 1, padding: '8px', background: authMode === 'register' ? '#d97706' : 'transparent', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>فتح حساب</button>
-          </div>
-
-          {authMode === 'login' && (
-            <div style={{ background: '#141824', padding: '10px', borderRadius: '10px', border: '1px solid #263147', marginBottom: '15px' }}>
-              <label style={{ fontSize: '11px', color: '#d97706', display: 'block', marginBottom: '6px', fontWeight: 'bold' }}>اختر صلاحية الدخول:</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button type="button" onClick={() => setLoginType('admin')} style={{ flex: 1, padding: '8px', background: loginType === 'admin' ? '#d97706' : 'transparent', color: '#fff', border: '1px solid #263147', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>مدير النظام الكامل</button>
-                <button type="button" onClick={() => setLoginType('cashier')} style={{ flex: 1, padding: '8px', background: loginType === 'cashier' ? '#d97706' : 'transparent', color: '#fff', border: '1px solid #263147', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>كاشير فقط</button>
-              </div>
-            </div>
-          )}
-
-          <form onSubmit={handleTriggerOtp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            
-            {authMode === 'register' ? (
-              <>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>1. البريد الإلكتروني *</label>
-                  <input type="email" placeholder="name@example.com" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>2. كلمة المرور *</label>
-                  <input type="password" placeholder="••••••••" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>3. رقم الهاتف *</label>
-                  <input type="text" placeholder="05xxxxxxxx" value={authPhone} onChange={e=>setAuthPhone(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>4. اسم المؤسسة أو الشركة أو المنشأة *</label>
-                  <input type="text" placeholder="مثال: مؤسسة مانويل التجارية" value={authCompanyName} onChange={e=>setAuthCompanyName(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>1. البريد الإلكتروني *</label>
-                  <input type="email" placeholder="name@example.com" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>2. كلمة المرور *</label>
-                  <input type="password" placeholder="••••••••" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px', color: '#94a3b8' }}>3. رقم الهاتف *</label>
-                  <input type="text" placeholder="05xxxxxxxx" value={authPhone} onChange={e=>setAuthPhone(e.target.value)} required style={{ width: '100%', padding: '11px', borderRadius: '8px', border: '1px solid #263147', background: '#141824', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
-                </div>
-              </>
-            )}
-
-            <button type="submit" disabled={isSendingOtp} style={{ background: '#d97706', color: '#fff', padding: '13px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px', marginTop: '5px' }}>
-              {isSendingOtp ? 'جاري الإرسال عبر البريد...' : (authMode === 'login' ? 'متابعة وإرسال رمز التحقق عبر الإيميل 🔐' : 'إرسال رمز التحقق وفتح الحساب 🔐')}
-            </button>
-          </form>
-        </div>
-
-        {/* نافذة التحقق الأمني OTP Modal */}
-        {showOtpModal && (
-          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4000, padding: '15px' }}>
-            <div style={{ background: '#1b2230', color: '#f8fafc', padding: '35px', borderRadius: '24px', maxWidth: '400px', width: '100%', border: '1px solid #d97706', boxSizing: 'border-box', textAlign: 'center' }}>
-              <h3 style={{ margin: '0 0 10px 0', fontSize: '20px', fontWeight: '900', color: '#d97706' }}>رمز التحقق الأمني (OTP)</h3>
-              <p style={{ fontSize: '13px', color: '#94a3b8', margin: '0 0 20px 0', lineHeight: '1.6' }}>
-                تم إرسال رمز التحقق المكون من 6 أرقام إلى بريدك الإلكتروني بنجاح. أدخله أدناه:
-              </p>
-              
-              <form onSubmit={handleVerifyOtpAndProceed} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                <input type="text" maxLength="6" placeholder="------" value={enteredOtp} onChange={e=>setEnteredOtp(e.target.value)} required style={{ padding: '14px', borderRadius: '10px', border: '2px solid #d97706', background: '#141824', color: '#fff', textAlign: 'center', fontSize: '22px', letterSpacing: '6px', fontWeight: 'bold', outline: 'none' }} />
-                
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button type="submit" style={{ flex: 1, background: '#10b981', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>تأكيد التحقق ✓</button>
-                  <button type="button" onClick={() => setShowOtpModal(false)} style={{ flex: 1, background: '#334155', color: '#fff', padding: '12px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>إلغاء</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-      </div>
+      <OctiqenAuthScreen
+        authMode={authMode}
+        setAuthMode={setAuthMode}
+        loginType={loginType}
+        setLoginType={setLoginType}
+        authEmail={authEmail}
+        setAuthEmail={setAuthEmail}
+        authPassword={authPassword}
+        setAuthPassword={setAuthPassword}
+        authPhone={authPhone}
+        setAuthPhone={setAuthPhone}
+        authCompanyName={authCompanyName}
+        setAuthCompanyName={setAuthCompanyName}
+        handleTriggerOtp={handleTriggerOtp}
+        isSendingOtp={isSendingOtp}
+        showOtpModal={showOtpModal}
+        setShowOtpModal={setShowOtpModal}
+        enteredOtp={enteredOtp}
+        setEnteredOtp={setEnteredOtp}
+        handleVerifyOtpAndProceed={handleVerifyOtpAndProceed}
+        lang={lang}
+        setLang={setLang}
+      />
     );
   }
 
@@ -1980,15 +1802,11 @@ function App() {
       {/* Sidebar */}
       <aside className="sidebar-nav">
         <div className="sidebar-top-section">
-          <div className="sidebar-brand-header" style={{ padding: '4px 10px 22px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {companyLogo ? (
-              <img src={companyLogo} alt="Logo" style={{ width: '38px', height: '38px', objectFit: 'contain', borderRadius: '8px', background: '#fff', padding: '2px', border: '1px solid #d97706' }} />
-            ) : (
-              <div style={{ background: 'linear-gradient(135deg, #4A90E2, #70A1FF)', color: '#fff', padding: '8px 14px', borderRadius: '16px', fontWeight: '900', fontSize: '15px', boxShadow: '0 4px 14px rgba(74, 144, 226, 0.35)' }}>مح</div>
-            )}
+          <div className="sidebar-brand-header" style={{ padding: '4px 10px 22px 10px', borderBottom: '1px solid rgba(14, 150, 169, 0.2)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <img src="/brand/octiqen-logo.svg" alt="OCTIQEN Logo" style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
             <div className="sidebar-brand-text">
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '900', color: '#fff' }}>نظام محور</h3>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>Cloud ERP</span>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '900', color: '#fff', letterSpacing: '0.4px' }}>OCTIQEN ERP</h3>
+              <span style={{ fontSize: '11px', color: '#00E5FF' }}>نظام محاسبة وإدارة الشركات</span>
             </div>
           </div>
           <div className="sidebar-tabs-container" style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '15px 10px' }}>
@@ -1998,7 +1816,7 @@ function App() {
                 <button 
                   key={tab.id} onClick={() => setActiveTab(tab.id)} 
                   className="sidebar-tab-button"
-                  style={{ background: isActive ? 'rgba(74, 144, 226, 0.16)' : 'transparent', border: 'none', color: isActive ? '#70A1FF' : 'rgba(255,255,255,0.65)', cursor: 'pointer', padding: '12px 16px', borderRadius: '16px', fontWeight: isActive ? '700' : '500', fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'right', width: '100%', transition: 'all 0.25s ease' }}>
+                  style={{ background: isActive ? 'rgba(14, 150, 169, 0.22)' : 'transparent', border: 'none', color: isActive ? '#00E5FF' : 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: '12px 16px', borderRadius: '16px', fontWeight: isActive ? '700' : '500', fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '12px', textAlign: 'right', width: '100%', transition: 'all 0.25s ease', boxShadow: isActive ? '0 4px 14px rgba(14, 150, 169, 0.25)' : 'none' }}>
                   <span style={{ fontSize: '16px' }}>{tab.icon}</span>
                   <span className="sidebar-tab-label">{tab.label}</span>
                 </button>
@@ -2006,10 +1824,17 @@ function App() {
             })}
           </div>
         </div>
-        <div className="sidebar-footer-card" style={{ padding: '0 20px' }}>
-          <div style={{ background: 'rgba(255,255,255,0.04)', padding: '14px', borderRadius: '18px', border: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
-            <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block' }}>مساحة العمل النشطة</span>
-            <strong style={{ fontSize: '12.5px', color: '#70A1FF', fontWeight: '700' }}>{businessName}</strong>
+        <div className="sidebar-footer-card" style={{ padding: '0 14px' }}>
+          <div style={{ background: 'rgba(14, 150, 169, 0.1)', padding: '12px 14px', borderRadius: '18px', border: '1px solid rgba(14, 150, 169, 0.22)', textAlign: 'right' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span style={{ fontSize: '10.5px', color: '#8FAEC0' }}>المنشأة النشطة</span>
+              <span style={{ fontSize: '10px', background: '#025a7e', color: '#00E5FF', padding: '2px 8px', borderRadius: '999px', fontWeight: '700' }}>
+                {user?.role === 'cashier' ? 'كاشير' : 'مدير'}
+              </span>
+            </div>
+            <strong style={{ fontSize: '12.5px', color: '#ffffff', fontWeight: '700', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {businessName || 'مؤسستي التجارية'}
+            </strong>
           </div>
         </div>
       </aside>
@@ -2022,7 +1847,7 @@ function App() {
               width: '42px',
               height: '42px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #4A90E2, #70A1FF)',
+              background: 'linear-gradient(135deg, #025a7e, #0e96a9)',
               color: '#fff',
               display: 'flex',
               alignItems: 'center',
@@ -2037,7 +1862,7 @@ function App() {
             <div>
               <div style={{ fontSize: '15px', fontWeight: '800', color: theme.textDark, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span>مرحباً بك! 👋</span>
-                <span style={{ fontSize: '13px', fontWeight: '700', color: '#4A90E2' }}>({user?.name || user?.businessName || 'المدير العام'})</span>
+                <span style={{ fontSize: '13px', fontWeight: '700', color: '#00E5FF' }}>({user?.name || user?.businessName || 'المدير العام'})</span>
               </div>
               <p style={{ margin: 0, fontSize: '12px', color: theme.textMuted }}>
                 {availableTabs.find(t => t.id === activeTab)?.icon} {availableTabs.find(t => t.id === activeTab)?.label}

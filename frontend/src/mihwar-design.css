@@ -3,6 +3,7 @@
    ══════════════════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+@import './octiqen-auth.css';
 
 /* ── CSS Custom Properties ── */
 :root {
@@ -15,9 +16,9 @@
   --mihwar-shadow-dark: 0 8px 30px rgba(0,0,0,0.18);
   --mihwar-shadow-hover: 0 12px 40px rgba(0,0,0,0.08);
   --mihwar-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --mihwar-blue: #4A90E2;
-  --mihwar-blue-light: #70A1FF;
-  --mihwar-blue-bg: rgba(74, 144, 226, 0.08);
+  --mihwar-blue: #0e96a9;
+  --mihwar-blue-light: #00E5FF;
+  --mihwar-blue-bg: rgba(14, 150, 169, 0.15);
   --mihwar-green: #34D399;
   --mihwar-green-bg: rgba(52, 211, 153, 0.1);
   --mihwar-amber: #FBBF24;
@@ -40,7 +41,7 @@ html, body, #root {
   max-width: 100% !important;
   min-height: 100vh !important;
   min-height: 100dvh !important;
-  background-color: #18191E !important;
+  background-color: #081724 !important;
   color: #F0F1F3;
   font-family: 'Cairo', 'Tahoma', 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -84,7 +85,7 @@ body {
   padding: 16px;
   gap: 16px;
   box-sizing: border-box !important;
-  background-color: #18191E;
+  background-color: #081724;
 }
 
 /* ── Main Content Layout ── */
@@ -108,7 +109,7 @@ body {
   top: 16px;
   z-index: 100;
   border-radius: 24px !important;
-  background: #1B1C21 !important;
+  background: #012839 !important;
   box-shadow: 0 12px 35px rgba(0,0,0,0.25) !important;
   border: 1px solid rgba(255,255,255,0.06) !important;
   display: flex;
@@ -137,7 +138,7 @@ body {
 
 /* ── Top Header ── */
 .app-top-header {
-  background: #1F2026;
+  background: #0B1F30;
   border-radius: 24px;
   padding: 16px 24px;
   display: flex;

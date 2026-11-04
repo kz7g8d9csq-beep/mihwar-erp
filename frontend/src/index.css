@@ -1,9 +1,28 @@
 /* ══════════════════════════════════════════════════════════════
-   Mihwar ERP — Full Viewport Fluid CSS
+   OCTIQEN ERP — Full Viewport Oceanic Fluid CSS
    ══════════════════════════════════════════════════════════════ */
 
 :root {
-  font-family: 'Cairo', 'Tahoma', system-ui, -apple-system, sans-serif;
+  --brand-primary: #025a7e;
+  --brand-accent: #0e96a9;
+  --brand-focus: #077a95;
+  --brand-muted: #066587;
+  --brand-ink: #011b26;
+  --brand-sidebar: #025a7e;
+  --brand-sidebar-deep: #012839;
+  --brand-sidebar-tonal: #077a95;
+  --brand-background: #f7fafb;
+  --brand-surface: #fcfdfe;
+  --brand-line: #c7dbe3;
+  --brand-soft: #f0f5f7;
+  --brand-on-dark: #ffffff;
+  --brand-on-dark-muted: #d9e6ec;
+  --brand-success: #4d7028;
+  --brand-warning: #a56115;
+  --brand-danger: #9d2929;
+  --brand-danger-soft: #fff0f0;
+
+  font-family: 'Segoe UI', 'Cairo', 'Tahoma', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
@@ -21,8 +40,8 @@ html, body {
   max-width: 100% !important;
   min-height: 100vh !important;
   min-height: 100dvh !important;
-  background-color: #18191E !important;
-  color: #F0F1F3;
+  background-color: #081724 !important;
+  color: #F1F7F9;
   overflow-x: hidden;
   box-sizing: border-box;
 }
@@ -38,5 +57,5 @@ html, body {
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
-  background-color: #18191E !important;
+  background-color: #081724 !important;
 }
